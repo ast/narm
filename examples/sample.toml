@@ -1,0 +1,43 @@
+[[channels]]
+name = "GB3WE"
+rx_hz = 145_725_000
+shift_hz = -600_000
+power = "low"
+scan = true
+mode = "fm"
+bandwidth = "wide"
+tone_tx_hz = 88.5
+tone_rx_hz = 88.5
+
+[[channels]]
+name = "Simplex 2m"
+rx_hz = 145_500_000
+mode = "fm"
+bandwidth = "wide"
+
+[[channels]]
+name = "DMR-SW"
+rx_hz = 439_412_500
+shift_hz = -9_400_000
+mode = "dmr"
+color_code = 1
+slot = 2
+talkgroup = 23_505
+admit = "color_code_free"
+
+[[channels]]
+name = "GB7DC"
+rx_hz = 439_575_000
+shift_hz = -9_000_000
+mode = "dstar"
+urcall = "CQCQCQ"
+rpt1 = "GB7DC  B"
+rpt2 = "GB7DC  G"
+
+[[channels]]
+name = "Wires-X"
+rx_hz = 145_375_000
+mode = "c4fm"
+dg_id_tx = 0
+dg_id_rx = 0
+data_rate = "dn"

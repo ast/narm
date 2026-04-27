@@ -1,0 +1,13 @@
+[package]
+name = "narm"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+clap_complete = "4"
+dotenvy = "0.15"
+serde = { version = "1", features = ["derive"] }
+thiserror = "2"
+toml = "0.8"

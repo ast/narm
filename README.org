@@ -1,0 +1,191 @@
+#+TITLE: narm — Nina Arvid Radio Manager
+#+OPTIONS: toc:2 num:nil
+
+* Overview
+
+=narm= is a CLI that manages channels and setup for several
+handheld ham radios from one TOML source of truth. The central
+config is "compiled" to each radio's native format, filtering out
+unsupported channels and modes per target.
+
+Supported radio targets:
+
+- Wouxun KG-Q336
+- Quansheng UV-K5
+- TYT MD-380
+- AnyTone AT-D878UV
+- Yaesu FT-50R
+
+* Install Rust
+
+=narm= requires a recent stable Rust toolchain (edition 2024).
+Install via [[https://rustup.rs][rustup]]:
+
+#+begin_src sh
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+#+end_src
+
+After install, reload your shell or =source "$HOME/.cargo/env"=,
+then verify:
+
+#+begin_src sh
+rustc --version
+cargo --version
+#+end_src
+
+To pick up newer toolchain releases later:
+
+#+begin_src sh
+rustup update stable
+#+end_src
+
+* Build & run
+
+Clone and build a debug binary:
+
+#+begin_src sh
+git clone <repo-url> narm
+cd narm
+cargo build
+#+end_src
+
+Run the CLI directly through Cargo:
+
+#+begin_src sh
+cargo run -- list-radios
+cargo run -- validate examples/sample.toml
+cargo run -- compile examples/sample.toml --radio quansheng-uv-k5
+cargo run -- completions zsh > _narm
+#+end_src
+
+Release build, lint, format, and tests:
+
+#+begin_src sh
+cargo build --release
+cargo fmt
+cargo clippy --all-targets -- -D warnings
+cargo test
+#+end_src
+
+* Subcommands
+
+- =validate <config.toml>= :: Parse and validate a channel
+  config; reports =OK: N channels= or the first error.
+- =compile <config.toml> --radio <radio> [--out <file>]= ::
+  Compile to a target radio's format. (Per-radio compilers are
+  not yet implemented; the surface and validation are in place.)
+- =list-radios= :: List supported radios with their ids and
+  modes.
+- =completions <shell>= :: Emit shell completions
+  (=bash=, =zsh=, =fish=, =elvish=, =powershell=) to stdout.
+
+* Crates used
+
+=clap= (derive), =clap_complete=, =serde= (derive), =toml=,
+=thiserror=, =anyhow=, =dotenvy=.
+
+* Project layout
+
+- Subcommand-based CLI.
+- =commands= module with each subcommand in its own file.
+- No =mod.rs=; uses =commands.rs= plus a =commands/= directory.
+- =lib.rs= holds everything that is not a command, so
+  integration tests can exercise core functionality.
+
+#+begin_example
+src/
+  lib.rs            core types, validation, errors
+  main.rs           dotenvy + Cli::parse + dispatch
+  commands.rs       Cli/Cmd definitions, module declarations
+  commands/
+    validate.rs
+    compile.rs
+    list_radios.rs
+    completions.rs
+examples/
+  sample.toml       reference config
+tests/
+  validate.rs       integration test against the sample
+#+end_example
+
+* Channel schema
+
+Channels are TOML tables tagged by =mode=. Mode-specific fields
+live on the same table as the common ones
+(=#[serde(flatten)]= on the Rust side):
+
+#+begin_src toml
+[[channels]]
+name = "GB3WE"
+rx_hz = 145_725_000
+shift_hz = -600_000
+power = "low"
+scan = true
+mode = "fm"
+bandwidth = "wide"
+tone_tx_hz = 88.5
+tone_rx_hz = 88.5
+
+[[channels]]
+name = "Simplex 2m"
+rx_hz = 145_500_000
+mode = "fm"
+
+[[channels]]
+name = "DMR-SW"
+rx_hz = 439_412_500
+shift_hz = -9_400_000
+mode = "dmr"
+color_code = 1
+slot = 2
+talkgroup = 23_505
+admit = "color_code_free"
+
+[[channels]]
+name = "GB7DC"
+rx_hz = 439_575_000
+shift_hz = -9_000_000
+mode = "dstar"
+urcall = "CQCQCQ"
+rpt1 = "GB7DC  B"
+rpt2 = "GB7DC  G"
+
+[[channels]]
+name = "Wires-X"
+rx_hz = 145_375_000
+mode = "c4fm"
+dg_id_tx = 0
+dg_id_rx = 0
+data_rate = "dn"
+#+end_src
+
+* Type sketch
+
+#+begin_src rust
+#[derive(Deserialize)]
+struct Channel {
+    name: String,
+    rx_hz: u64,
+    #[serde(default)] shift_hz: i64,
+    #[serde(default)] power: Power,
+    #[serde(default)] scan: bool,
+    #[serde(flatten)]  mode: Mode,
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "mode", rename_all = "lowercase")]
+enum Mode {
+    Fm {
+        #[serde(default)] bandwidth: Bandwidth,
+        #[serde(default)] tone_tx_hz: Option<f32>,
+        #[serde(default)] tone_rx_hz: Option<f32>,
+        #[serde(default)] dcs_code:   Option<u16>,
+    },
+    Dmr   { color_code: u8, slot: u8, talkgroup: u32,
+            #[serde(default)] admit: Admit },
+    Dstar { urcall: String, rpt1: String, rpt2: String },
+    C4fm  { dg_id_tx: u8, dg_id_rx: u8, data_rate: C4fmRate },
+    P25   { nac: u16, talkgroup: u32 },
+    M17   { destination: String, can: u8 },
+}
+#+end_src
