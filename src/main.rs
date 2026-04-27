@@ -8,7 +8,7 @@ use commands::{Cli, Command};
 fn main() -> Result<()> {
     dotenvy::dotenv().ok();
     let cli = Cli::parse();
-    match &cli.cmd {
+    match &cli.command {
         Command::Validate(args) => commands::validate::run(args),
         Command::Compile(args) => commands::compile::run(args),
         Command::ListRadios => commands::list_radios::run(),

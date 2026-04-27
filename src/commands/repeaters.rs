@@ -4,16 +4,16 @@ use anyhow::{Context, Result, anyhow};
 
 use narm::repeaters::{self, NearFilter, NearMatch};
 
-use crate::commands::{ImportRepeatersArgs, NearArgs, RepeatersArgs, RepeatersCmd};
+use crate::commands::{ImportRepeatersArgs, NearArgs, RepeatersArgs, RepeatersCommand};
 
 pub fn run(args: &RepeatersArgs) -> Result<()> {
     let db_path = match &args.db {
         Some(p) => p.clone(),
         None => repeaters::default_db_path()?,
     };
-    match &args.cmd {
-        RepeatersCmd::Import(a) => run_import(&db_path, a),
-        RepeatersCmd::Near(a) => run_near(&db_path, a),
+    match &args.command {
+        RepeatersCommand::Import(a) => run_import(&db_path, a),
+        RepeatersCommand::Near(a) => run_near(&db_path, a),
     }
 }
 
@@ -37,7 +37,7 @@ fn run_near(db_path: &Path, args: &NearArgs) -> Result<()> {
     let filter = NearFilter {
         band: args.band.clone(),
         mode: args.mode.clone(),
-        limit: Some(args.limit),
+        limit: args.limit,
     };
     let hits = repeaters::find_near(&conn, lat, lng, args.radius, &filter)?;
 

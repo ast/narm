@@ -16,7 +16,7 @@ pub mod validate;
 #[command(name = "narm", version, about = "Nina Arvid Radio Manager")]
 pub struct Cli {
     #[command(subcommand)]
-    pub cmd: Command,
+    pub command: Command,
 }
 
 #[derive(Subcommand, Debug)]
@@ -73,11 +73,11 @@ pub struct RepeatersArgs {
     #[arg(long, env = "NARM_DB", global = true)]
     pub db: Option<PathBuf>,
     #[command(subcommand)]
-    pub cmd: RepeatersCmd,
+    pub command: RepeatersCommand,
 }
 
 #[derive(Subcommand, Debug)]
-pub enum RepeatersCmd {
+pub enum RepeatersCommand {
     /// Import a SSA repeater CSV (https://www.ssa.se/vushf/repeatrar-fyrar/).
     Import(ImportRepeatersArgs),
     /// List repeaters within a radius of a location.
@@ -104,9 +104,9 @@ pub struct NearArgs {
     /// Filter by mode column (case-insensitive: fm, dmr, c4fm, dstar).
     #[arg(long)]
     pub mode: Option<String>,
-    /// Maximum number of results.
-    #[arg(long, default_value_t = 20)]
-    pub limit: usize,
+    /// Maximum number of results (default: no limit).
+    #[arg(long)]
+    pub limit: Option<usize>,
     /// Emit tab-separated output instead of an aligned table.
     #[arg(long)]
     pub tsv: bool,
