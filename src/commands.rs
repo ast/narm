@@ -22,16 +22,22 @@ pub struct Cli {
 #[derive(Subcommand, Debug)]
 pub enum Command {
     /// Parse and validate a channel config file.
+    #[command(visible_alias = "v")]
     Validate(ValidateArgs),
     /// Compile a config to a target radio's format.
+    #[command(visible_alias = "c")]
     Compile(CompileArgs),
     /// List supported radio targets.
+    #[command(visible_alias = "lr")]
     ListRadios,
     /// Convert between Maidenhead grid locator and lat/lng.
+    #[command(visible_alias = "g")]
     Grid(GridArgs),
     /// Manage and query the SSA repeater database.
+    #[command(visible_alias = "rep")]
     Repeaters(RepeatersArgs),
     /// Generate shell completion scripts.
+    #[command(visible_alias = "comp")]
     Completions(CompletionsArgs),
 }
 
@@ -79,10 +85,13 @@ pub struct RepeatersArgs {
 #[derive(Subcommand, Debug)]
 pub enum RepeatersCommand {
     /// Import a SSA repeater CSV (https://www.ssa.se/vushf/repeatrar-fyrar/).
+    #[command(visible_alias = "i")]
     Import(ImportRepeatersArgs),
     /// List repeaters within a radius of a location.
+    #[command(visible_alias = "n")]
     Near(NearArgs),
     /// Full-text search over call, city, district, network (FTS5).
+    #[command(visible_alias = "s")]
     Search(SearchArgs),
 }
 
