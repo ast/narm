@@ -79,9 +79,18 @@ cargo test
 - =validate <config>= :: Parse and validate a channel config
   (file or directory); reports =OK: N channels= or the first
   error.
-- =compile <config> --radio <radio> [--out <file>]= ::
-  Compile to a target radio's format. (Per-radio compilers are
-  not yet implemented; the surface and validation are in place.)
+- =compile <config> --radio <radio> [--format chirp-csv]
+  [--out <file>]= :: Compile a channel config to a programming
+  format. Default =--format chirp-csv= emits the generic CHIRP
+  CSV that any CHIRP-supported radio can import via *File →
+  Import*. Channels using modes the target radio doesn't
+  support (e.g. D-STAR on FM-only Yaesu) are skipped with a
+  warning on stderr; DMR / C4FM / P25 / M17 are always skipped
+  because CHIRP CSV can't represent them — those need the
+  manufacturer's CPS (future targets). Examples:
+  =narm c samples/sample.toml --radio yaesu-ft-50r=;
+  =narm c samples/sample.toml --radio anytone-at-d878uv --out
+  out.csv=.
 - =list-radios= :: List supported radios with their ids and
   modes.
 - =grid <locator> | <lat> <lng>= :: Convert between Maidenhead

@@ -1,10 +1,18 @@
 #[derive(clap::ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]
-#[clap(rename_all = "kebab-case")]
 pub enum Radio {
+    // Explicit `name`s match `Radio::id()` and the model-number
+    // hyphenation in CLAUDE.md / list-radios output. Without this
+    // clap's auto-kebab-case strips dashes around digits
+    // (`tyt-md380` vs the documented `tyt-md-380`).
+    #[clap(name = "wouxun-kg-q336")]
     WouxunKgQ336,
+    #[clap(name = "quansheng-uv-k5")]
     QuanshengUvK5,
+    #[clap(name = "tyt-md-380")]
     TytMd380,
+    #[clap(name = "anytone-at-d878uv")]
     AnytoneAtD878uv,
+    #[clap(name = "yaesu-ft-50r")]
     YaesuFt50r,
 }
 

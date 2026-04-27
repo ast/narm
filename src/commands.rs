@@ -1,9 +1,16 @@
 use std::path::PathBuf;
 
-use clap::{Args, Parser, Subcommand};
+use clap::{Args, Parser, Subcommand, ValueEnum};
 use clap_complete::Shell;
 
 use narm::Radio;
+
+#[derive(ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]
+#[clap(rename_all = "kebab-case")]
+pub enum CompileFormat {
+    /// Generic CHIRP CSV — importable by CHIRP for any supported radio.
+    ChirpCsv,
+}
 
 pub mod compile;
 pub mod completions;
@@ -54,6 +61,10 @@ pub struct CompileArgs {
     /// Target radio.
     #[arg(long, value_enum)]
     pub radio: Radio,
+    /// Output format. Defaults to chirp-csv (the universal CHIRP
+    /// generic-CSV interchange).
+    #[arg(long, value_enum, default_value_t = CompileFormat::ChirpCsv)]
+    pub format: CompileFormat,
     /// Output file (defaults to stdout).
     #[arg(long, short)]
     pub out: Option<PathBuf>,
