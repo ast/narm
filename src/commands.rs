@@ -4,12 +4,14 @@ pub mod compile;
 pub mod completions;
 pub mod grid;
 pub mod list_radios;
+pub mod radio;
 pub mod repeaters;
 pub mod validate;
 
 use compile::CompileArgs;
 use completions::CompletionsArgs;
 use grid::GridArgs;
+use radio::RadioArgs;
 use repeaters::RepeatersArgs;
 use validate::ValidateArgs;
 
@@ -37,6 +39,9 @@ pub enum Command {
     /// Manage and query the SSA repeater database.
     #[command(visible_alias = "rep")]
     Repeaters(RepeatersArgs),
+    /// Talk to a connected radio over serial (read EEPROM, …).
+    #[command(visible_alias = "rad")]
+    Radio(RadioArgs),
     /// Generate shell completion scripts.
     #[command(visible_alias = "comp")]
     Completions(CompletionsArgs),

@@ -3,6 +3,7 @@ pub mod chirp;
 pub mod grid;
 pub mod radio;
 pub mod repeaters;
+pub mod uvk5;
 
 pub use channel::*;
 pub use chirp::*;

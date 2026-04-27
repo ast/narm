@@ -123,6 +123,14 @@ cargo test
   =--band=, =--mode=, =--limit=, =--tsv= flags as =near=.
   Examples: =narm rep s Angered=; =narm rep s SK6* --band 70=;
   =narm rep s --raw "call:SK6*"=.
+- =radio read --port <port> --radio <radio> [--out <file>]= ::
+  Download channel data from a connected radio over its USB-
+  serial cable, decode into the narm channel TOML schema, and
+  emit it (stdout by default). Currently only
+  =--radio quansheng-uv-k5= is implemented (UV-K5 / UV-K5(8),
+  using CHIRP's wire protocol). AM channels are skipped with a
+  warning since narm has no AM mode yet. Example: =narm radio
+  read --port /dev/ttyUSB0 --radio quansheng-uv-k5 > my-uvk5.toml=.
 - =completions <shell>= :: Emit shell completions
   (=bash=, =zsh=, =fish=, =elvish=, =powershell=) to stdout.
 
@@ -134,7 +142,8 @@ The repeaters database lives at
 
 =clap= (derive + env), =clap_complete=, =serde= (derive),
 =toml=, =csv=, =rusqlite= (bundled, includes FTS5),
-=dirs=, =thiserror=, =anyhow=, =dotenvy=.
+=serialport= (UV-K5 cable I/O), =dirs=, =thiserror=, =anyhow=,
+=dotenvy=.
 
 * Project layout
 

@@ -1,23 +1,23 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Config {
     #[serde(default)]
     pub channels: Vec<Channel>,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 pub struct Channel {
     pub name: String,
     pub rx_hz: u64,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_zero_i64")]
     pub shift_hz: i64,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_default_power")]
     pub power: Power,
-    #[serde(default)]
+    #[serde(default, skip_serializing_if = "is_false")]
     pub scan: bool,
     #[serde(flatten)]
     pub mode: Mode,
@@ -25,7 +25,17 @@ pub struct Channel {
     pub source: Option<PathBuf>,
 }
 
-#[derive(Deserialize, Debug, Clone, Copy, Default, PartialEq, Eq)]
+fn is_zero_i64(v: &i64) -> bool {
+    *v == 0
+}
+fn is_default_power(p: &Power) -> bool {
+    *p == Power::default()
+}
+fn is_false(b: &bool) -> bool {
+    !*b
+}
+
+#[derive(Deserialize, Serialize, Debug, Clone, Copy, Default, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Power {
     Low,
@@ -34,7 +44,7 @@ pub enum Power {
     High,
 }
 
-#[derive(Deserialize, Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, Debug, Clone, Copy, Default, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum Bandwidth {
     Narrow,
@@ -42,7 +52,7 @@ pub enum Bandwidth {
     Wide,
 }
 
-#[derive(Deserialize, Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, Debug, Clone, Copy, Default, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum Admit {
     #[default]
@@ -51,7 +61,7 @@ pub enum Admit {
     ColorCodeFree,
 }
 
-#[derive(Deserialize, Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Deserialize, Serialize, Debug, Clone, Copy, PartialEq, Eq)]
 #[serde(rename_all = "lowercase")]
 pub enum C4fmRate {
     Dn,
@@ -60,7 +70,7 @@ pub enum C4fmRate {
     Data,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize, Serialize, Debug, Clone)]
 #[serde(tag = "mode", rename_all = "lowercase")]
 pub enum Mode {
     Fm {

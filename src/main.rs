@@ -14,6 +14,7 @@ fn main() -> Result<()> {
         Command::ListRadios => commands::list_radios::run(),
         Command::Grid(args) => commands::grid::run(args),
         Command::Repeaters(args) => commands::repeaters::run(args),
+        Command::Radio(args) => commands::radio::run(args),
         Command::Completions(args) => commands::completions::run(args),
     }
 }
