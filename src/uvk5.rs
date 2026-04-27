@@ -201,8 +201,11 @@ pub fn say_hello(port: &mut dyn SerialPort) -> Result<String, UvK5Error> {
     Ok(fw)
 }
 
-fn read_mem(port: &mut dyn SerialPort, offset: u16, len: u8) -> Result<Vec<u8>, UvK5Error> {
-    let payload = [
+/// Build the read-block command payload (pre-framing). Pure for
+/// testing. Wire layout matches CHIRP `_readmem`:
+///   `1b 05 08 00 [addr_lo addr_hi] [len] 00 6a 39 57 64`.
+fn build_read_payload(offset: u16, len: u8) -> [u8; 12] {
+    [
         0x1B,
         0x05,
         0x08,
@@ -215,7 +218,11 @@ fn read_mem(port: &mut dyn SerialPort, offset: u16, len: u8) -> Result<Vec<u8>, 
         0x39,
         0x57,
         0x64,
-    ];
+    ]
+}
+
+fn read_mem(port: &mut dyn SerialPort, offset: u16, len: u8) -> Result<Vec<u8>, UvK5Error> {
+    let payload = build_read_payload(offset, len);
     send(port, &payload)?;
     let reply = recv(port)?;
     // Reply: [0x1B, ..., addr_lo, addr_hi, len, 0x00, data...]
@@ -316,9 +323,9 @@ pub fn read_eeprom(port: &mut dyn SerialPort) -> Result<Vec<u8>, UvK5Error> {
 // -------- channel decode (pure, testable) --------
 
 /// Decode the 200 user-channel slots out of a complete EEPROM dump.
-/// Empty slots (freq 0 or 0xFFFF_FFFF) are skipped. Channels with AM
-/// modulation are skipped with a warning since narm has no AM mode
-/// today; warnings are returned alongside the channel list.
+/// Empty slots (freq 0 or 0xFFFF_FFFF) are skipped. AM channels are
+/// emitted as [`Mode::Am`]. Warnings vec is reserved for future
+/// per-channel skips; currently always empty.
 pub struct DecodeReport {
     pub channels: Vec<Channel>,
     pub warnings: Vec<String>,
@@ -329,7 +336,7 @@ pub fn decode_channels(eeprom: &[u8]) -> Result<DecodeReport, UvK5Error> {
         return Err(UvK5Error::ShortEeprom { got: eeprom.len() });
     }
     let mut channels = Vec::new();
-    let mut warnings = Vec::new();
+    let warnings = Vec::new();
 
     for i in 0..CHANNEL_COUNT {
         let off = i * CHANNEL_SIZE;
@@ -358,19 +365,7 @@ pub fn decode_channels(eeprom: &[u8]) -> Result<DecodeReport, UvK5Error> {
         let bandwidth_bit = (flags2 >> 1) & 1;
         let txpower_bits = (flags2 >> 2) & 0b11;
 
-        // Skip AM channels — narm has no AM mode (yet).
         let name = read_channel_name(eeprom, i);
-        let display = if name.is_empty() {
-            format!("CH{:03}", i + 1)
-        } else {
-            name.clone()
-        };
-        if enable_am {
-            warnings.push(format!(
-                "skipping {display}: AM modulation not yet supported"
-            ));
-            continue;
-        }
 
         let bandwidth = if bandwidth_bit == 0 {
             Bandwidth::Wide
@@ -393,11 +388,20 @@ pub fn decode_channels(eeprom: &[u8]) -> Result<DecodeReport, UvK5Error> {
         let (tone_tx_hz, tone_rx_hz, dcs_code) =
             decode_tones(tx_codeflag, txcode, rx_codeflag, rxcode);
 
-        let mode = Mode::Fm {
-            bandwidth,
-            tone_tx_hz,
-            tone_rx_hz,
-            dcs_code,
+        let mode = if enable_am {
+            Mode::Am {
+                bandwidth,
+                tone_tx_hz,
+                tone_rx_hz,
+                dcs_code,
+            }
+        } else {
+            Mode::Fm {
+                bandwidth,
+                tone_tx_hz,
+                tone_rx_hz,
+                dcs_code,
+            }
         };
 
         channels.push(Channel {
@@ -550,15 +554,51 @@ mod tests {
     }
 
     #[test]
-    fn am_channel_skipped_with_warning() {
+    fn am_channel_decoded_as_am_mode() {
+        // 121.250 MHz aviation, AM mode, no tones.
         let mut e = vec![0u8; EEPROM_SIZE];
         let freq_10hz: u32 = 12_125_000;
         e[0..4].copy_from_slice(&freq_10hz.to_le_bytes());
         e[11] = 1 << 4; // enable_am bit
         let report = decode_channels(&e).unwrap();
-        assert!(report.channels.is_empty());
-        assert_eq!(report.warnings.len(), 1);
-        assert!(report.warnings[0].contains("AM"));
+        assert_eq!(report.channels.len(), 1);
+        assert!(report.warnings.is_empty());
+        let ch = &report.channels[0];
+        assert_eq!(ch.rx_hz, 121_250_000);
+        assert!(matches!(
+            ch.mode,
+            Mode::Am {
+                bandwidth: Bandwidth::Wide,
+                tone_tx_hz: None,
+                tone_rx_hz: None,
+                dcs_code: None,
+            }
+        ));
+    }
+
+    #[test]
+    fn am_channel_preserves_bandwidth_and_tones() {
+        // Aviation channel with narrow AM (rare but representable)
+        // and a TX CTCSS — verify both fields make it through.
+        let mut e = vec![0u8; EEPROM_SIZE];
+        let freq_10hz: u32 = 12_125_000;
+        e[0..4].copy_from_slice(&freq_10hz.to_le_bytes());
+        e[9] = 8; // CTCSS index 8 = 88.5 Hz
+        e[10] = 1 << 4; // tx_flag = CTCSS
+        e[11] = 1 << 4; // enable_am
+        e[12] = 0b0000_0010; // bandwidth bit set = narrow
+        let r = decode_channels(&e).unwrap();
+        match &r.channels[0].mode {
+            Mode::Am {
+                bandwidth,
+                tone_tx_hz,
+                ..
+            } => {
+                assert_eq!(*bandwidth, Bandwidth::Narrow);
+                assert_eq!(*tone_tx_hz, Some(88.5));
+            }
+            other => panic!("expected AM, got {other:?}"),
+        }
     }
 
     #[test]
@@ -595,6 +635,397 @@ mod tests {
         assert_eq!(payload[7], 0x01);
         assert_eq!(&payload[8..12], &[0x6A, 0x39, 0x57, 0x64]);
         assert_eq!(&payload[12..], &data[..]);
+    }
+
+    // ===== regression tests captured from the live UV-K5(8) =====
+    //
+    // Bytes below were read off a real radio with `narm radio read
+    // --format raw` and verified against the radio's UI. They lock
+    // the wire-format and decoder against future drift.
+
+    #[test]
+    fn xor_key_locks_each_byte() {
+        // XOR-ing 'A' (0x41) against the 16-byte cyclic key produces
+        // a fully-determined sequence; this test fails if any single
+        // byte of XOR_KEY changes.
+        let scrambled = xor(b"AAAAAAAAAAAAAAAA");
+        assert_eq!(
+            scrambled,
+            vec![
+                0x57, 0x2D, 0x55, 0xA7, 0x6F, 0xD0, 0x4C, 0x01, 0x60, 0x74, 0x94, 0x01, 0x52, 0x42,
+                0xA8, 0xC1,
+            ],
+        );
+    }
+
+    #[test]
+    fn hello_payload_constant() {
+        // The hello bytes the radio expects on the wire.
+        assert_eq!(HELLO, [0x14, 0x05, 0x04, 0x00, 0x6A, 0x39, 0x57, 0x64]);
+    }
+
+    #[test]
+    fn build_read_payload_matches_chirp_format() {
+        // CHIRP `_readmem`:
+        //   payload = b"\x1b\x05\x08\x00" + struct.pack("<HBB", off, len, 0)
+        //             + b"\x6a\x39\x57\x64"
+        // For offset=0x0080, len=0x80:
+        //   1b 05 08 00 80 00 80 00 6a 39 57 64
+        assert_eq!(
+            build_read_payload(0x0080, 0x80),
+            [
+                0x1B, 0x05, 0x08, 0x00, 0x80, 0x00, 0x80, 0x00, 0x6A, 0x39, 0x57, 0x64
+            ],
+        );
+        assert_eq!(
+            build_read_payload(0x1F80, 0x80),
+            [
+                0x1B, 0x05, 0x08, 0x00, 0x80, 0x1F, 0x80, 0x00, 0x6A, 0x39, 0x57, 0x64
+            ],
+        );
+    }
+
+    #[test]
+    fn frame_invariants_for_arbitrary_payload() {
+        // For every well-formed payload, the framer must produce:
+        //   prefix = AB CD len 00, suffix = DC BA, total = len+8.
+        for payload in [
+            HELLO.to_vec(),
+            build_read_payload(0, 0x80).to_vec(),
+            build_write_payload(0x0040, &[0xAB; 64]),
+        ] {
+            let frame = build_frame(&payload);
+            assert_eq!(&frame[..2], &HEADER_MAGIC);
+            assert_eq!(frame[2] as usize, payload.len());
+            assert_eq!(frame[3], 0x00);
+            assert_eq!(&frame[frame.len() - 2..], &FOOTER_MAGIC);
+            assert_eq!(frame.len(), payload.len() + 8);
+        }
+    }
+
+    /// Captured from a real UV-K5(8): channel slot 0 = SK6RFQ on 2 m,
+    /// 145.650 MHz, -600 kHz shift, CTCSS 114.8 Hz on TX only, high
+    /// power, wide bandwidth.
+    const REAL_SLOT_0_BYTES: [u8; 16] = [
+        0x88, 0x3E, 0xDE, 0x00, 0x60, 0xEA, 0x00, 0x00, 0x00, 0x10, 0x10, 0x02, 0x08, 0x00, 0x04,
+        0x00,
+    ];
+    const REAL_SLOT_0_NAME: [u8; 16] = [
+        0x53, 0x4B, 0x36, 0x52, 0x46, 0x51, 0x20, 0x20, 0x20, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00,
+    ];
+
+    /// Slot 1 = SK6RFQ on 70 cm, 434.650 MHz, -2 MHz shift, CTCSS
+    /// 114.8 Hz TX only, high power, wide bandwidth.
+    const REAL_SLOT_1_BYTES: [u8; 16] = [
+        0x28, 0x39, 0x97, 0x02, 0x40, 0x0D, 0x03, 0x00, 0x00, 0x10, 0x10, 0x02, 0x08, 0x00, 0x04,
+        0x00,
+    ];
+
+    /// Slot 2 = PMR446 K1, 446.00625 MHz, no shift, no tone, low
+    /// power, wide bandwidth.
+    const REAL_SLOT_2_BYTES: [u8; 16] = [
+        0x31, 0x8D, 0xA8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x04,
+        0x00,
+    ];
+    const REAL_SLOT_2_NAME: [u8; 16] = [
+        0x4B, 0x31, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00,
+    ];
+
+    fn fake_eeprom_with(slot0: &[u8], slot1: Option<&[u8]>, name0: &[u8]) -> Vec<u8> {
+        let mut e = vec![0u8; EEPROM_SIZE];
+        e[0..16].copy_from_slice(slot0);
+        if let Some(s1) = slot1 {
+            e[16..32].copy_from_slice(s1);
+        }
+        e[CHANNEL_NAME_BASE..CHANNEL_NAME_BASE + 16].copy_from_slice(name0);
+        e
+    }
+
+    #[test]
+    fn decodes_real_uvk5_slot_0_sk6rfq_2m() {
+        let e = fake_eeprom_with(&REAL_SLOT_0_BYTES, None, &REAL_SLOT_0_NAME);
+        let r = decode_channels(&e).unwrap();
+        assert_eq!(r.channels.len(), 1);
+        let ch = &r.channels[0];
+        assert_eq!(ch.name, "SK6RFQ");
+        assert_eq!(ch.rx_hz, 145_650_000);
+        assert_eq!(ch.shift_hz, -600_000);
+        assert_eq!(ch.power, Power::High);
+        match &ch.mode {
+            Mode::Fm {
+                bandwidth,
+                tone_tx_hz,
+                tone_rx_hz,
+                dcs_code,
+            } => {
+                assert_eq!(*bandwidth, Bandwidth::Wide);
+                assert_eq!(*tone_tx_hz, Some(114.8));
+                assert_eq!(*tone_rx_hz, None);
+                assert!(dcs_code.is_none());
+            }
+            other => panic!("expected FM, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn decodes_real_uvk5_slot_1_sk6rfq_70cm() {
+        let mut e = vec![0u8; EEPROM_SIZE];
+        e[16..32].copy_from_slice(&REAL_SLOT_1_BYTES);
+        // No name set → slot uses synthetic CH002.
+        let r = decode_channels(&e).unwrap();
+        assert_eq!(r.channels.len(), 1);
+        let ch = &r.channels[0];
+        assert_eq!(ch.name, "CH002");
+        assert_eq!(ch.rx_hz, 434_650_000);
+        assert_eq!(ch.shift_hz, -2_000_000);
+        assert_eq!(ch.power, Power::High);
+    }
+
+    #[test]
+    fn decodes_real_uvk5_slot_2_pmr446_k1() {
+        let mut e = vec![0u8; EEPROM_SIZE];
+        e[32..48].copy_from_slice(&REAL_SLOT_2_BYTES);
+        e[CHANNEL_NAME_BASE + 32..CHANNEL_NAME_BASE + 48].copy_from_slice(&REAL_SLOT_2_NAME);
+        let r = decode_channels(&e).unwrap();
+        assert_eq!(r.channels.len(), 1);
+        let ch = &r.channels[0];
+        assert_eq!(ch.name, "K1");
+        assert_eq!(ch.rx_hz, 446_006_250);
+        assert_eq!(ch.shift_hz, 0);
+        assert_eq!(ch.power, Power::Low);
+        match &ch.mode {
+            Mode::Fm {
+                bandwidth,
+                tone_tx_hz,
+                tone_rx_hz,
+                dcs_code,
+            } => {
+                assert_eq!(*bandwidth, Bandwidth::Wide);
+                assert!(tone_tx_hz.is_none());
+                assert!(tone_rx_hz.is_none());
+                assert!(dcs_code.is_none());
+            }
+            _ => panic!("expected FM"),
+        }
+    }
+
+    fn one_channel_with_flags(flags1: u8, flags2: u8, offset_10hz: u32) -> Channel {
+        let mut e = vec![0u8; EEPROM_SIZE];
+        let freq_10hz: u32 = 14_565_000; // 145.65 MHz
+        e[0..4].copy_from_slice(&freq_10hz.to_le_bytes());
+        e[4..8].copy_from_slice(&offset_10hz.to_le_bytes());
+        e[11] = flags1;
+        e[12] = flags2;
+        decode_channels(&e)
+            .unwrap()
+            .channels
+            .into_iter()
+            .next()
+            .unwrap()
+    }
+
+    #[test]
+    fn shift_direction_matrix() {
+        // shift bits live in the low 2 of flags1: 00=none, 01=plus, 10=minus.
+        let off_10hz: u32 = 60_000; // 600 kHz
+        assert_eq!(one_channel_with_flags(0b00, 0, off_10hz).shift_hz, 0);
+        assert_eq!(one_channel_with_flags(0b01, 0, off_10hz).shift_hz, 600_000);
+        assert_eq!(one_channel_with_flags(0b10, 0, off_10hz).shift_hz, -600_000);
+    }
+
+    #[test]
+    fn power_levels_matrix() {
+        // txpower is bits 2..3 of flags2 (0b00=Low, 0b01=Mid, 0b10=High).
+        assert_eq!(one_channel_with_flags(0, 0b0000_0000, 0).power, Power::Low);
+        assert_eq!(one_channel_with_flags(0, 0b0000_0100, 0).power, Power::Mid);
+        assert_eq!(one_channel_with_flags(0, 0b0000_1000, 0).power, Power::High);
+    }
+
+    #[test]
+    fn bandwidth_wide_and_narrow() {
+        // bandwidth is bit 1 of flags2 (0=wide, 1=narrow).
+        let wide = one_channel_with_flags(0, 0b0000_0000, 0);
+        let narrow = one_channel_with_flags(0, 0b0000_0010, 0);
+        assert!(matches!(
+            wide.mode,
+            Mode::Fm {
+                bandwidth: Bandwidth::Wide,
+                ..
+            }
+        ));
+        assert!(matches!(
+            narrow.mode,
+            Mode::Fm {
+                bandwidth: Bandwidth::Narrow,
+                ..
+            }
+        ));
+    }
+
+    fn decode_with_codes(tx_flag: u8, txcode: u8, rx_flag: u8, rxcode: u8) -> Channel {
+        let mut e = vec![0u8; EEPROM_SIZE];
+        let freq_10hz: u32 = 14_565_000;
+        e[0..4].copy_from_slice(&freq_10hz.to_le_bytes());
+        e[8] = rxcode;
+        e[9] = txcode;
+        e[10] = (tx_flag << 4) | (rx_flag & 0x0F);
+        decode_channels(&e)
+            .unwrap()
+            .channels
+            .into_iter()
+            .next()
+            .unwrap()
+    }
+
+    #[test]
+    fn ctcss_index_boundaries() {
+        // Index 0 = 67.0 Hz, index 49 = 254.1 Hz, index 50 = out of range → no tone.
+        let lo = decode_with_codes(1, 0, 0, 0);
+        let hi = decode_with_codes(1, 49, 0, 0);
+        let oob = decode_with_codes(1, 50, 0, 0);
+        if let Mode::Fm { tone_tx_hz, .. } = lo.mode {
+            assert_eq!(tone_tx_hz, Some(67.0));
+        } else {
+            panic!()
+        }
+        if let Mode::Fm { tone_tx_hz, .. } = hi.mode {
+            assert_eq!(tone_tx_hz, Some(254.1));
+        } else {
+            panic!()
+        }
+        if let Mode::Fm { tone_tx_hz, .. } = oob.mode {
+            assert!(
+                tone_tx_hz.is_none(),
+                "out-of-range CTCSS index returns None"
+            );
+        } else {
+            panic!()
+        }
+    }
+
+    #[test]
+    fn dcs_index_boundaries() {
+        // Index 0 = 23, index 103 = 754, index 104 = out of range → None.
+        let lo = decode_with_codes(2, 0, 0, 0);
+        let hi = decode_with_codes(2, 103, 0, 0);
+        let oob = decode_with_codes(2, 104, 0, 0);
+        if let Mode::Fm { dcs_code, .. } = lo.mode {
+            assert_eq!(dcs_code, Some(23));
+        } else {
+            panic!()
+        }
+        if let Mode::Fm { dcs_code, .. } = hi.mode {
+            assert_eq!(dcs_code, Some(754));
+        } else {
+            panic!()
+        }
+        if let Mode::Fm { dcs_code, .. } = oob.mode {
+            assert!(dcs_code.is_none());
+        } else {
+            panic!()
+        }
+    }
+
+    #[test]
+    fn dcs_flag_3_reversed_polarity_treated_as_dcs() {
+        // Flag value 3 (DCS-reversed) shares the DCS table; we surface it
+        // as the same DCS code as flag 2 since narm has no polarity field.
+        let ch = decode_with_codes(3, 5, 0, 0);
+        if let Mode::Fm { dcs_code, .. } = ch.mode {
+            assert_eq!(dcs_code, Some(36)); // DTCS_CODES[5] == 36
+        } else {
+            panic!()
+        }
+    }
+
+    #[test]
+    fn tx_only_ctcss_doesnt_set_rx_tone() {
+        let ch = decode_with_codes(1, 8, 0, 0); // tx CTCSS index 8 = 88.5
+        if let Mode::Fm {
+            tone_tx_hz,
+            tone_rx_hz,
+            ..
+        } = ch.mode
+        {
+            assert_eq!(tone_tx_hz, Some(88.5));
+            assert!(tone_rx_hz.is_none());
+        }
+    }
+
+    #[test]
+    fn rx_only_ctcss_doesnt_set_tx_tone() {
+        let ch = decode_with_codes(0, 0, 1, 8);
+        if let Mode::Fm {
+            tone_tx_hz,
+            tone_rx_hz,
+            ..
+        } = ch.mode
+        {
+            assert!(tone_tx_hz.is_none());
+            assert_eq!(tone_rx_hz, Some(88.5));
+        }
+    }
+
+    #[test]
+    fn tx_and_rx_different_ctcss_both_recorded() {
+        let ch = decode_with_codes(1, 0, 1, 49); // tx 67.0, rx 254.1
+        if let Mode::Fm {
+            tone_tx_hz,
+            tone_rx_hz,
+            ..
+        } = ch.mode
+        {
+            assert_eq!(tone_tx_hz, Some(67.0));
+            assert_eq!(tone_rx_hz, Some(254.1));
+        }
+    }
+
+    fn decode_with_name(name_bytes: &[u8]) -> Channel {
+        let mut e = vec![0u8; EEPROM_SIZE];
+        let freq_10hz: u32 = 14_565_000;
+        e[0..4].copy_from_slice(&freq_10hz.to_le_bytes());
+        e[CHANNEL_NAME_BASE..CHANNEL_NAME_BASE + name_bytes.len()].copy_from_slice(name_bytes);
+        decode_channels(&e)
+            .unwrap()
+            .channels
+            .into_iter()
+            .next()
+            .unwrap()
+    }
+
+    #[test]
+    fn channel_name_nul_terminated() {
+        let ch = decode_with_name(b"GB3WE\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00");
+        assert_eq!(ch.name, "GB3WE");
+    }
+
+    #[test]
+    fn channel_name_ff_terminated() {
+        let ch = decode_with_name(b"GB3WE\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff");
+        assert_eq!(ch.name, "GB3WE");
+    }
+
+    #[test]
+    fn channel_name_full_16_chars_no_terminator() {
+        // 16 printable chars exactly — no NUL/FF in the slot.
+        let ch = decode_with_name(b"ABCDEFGHIJKLMNOP");
+        assert_eq!(ch.name, "ABCDEFGHIJKLMNOP");
+    }
+
+    #[test]
+    fn channel_name_trailing_spaces_trimmed() {
+        // CHIRP/UV-K5 pads short names with spaces.
+        let ch = decode_with_name(b"K1      \x00\x00\x00\x00\x00\x00\x00\x00");
+        assert_eq!(ch.name, "K1");
+    }
+
+    #[test]
+    fn channel_name_blank_falls_back_to_synthetic() {
+        let ch =
+            decode_with_name(b"\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00");
+        assert_eq!(ch.name, "CH001");
     }
 
     #[test]

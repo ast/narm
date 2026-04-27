@@ -22,5 +22,7 @@ pub const SPEC: RadioSpec = RadioSpec {
         (400_000_000, 469_997_500),
         (470_000_000, 599_997_500),
     ],
-    supported_modes: &[ModeKind::Fm],
+    // FM TX+RX, AM RX-only on the aviation band; both representable
+    // in narm's channel model.
+    supported_modes: &[ModeKind::Fm, ModeKind::Am],
 };

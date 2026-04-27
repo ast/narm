@@ -1,9 +1,10 @@
 //! CHIRP-compatible CSV export.
 //!
 //! Produces the column layout that CHIRP's "File → Import" / generic CSV
-//! driver accepts. Covers analog FM (with CTCSS / DCS) and D-STAR (DV).
-//! DMR / C4FM / P25 / M17 channels are not representable and are skipped
-//! with a warning — those targets need the manufacturer's own CPS.
+//! driver accepts. Covers analog FM/NFM and AM/NAM (both with optional
+//! CTCSS / DCS) and D-STAR (DV). DMR / C4FM / P25 / M17 channels are
+//! not representable and are skipped with a warning — those targets
+//! need the manufacturer's own CPS.
 //!
 //! Reference: <https://chirpmyradio.com/projects/chirp/wiki/CSV_Generic>
 
@@ -164,6 +165,29 @@ pub fn channels_to_csv(channels: &[Channel]) -> Result<ConvertReport, ChirpError
     Ok(ConvertReport { csv, warnings })
 }
 
+fn fill_analog_row(
+    row: &mut ChirpRow,
+    bandwidth: Bandwidth,
+    tone_tx_hz: Option<f32>,
+    tone_rx_hz: Option<f32>,
+    dcs_code: Option<u16>,
+    am: bool,
+) {
+    row.mode = match (am, bandwidth) {
+        (false, Bandwidth::Wide) => "FM",
+        (false, Bandwidth::Narrow) => "NFM",
+        (true, Bandwidth::Wide) => "AM",
+        (true, Bandwidth::Narrow) => "NAM",
+    }
+    .to_string();
+    let tone = ToneCells::for_fm(tone_tx_hz, tone_rx_hz, dcs_code);
+    row.tone = tone.tone.to_string();
+    row.r_tone_freq = tone.rtone;
+    row.c_tone_freq = tone.ctone;
+    row.dtcs_code = tone.dtcs;
+    row.dtcs_polarity = tone.polarity.to_string();
+}
+
 fn channel_to_row(ch: &Channel, location: u32) -> Result<ChirpRow, &'static str> {
     let mut row = ChirpRow::base(ch, location);
     match &ch.mode {
@@ -173,17 +197,30 @@ fn channel_to_row(ch: &Channel, location: u32) -> Result<ChirpRow, &'static str>
             tone_rx_hz,
             dcs_code,
         } => {
-            row.mode = match bandwidth {
-                Bandwidth::Wide => "FM",
-                Bandwidth::Narrow => "NFM",
-            }
-            .to_string();
-            let tone = ToneCells::for_fm(*tone_tx_hz, *tone_rx_hz, *dcs_code);
-            row.tone = tone.tone.to_string();
-            row.r_tone_freq = tone.rtone;
-            row.c_tone_freq = tone.ctone;
-            row.dtcs_code = tone.dtcs;
-            row.dtcs_polarity = tone.polarity.to_string();
+            fill_analog_row(
+                &mut row,
+                *bandwidth,
+                *tone_tx_hz,
+                *tone_rx_hz,
+                *dcs_code,
+                false,
+            );
+            Ok(row)
+        }
+        Mode::Am {
+            bandwidth,
+            tone_tx_hz,
+            tone_rx_hz,
+            dcs_code,
+        } => {
+            fill_analog_row(
+                &mut row,
+                *bandwidth,
+                *tone_tx_hz,
+                *tone_rx_hz,
+                *dcs_code,
+                true,
+            );
             Ok(row)
         }
         Mode::Dstar { urcall, rpt1, rpt2 } => {
@@ -389,6 +426,32 @@ mod tests {
         assert_eq!(row[5], "DTCS");
         assert_eq!(row[8], "074");
         assert_eq!(row[9], "NN");
+    }
+
+    #[test]
+    fn am_wide_yields_am_mode() {
+        let mut ch = fm("Air 121.5", 121_500_000);
+        ch.mode = Mode::Am {
+            bandwidth: Bandwidth::Wide,
+            tone_tx_hz: None,
+            tone_rx_hz: None,
+            dcs_code: None,
+        };
+        let row = &rows(&channels_to_csv(&[ch]).unwrap().csv)[1];
+        assert_eq!(row[12], "AM");
+    }
+
+    #[test]
+    fn am_narrow_yields_nam_mode() {
+        let mut ch = fm("Narrow AM", 121_500_000);
+        ch.mode = Mode::Am {
+            bandwidth: Bandwidth::Narrow,
+            tone_tx_hz: None,
+            tone_rx_hz: None,
+            dcs_code: None,
+        };
+        let row = &rows(&channels_to_csv(&[ch]).unwrap().csv)[1];
+        assert_eq!(row[12], "NAM");
     }
 
     #[test]

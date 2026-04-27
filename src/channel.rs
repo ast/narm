@@ -83,6 +83,19 @@ pub enum Mode {
         #[serde(default)]
         dcs_code: Option<u16>,
     },
+    /// Amplitude modulation. Wide AM is broadcast / aviation; narrow
+    /// AM is rarer. Tone fields exist for symmetry with `Fm` but most
+    /// AM use cases (aviation 108–137 MHz) don't use CTCSS/DCS.
+    Am {
+        #[serde(default)]
+        bandwidth: Bandwidth,
+        #[serde(default)]
+        tone_tx_hz: Option<f32>,
+        #[serde(default)]
+        tone_rx_hz: Option<f32>,
+        #[serde(default)]
+        dcs_code: Option<u16>,
+    },
     Dmr {
         color_code: u8,
         slot: u8,
@@ -114,6 +127,7 @@ impl Mode {
     pub fn kind(&self) -> ModeKind {
         match self {
             Mode::Fm { .. } => ModeKind::Fm,
+            Mode::Am { .. } => ModeKind::Am,
             Mode::Dmr { .. } => ModeKind::Dmr,
             Mode::Dstar { .. } => ModeKind::Dstar,
             Mode::C4fm { .. } => ModeKind::C4fm,
@@ -125,11 +139,12 @@ impl Mode {
 
 /// Discriminant of [`Mode`] without the per-mode payload. Used by
 /// [`crate::radio::RadioSpec::supported_modes`] and the compile
-/// filter. Display gives the kebab-case wire form (`"fm"`, `"dmr"`,
-/// `"dstar"`, `"c4fm"`, `"p25"`, `"m17"`).
+/// filter. Display gives the kebab-case wire form (`"fm"`, `"am"`,
+/// `"dmr"`, `"dstar"`, `"c4fm"`, `"p25"`, `"m17"`).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum ModeKind {
     Fm,
+    Am,
     Dmr,
     Dstar,
     C4fm,
@@ -141,6 +156,7 @@ impl ModeKind {
     pub fn as_str(self) -> &'static str {
         match self {
             ModeKind::Fm => "fm",
+            ModeKind::Am => "am",
             ModeKind::Dmr => "dmr",
             ModeKind::Dstar => "dstar",
             ModeKind::C4fm => "c4fm",

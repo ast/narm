@@ -184,6 +184,11 @@ mode = "c4fm"
 dg_id_tx = 0
 dg_id_rx = 0
 data_rate = "dn"
+
+[[channels]]
+name = "ATIS Stockholm"
+rx_hz = 119_725_000
+mode = "am"
 ```
 
 ## Type sketch
@@ -203,6 +208,14 @@ struct Channel {
 #[serde(tag = "mode", rename_all = "lowercase")]
 enum Mode {
     Fm {
+        #[serde(default)] bandwidth: Bandwidth,
+        #[serde(default)] tone_tx_hz: Option<f32>,
+        #[serde(default)] tone_rx_hz: Option<f32>,
+        #[serde(default)] dcs_code:   Option<u16>,
+    },
+    /// Amplitude modulation — broadcast / aviation. Same shape as
+    /// `Fm`; tone fields exist for symmetry but are rarely used.
+    Am {
         #[serde(default)] bandwidth: Bandwidth,
         #[serde(default)] tone_tx_hz: Option<f32>,
         #[serde(default)] tone_rx_hz: Option<f32>,
