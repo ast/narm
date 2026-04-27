@@ -84,6 +84,11 @@ cargo test
   not yet implemented; the surface and validation are in place.)
 - =list-radios= :: List supported radios with their ids and
   modes.
+- =grid <locator> | <lat> <lng>= :: Convert between Maidenhead
+  grid locator and lat/lng. One arg = locator (decode → centre
+  of cell, prints =lat lng=); two args = coords (encode → 6-char
+  locator). Examples: =narm grid JO67AT=; =narm grid 57.8125
+  12.0417=.
 - =completions <shell>= :: Emit shell completions
   (=bash=, =zsh=, =fish=, =elvish=, =powershell=) to stdout.
 

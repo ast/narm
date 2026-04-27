@@ -7,6 +7,7 @@ use narm::Radio;
 
 pub mod compile;
 pub mod completions;
+pub mod grid;
 pub mod list_radios;
 pub mod validate;
 
@@ -25,6 +26,8 @@ pub enum Command {
     Compile(CompileArgs),
     /// List supported radio targets.
     ListRadios,
+    /// Convert between Maidenhead grid locator and lat/lng.
+    Grid(GridArgs),
     /// Generate shell completion scripts.
     Completions(CompletionsArgs),
 }
@@ -51,4 +54,12 @@ pub struct CompileArgs {
 pub struct CompletionsArgs {
     /// Shell to generate completions for.
     pub shell: Shell,
+}
+
+#[derive(Args, Debug)]
+pub struct GridArgs {
+    /// Either a Maidenhead locator (e.g. JO67AT) — one arg —
+    /// or a "lat lng" pair (e.g. 57.8125 12.0417) — two args.
+    #[arg(num_args = 1..=2, value_name = "LOCATOR | LAT LNG")]
+    pub input: Vec<String>,
 }

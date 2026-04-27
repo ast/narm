@@ -12,6 +12,7 @@ fn main() -> Result<()> {
         Command::Validate(args) => commands::validate::run(args),
         Command::Compile(args) => commands::compile::run(args),
         Command::ListRadios => commands::list_radios::run(),
+        Command::Grid(args) => commands::grid::run(args),
         Command::Completions(args) => commands::completions::run(args),
     }
 }
