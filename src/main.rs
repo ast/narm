@@ -13,6 +13,7 @@ fn main() -> Result<()> {
         Command::Compile(args) => commands::compile::run(args),
         Command::ListRadios => commands::list_radios::run(),
         Command::Grid(args) => commands::grid::run(args),
+        Command::Repeaters(args) => commands::repeaters::run(args),
         Command::Completions(args) => commands::completions::run(args),
     }
 }

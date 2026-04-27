@@ -9,6 +9,7 @@ pub mod compile;
 pub mod completions;
 pub mod grid;
 pub mod list_radios;
+pub mod repeaters;
 pub mod validate;
 
 #[derive(Parser, Debug)]
@@ -28,6 +29,8 @@ pub enum Command {
     ListRadios,
     /// Convert between Maidenhead grid locator and lat/lng.
     Grid(GridArgs),
+    /// Manage and query the SSA repeater database.
+    Repeaters(RepeatersArgs),
     /// Generate shell completion scripts.
     Completions(CompletionsArgs),
 }
@@ -62,4 +65,49 @@ pub struct GridArgs {
     /// or a "lat lng" pair (e.g. 57.8125 12.0417) — two args.
     #[arg(num_args = 1..=2, value_name = "LOCATOR | LAT LNG")]
     pub input: Vec<String>,
+}
+
+#[derive(Args, Debug)]
+pub struct RepeatersArgs {
+    /// SQLite database path. Defaults to $XDG_DATA_HOME/narm/repeaters.db.
+    #[arg(long, env = "NARM_DB", global = true)]
+    pub db: Option<PathBuf>,
+    #[command(subcommand)]
+    pub cmd: RepeatersCmd,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum RepeatersCmd {
+    /// Import a SSA repeater CSV (https://www.ssa.se/vushf/repeatrar-fyrar/).
+    Import(ImportRepeatersArgs),
+    /// List repeaters within a radius of a location.
+    Near(NearArgs),
+}
+
+#[derive(Args, Debug)]
+pub struct ImportRepeatersArgs {
+    /// Path to the SSA repeaters CSV.
+    pub csv: PathBuf,
+}
+
+#[derive(Args, Debug)]
+pub struct NearArgs {
+    /// Maidenhead locator (one arg) or "lat lng" coords (two args).
+    #[arg(num_args = 1..=2, value_name = "LOCATOR | LAT LNG")]
+    pub location: Vec<String>,
+    /// Search radius in kilometres.
+    #[arg(long, default_value_t = 50.0)]
+    pub radius: f64,
+    /// Filter by band column (e.g. 2, 70, 23).
+    #[arg(long)]
+    pub band: Option<String>,
+    /// Filter by mode column (case-insensitive: fm, dmr, c4fm, dstar).
+    #[arg(long)]
+    pub mode: Option<String>,
+    /// Maximum number of results.
+    #[arg(long, default_value_t = 20)]
+    pub limit: usize,
+    /// Emit tab-separated output instead of an aligned table.
+    #[arg(long)]
+    pub tsv: bool,
 }

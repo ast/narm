@@ -89,13 +89,29 @@ cargo test
   of cell, prints =lat lng=); two args = coords (encode → 6-char
   locator). Examples: =narm grid JO67AT=; =narm grid 57.8125
   12.0417=.
+- =repeaters import <csv>= :: Import a SSA repeater CSV
+  ([[https://www.ssa.se/vushf/repeatrar-fyrar/]]) into the local
+  SQLite database (FTS5-indexed on call/city/district/network).
+  Re-imports update in place via the stable SSA =id=.
+- =repeaters near <locator> | <lat> <lng>= :: List repeaters
+  within a radius of a location. Flags: =--radius <km>=
+  (default 50), =--band <2|70|...>=, =--mode <fm|dmr|...>=,
+  =--limit <N>= (default 20), =--tsv= (pipe-friendly output;
+  default is an aligned table). Examples: =narm repeaters near
+  JO67AT --radius 30 --mode fm=; =narm repeaters near 57.7
+  11.97 --band 2 --tsv=.
 - =completions <shell>= :: Emit shell completions
   (=bash=, =zsh=, =fish=, =elvish=, =powershell=) to stdout.
 
+The repeaters database lives at
+=$XDG_DATA_HOME/narm/repeaters.db= by default; override with
+=--db <path>= or =NARM_DB= env (loaded via =dotenvy=).
+
 * Crates used
 
-=clap= (derive), =clap_complete=, =serde= (derive), =toml=,
-=thiserror=, =anyhow=, =dotenvy=.
+=clap= (derive + env), =clap_complete=, =serde= (derive),
+=toml=, =csv=, =rusqlite= (bundled, includes FTS5),
+=dirs=, =thiserror=, =anyhow=, =dotenvy=.
 
 * Project layout
 

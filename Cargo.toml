@@ -5,9 +5,12 @@ edition = "2024"
 
 [dependencies]
 anyhow = "1"
-clap = { version = "4", features = ["derive"] }
+clap = { version = "4", features = ["derive", "env"] }
 clap_complete = "4"
+csv = "1"
+dirs = "5"
 dotenvy = "0.15"
+rusqlite = { version = "0.32", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
 thiserror = "2"
 toml = "0.8"
