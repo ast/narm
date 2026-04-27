@@ -41,6 +41,10 @@ Same row order across radios so they diff cleanly. DMR-only
 rows are appended below the common rows for the two DMR
 radios.
 
+To search across the PDFs in `docs/`, use `rga`
+(ripgrep-all) — plain `rg` does not look inside PDF content.
+Example: `rga -i "color code" docs/`.
+
 ### Wouxun KG-Q336
 
 | Capability | Value |

@@ -14,11 +14,11 @@ pub mod validate;
 #[command(name = "narm", version, about = "Nina Arvid Radio Manager")]
 pub struct Cli {
     #[command(subcommand)]
-    pub cmd: Cmd,
+    pub cmd: Command,
 }
 
 #[derive(Subcommand, Debug)]
-pub enum Cmd {
+pub enum Command {
     /// Parse and validate a channel config file.
     Validate(ValidateArgs),
     /// Compile a config to a target radio's format.
@@ -31,13 +31,13 @@ pub enum Cmd {
 
 #[derive(Args, Debug)]
 pub struct ValidateArgs {
-    /// Path to a TOML config file.
+    /// Path to a TOML config file or a directory of `*.toml` files.
     pub config: PathBuf,
 }
 
 #[derive(Args, Debug)]
 pub struct CompileArgs {
-    /// Path to a TOML config file.
+    /// Path to a TOML config file or a directory of `*.toml` files.
     pub config: PathBuf,
     /// Target radio.
     #[arg(long, value_enum)]

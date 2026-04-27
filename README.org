@@ -53,10 +53,17 @@ Run the CLI directly through Cargo:
 
 #+begin_src sh
 cargo run -- list-radios
-cargo run -- validate examples/sample.toml
-cargo run -- compile examples/sample.toml --radio quansheng-uv-k5
+cargo run -- validate samples/sample.toml
+cargo run -- compile samples/sample.toml --radio quansheng-uv-k5
 cargo run -- completions zsh > _narm
 #+end_src
+
+The =<config>= argument may be either a single =.toml= file or
+a directory of =*.toml= files. For a directory, every file is
+loaded in lexicographic order and the =[[channels]]= arrays are
+concatenated — use prefixes like =10-uk.toml=, =20-simplex.toml=
+to control channel order. Hidden files (=.foo.toml=) are
+skipped; recursion is not done.
 
 Release build, lint, format, and tests:
 
@@ -69,9 +76,10 @@ cargo test
 
 * Subcommands
 
-- =validate <config.toml>= :: Parse and validate a channel
-  config; reports =OK: N channels= or the first error.
-- =compile <config.toml> --radio <radio> [--out <file>]= ::
+- =validate <config>= :: Parse and validate a channel config
+  (file or directory); reports =OK: N channels= or the first
+  error.
+- =compile <config> --radio <radio> [--out <file>]= ::
   Compile to a target radio's format. (Per-radio compilers are
   not yet implemented; the surface and validation are in place.)
 - =list-radios= :: List supported radios with their ids and
@@ -96,13 +104,13 @@ cargo test
 src/
   lib.rs            core types, validation, errors
   main.rs           dotenvy + Cli::parse + dispatch
-  commands.rs       Cli/Cmd definitions, module declarations
+  commands.rs       Cli/Command definitions, module declarations
   commands/
     validate.rs
     compile.rs
     list_radios.rs
     completions.rs
-examples/
+samples/
   sample.toml       reference config
 tests/
   validate.rs       integration test against the sample

@@ -3,15 +3,15 @@ use clap::Parser;
 
 mod commands;
 
-use commands::{Cli, Cmd};
+use commands::{Cli, Command};
 
 fn main() -> Result<()> {
     dotenvy::dotenv().ok();
     let cli = Cli::parse();
     match &cli.cmd {
-        Cmd::Validate(args) => commands::validate::run(args),
-        Cmd::Compile(args) => commands::compile::run(args),
-        Cmd::ListRadios => commands::list_radios::run(),
-        Cmd::Completions(args) => commands::completions::run(args),
+        Command::Validate(args) => commands::validate::run(args),
+        Command::Compile(args) => commands::compile::run(args),
+        Command::ListRadios => commands::list_radios::run(),
+        Command::Completions(args) => commands::completions::run(args),
     }
 }

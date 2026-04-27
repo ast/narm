@@ -11,3 +11,6 @@ dotenvy = "0.15"
 serde = { version = "1", features = ["derive"] }
 thiserror = "2"
 toml = "0.8"
+
+[dev-dependencies]
+tempfile = "3"

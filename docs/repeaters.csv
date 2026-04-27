@@ -1,0 +1,506 @@
+﻿id;updated;type;band;mode;network;network_id;district;call;city;channel;output;tx_shift;access;status;lat;lng;locator;masl;magl;watt_pep;dir;ant;backup
+10;"";"Repeater";70;"FM";"";"";6;"SA6AR/R";"Angered";"RU394";434.925;-2;1750;"QRV";57.8125;12.0417;"JO67AT";"";"";"";"";"";0
+13;"";"Repeater";2;"FM";"";"";2;"SK2AU/R";"Arjeplog / Galtispouda";"RV56";145.7;-0.6;1750;"QRV";66.11;17.9312;"JP86XC";805;12;32;"";"Aerial OY AV1431 (2 stack 7dBi)";0
+14;"2016-05-15";"Repeater";2;"FM";"";"";2;"SK2AU/R";"Skellefteå";"RV56";145.7;-0.6;1750;"QRV";64.774;20.95;"KP04LS";248;125;75;"";"Aerial OY AV1431 (2 stack 7dBi)";0
+15;"2023-12-28";"Repeater";2;"FM";"";"";2;"SK2RIU";"Vännäs / Granlundsberget";"RV58";145.725;-0.6;1750;"QRV";63.9;19.81;"JP93VU";250;100;25;"Omni";"Aerial oy AV1431, 7dBi";1
+16;"2023-09-12";"Repeater";70;"FM";"Echolink / SvxReflector";"";2;"SK2RIU";"Vännäs / Granlundsberget";"RU378";434.725;-2;"1750 / 107.2";"QRV";63.9;19.81;"JP93VU";350;100;25;"Omni";"Aerial OY AV1914-H (4 stack 10dBi)";1
+18;"2023-12-28";"Repeater";2;"FM";"";"";2;"SK2RLJ";"Umeå / Rödberget";"RV52";145.65;-0.6;1750;"QRV";63.8412;20.2099;"KP03CU";48;40;25;"Omni";"TSB-3304, 4dBi";2
+20;"2022-12-27";"Repeater";2;"FM";"";"";2;"SK2RMR";"Storuman";"RV58";145.725;-0.6;1750;"QRV";65.097;17.14;"JP85NC";510;15;10;"Omni";"4x dipole";2
+21;"2025-05-23";"Repeater";2;"FM";"";"";2;"SK2RYI";"Skellefteå / Åsträsk";"RV50";145.625;-0.6;1750;"QRV";64.6458;20.2917;"KP04DP";380;42;25;"Omni";"Aerial oy AV1431, 7dBi";2
+22;"2020-11-22";"Repeater";70;"FM";"";"";3;"SK3EK/R";"Sollefteå";"RU372";434.65;-1.6;1750;"QRT";63.1828;17.2718;"JP83DE";"";"";"";"";"";0
+23;"";"Repeater";2;"FM";"";"";3;"SK3MF/R";"Nordingrå / Rävsön";"RV50";145.625;-0.6;1750;"QRV";62.9375;18.4583;"JP92FW";"";"";"";"";"";0
+24;"";"Repeater";70;"FM";"";"";3;"SK3MF/R";"Nordingrå / Rävsön";"RU388";434.85;-2;1750;"QRV";62.9375;18.4583;"JP92FW";"";"";"";"";"";0
+26;"2021-05-23";"Repeater";2;"FM";"SvxReflector / Echolink";27796;3;"SK3RFG";"Sundsvall";"RV58";145.725;-0.6;"1750 / 127.3";"QRV";62.3958;17.4583;"JP82RJ";"";"";"";"";"";0
+27;"";"Repeater";70;"FM";"Echolink";138925;3;"SK3RIA";"Östersund";"RU380";434.75;-2;127.3;"QRV";63.1898;14.7668;"JP73JE";"";"";"";"";"";0
+28;"2021-11-03";"Repeater";2;"FM";"SvxReflector";240306;3;"SK3RIN";"Borgsjö";"RV56";145.7;-0.6;1750;"QRV";62.546;15.9105;"JP72WN";509;20;20;"270°";"Aerial AV1431 2 stack / 7 dBi";2
+29;"2025-06-03";"Repeater";2;"FM";"SvxReflector";"";3;"SK3RKL";"Örnsköldsvik";"RV62";145.775;-0.6;"1750 / 110.9 / DTMF 3";"QRV";63.2963;18.7318;"JP93IH";"";"";"";"Omni";"";2
+32;"";"Repeater";23;"FM";"";"";3;"SK3RMG";"Bergsjö";"RM4";1297.1;-6;1750;"QRV";61.983;17.0591;"JP81MX";"";"";"";"";"";0
+33;"2014-04-17";"Repeater";2;"FM";"";"";3;"SK3RMX";"Hoting / Kyrktåsjö";"RV48";145.6;-0.6;1750;"QRV";64.235;15.9302;"JP74XF";"";"";"";"";"";0
+35;"";"Repeater";2;"FM";"";"";3;"SK3RYK";"Söderhamn";"RV60";145.75;-0.6;1750;"QRV";61.2969;17.0864;"JP81NH";"";"";"";"";"";0
+36;"";"Repeater";70;"FM";"";"";3;"SK3RYK";"Söderhamn";"RU380";434.75;-1.6;1750;"QRV";61.2969;17.0864;"JP81NH";"";"";"";"";"";0
+37;"";"Repeater";23;"FM";"";"";3;"SK3WH";"Högakustenbron";"RM11";1297.275;-6;1750;"QRV";62.8024;17.9463;"JP82XT";"";"";"";"";"";0
+38;"2025-06-03";"Repeater";70;"FM";"SvxReflector";"";3;"SK3LH/R";"Örnsköldsvik";"RU390";434.875;-2;"1750 / 110.9 / DTMF 3";"QRV";63.2882;18.6934;"JP93IG";"";"";"";"Omni";"";2
+39;"2025-08-11";"Repeater";2;"FM";"";"";4;"SK4RJM";"Ludvika";"RV58";145.725;-0.6;"1750 / DTMF 1";"QRV";60.1025;15.13;"JP70NC";355;"";50;"Omni";"Tx 18el Koaxialkollinjär ca 10dBd";2
+40;"2025-08-11";"Repeater";70;"FM";"";"";4;"SK4RJM";"Ludvika";"RU378";434.725;-1.6;"1750 / DTMF1";"QRV";60.1025;15.13;"JP70NC";355;10;50;"Omni";"2x Diamond BC205";2
+41;"2024-06-06";"Repeater";70;"FM";"SvxReflector";"";4;"SK4RGO";"Orsa / Grönklitt";"RU380";434.75;-2;"1750 / 85.4";"QRV";61.2168;14.5388;"JP71GF";"";"";"";"";"";2
+42;"";"Repeater";70;"FM";"";"";4;"SK4RPK";"Torsby / Valberget";"RU370";434.625;-2;1750;"QRV";60.1057;12.9649;"JP60LC";"";"";"";"";"";0
+43;"2014-03-13";"Repeater";2;"FM";"";"";4;"SK4RQF";"Årjäng";"RV58";145.725;-0.6;1750;"QRV";59.4045;12.1179;"JO69BJ";"";"";"";"";"";0
+44;"2022-06-02";"Repeater";2;"FM";"";"";5;"SK5AS/R";"Linköping";"RV58";145.725;-0.6;1750;"QRV";58.3837;15.5645;"JO78SJ";"";"";"";"";"";1
+45;"";"Repeater";70;"FM";"";"";5;"SK5BN/R";"Finspång";"RU394";434.925;-2;107.2;"QRV";58.7292;15.7917;"JO78VR";"";"";"";"";"";0
+47;"2016-03-08";"Repeater";70;"FM";"Echolink";353113;6;"SK6QW/R";"Mariestad / Katrinefors";"RU392";434.9;-2;"Carrier";"QRV";58.7002;13.8253;"JO68VQ";"";"";"";"";"4-stackad dipol";0
+166;"2024-01-13";"Link";70;"FM";"IRLP";5668;6;"SK6RP";"Floda";"";433.475;"";"Carrier";"QRV";57.809;12.3654;"JO67ET";"";"";"";"";"";0
+167;"2025-03-31";"Repeater";2;"FM";"";"";3;"SK3RNJ";"Åre / Åreskutan";"RV58";145.725;-0.6;"";"QRT";63.427;13.0855;"JP63NK";1285;"";20;"";"Dipole";2
+170;"2020-03-28";"Repeater";70;"FM";"";"";0;"SKØNN/R";"Haninge";"RU382";434.775;-2;77;"QRV";59.17;18.1694;"JO99CE";"";"";"";"";"";0
+172;"2024-09-12";"Repeater";70;"FM";"";"";6;"SK6DK/R";"Varberg / Veddige";"RU376";434.7;-2;1750;"QRV";57.3025;12.382;"JO67EH";150;20;"";"Omni";"";2
+173;"2013-08-08";"Repeater";2;"FM";"";"";6;"SK6DK/R";"Varberg / Veddige";"RV56";145.7;-0.6;1750;"QRV";57.3025;12.382;"JO67EH";"";"";"";"";"";0
+174;"2023-07-05";"Repeater";2;"FM / C4FM";"";"";5;"SK5RCQ";"Kisa";"RV56";145.7;-0.6;82.5;"QRV";57.987;15.6312;"JO77TX";260;"";"";"Omni";"";1
+176;"2021-10-01";"Repeater";70;"FM";"";"";4;"SM4JDP";"Mora";"RU376";434.7;-2;"Carrier";"QRV";61.0066;14.5028;"JP71GA";"";"";"";"";"";2
+181;"";"Link";70;"FM";"";"";0;"SKØMM";"Sandhamn";"";434.375;"";91.5;"QRV";59.2873;18.9122;"JO99KG";"";"";"";"";"";0
+182;"2015-11-09";"Link";2;"FM";"";"";4;"";"Nyhammar";"";145.325;"";"";"QRV";60.278;14.9803;"JP70LG";"";"";"";"Omni";"Diamond X-300";0
+183;"2015-11-09";"Link";2;"FM";"";"";4;"";"Grängesberg";"";145.35;"";"";"QRV";60.0715;15.0157;"JP70MB";"";"";"";"Omni";"Diamond X-300";0
+185;"";"Link";70;"FM";"";"";0;"SMØUAO";"Kopparmora";"";434.4875;"";91.5;"QRV";59.3388;18.5937;"JO99HI";"";"";"";"";"";0
+199;"2022-04-04";"Repeater";70;"FM";"";"";6;"SA6BSN/R";"Åmål";"RU368";434.6;-2;1750;"QRV";59.0498;12.6888;"JO69IB";15;"";10;"";"";2
+208;"2015-07-07";"Repeater";70;"FM";"";"";3;"SM3XRJ";"Kramfors";"RU368";434.6;-2;1750;"QRV";62.9275;17.7652;"JP82VW";70;15;15;"";"Dipole";0
+223;"2015-05-13";"Hotspot";2;"D-Star";"";"";5;"SC5SLU-C";"Uppsala";"";145.325;"Duplex 0";"DV Carrier";"QRV";59.9432;17.386;"JO89QW";40;10;60;"Omni";"2 x 5/8";0
+224;"2014-02-17";"Repeater";70;"D-Star";"";"";6;"SK6DW-B";"Trollhättan";"RU362";434.525;-2;"DV Carrier";"QRV";58.165;12.1717;"JO68DG";70;25;25;"Omni";"5/8";0
+228;"2022-04-09";"Repeater";70;"DMR";"Brandmeister";"";7;"SA7CCO";"Sjöbo";"RU394";434.925;-2;"CC 7";"QRV";55.6408;13.709;"JO65UP";45;12;30;"Omni";"Diamond";1
+229;"2014-05-27";"Repeater";70;"D-Star";"";"";7;"SM7XAA";"Malmö";"RU362";434.525;-2;"DV Carrier";"QRV";55.563;13.044;"JO65MN";16;"";5;"Omni";"0 dB";0
+230;"2024-01-17";"Repeater";70;"FM";"";"";6;"SA6BXG/R";"Kungälv / Romelanda";"RU379";434.7375;-2;114.8;"QRV";57.9814;12.0462;"JO67AX";"";"";25;"";"";2
+231;"2016-08-15";"Repeater";2;"FM";"";"";6;"SK6RPE";"Kungälv";"RV49";145.6125;-0.6;114.8;"QRV";57.8564;11.9628;"JO57XU";"";"";25;"";"";0
+233;"2015-05-13";"Hotspot";70;"D-Star";"";"";5;"SM5EZN-B";"Uppsala";"";433.4875;"Duplex 0";"DV Carrier";"QRV";59.9432;17.386;"JO89QW";"";2;"10mW";"Omni";"1/4";0
+239;"2015-07-21";"Repeater";2;"D-Star";"";"";4;"SG4TYA";"Mora";"RV46";145.575;-0.6;"DV Carrier";"QRV";61.1944;14.5356;"JP71GE";490;20;25;"Omni";"2x dipol";0
+242;"2025-05-25";"Link";2;"FM";"";"";4;"SK4RJJ";"Torsby / Hovfjället";"";145.2875;"";74.4;"QRV";60.2921;12.9673;"JP60LH";"";"";"";"";"";0
+246;"2016-10-31";"Repeater";70;"FM";"";"";1;"SL1ZXK/R";"Slite";"RU368";434.6;-2;218.1;"QRV";57.7186;18.7851;"JO97JR";110;"";"";"Omni";"Dipole";0
+247;"2016-11-02";"Repeater";70;"FM";"";"";3;"SL3ZB";"Härnösand";"RU378";434.725;-2;1750;"QRV";62.6431;17.9583;"JP82XP";100;20;15;"";"Dipole";0
+249;"2025-08-06";"Repeater";2;"FM";"";"";2;"SK2LY/R";"Lycksele";"RV62";145.775;-0.6;107.2;"QRV";64.357;18.4484;"JP94IO";280;45;50;"Omni";"7/8";0
+252;"";"Repeater";2;"FM";"";"";3;"SK3EK/R";"Sollefteå";"RV52";145.65;-0.6;1750;"QRV";63.1654;17.2771;"JP83PD";"";"";"";"";"";0
+259;"2025-07-09";"Repeater";70;"FM";"";"";4;"SK4IL/R";"Grums";"RU378";434.725;-2;74.4;"QRV";59.3398;13.1179;"JO69NI";139;85;50;"Omni";"Vertical";2
+261;"2025-12-17";"Repeater";2;"FM";"";"";7;"SK7REP";"Lund / Harderberga";"RV62";145.775;-0.6;79.7;"QRV";55.697;13.284;"JO65PQ";100;50;70;"";"Aerial Oy AV1912";1
+262;"2016-12-28";"Repeater";2;"FM";"";"";7;"SK7RNQ";"Vitaby";"RV49";145.6125;-0.6;79.7;"QRV";55.6955;14.16;"JO75BQ";210;"";70;"";"Aerial Oy AV1912";0
+263;"2016-12-28";"Repeater";70;"FM";"";"";7;"SK7ROQ";"Gladsax";"RU391";434.8875;-2;79.7;"QRV";55.5611;14.2808;"JO75DN";120;"";15;"";"4-Stack Aerial";0
+292;"2023-12-10";"Repeater";70;"FM";"SvxReflector";"";5;"SK5LW/R";"Eskilstuna / Hällby";"RU388";434.85;-2;82.5;"QRV";59.3934;16.4216;"JO89FJ";50;33;25;"";"4 stack RX / TX";0
+293;"2017-03-04";"Repeater";70;"FM";"";"";6;"SM6CYJ/R";"Kinnekulle";"RU396";434.95;-2;"Carrier";"QRV";58.6;13.41;"JO68QO";"";"";"";"";"";0
+308;"2013-12-11";"Repeater";23;"FM";"";"";0;"SKØCT/R";"Kista";"RM1";1297.025;-6;"Carrier";"QRV";59.4;17.95;"JO89XJ";70;50;"";"Omni";"";0
+309;"2022-10-09";"Repeater";2;"FM";"";"";0;"SLØZS/R";"Västberga";"RV48";145.6;-0.6;123;"QRV";59.298;17.99;"JO89XH";100;70;10;20;"4-stack dipol";2
+310;"2022-10-09";"Repeater";70;"FM";"";"";0;"SLØZS/R";"Västberga";"RU392";434.9;-2;123;"QRV";59.298;17.99;"JO89XH";100;70;10;20;"4-stack dipol";2
+320;"2021-12-05";"Repeater";2;"FM";"";"";4;"SK4WV";"Vansbro";"RV52";145.65;-0.6;"1750 / 85.4";"QRV";60.505;14.0315;"JP70AM";500;15;75;"45 deg";"2x4 dipole antennas";2
+321;"2025-08-06";"Repeater";70;"FM";"";"";4;"SK4WV";"Vansbro";"RU372";434.65;-1.6;"1750 / 85.4";"QRV";60.505;14.0315;"JP70AM";500;10;5;"90 deg";"4x dipole AV1914";2
+322;"2025-01-09";"Repeater";2;"FM";"Kalixlinjen";"";2;"SK2RFR";"Kiruna";"RV50";145.625;-0.6;107.2;"QRV";67.8314;20.1876;"KP07CT";"";"";"";"Omni";"";2
+323;"2025-01-09";"Repeater";70;"FM";"Kalixlinjen";"";2;"SK2RFR";"Kiruna";"RU386";434.825;-2;107.2;"QRV";67.8314;20.1876;"KP07CT";"";"";"";"Omni";"Aerial OY AV1914-H (4 stack 10dBi)";2
+324;"2017-04-07";"Repeater";2;"FM";"";"";2;"SK2DR/R";"Luleå";"RV52";145.65;-0.6;107.2;"QRV";65.6141;22.2024;"KP15CO";120;"";70;"Omni";"Aerial OY AV1431 (2 stack 7dBi)";0
+325;"2017-03-07";"Repeater";2;"FM";"";"";2;"SK2AZ/R";"Piteå";"RV48";145.6;-0.6;107.2;"QRV";65.3095;21.3272;"KP05PH";125;20;50;"Omni";"";0
+326;"2021-05-18";"Repeater";2;"FM";"SvxReflector";"";2;"SK2RWJ";"Älvsbyn";"RV54";145.675;-0.6;107.2;"QRV";65.6771;20.9928;"KP05LQ";"";"";"";"";"";1
+328;"2017-04-07";"Repeater";6;"FM";"";"";2;"SK2HG/R";"Kalix / Raggdynan";"RF95";51.95;-0.6;107.2;"QRV";65.92;22.833;"KP15KW";160;"";50;"Omni";"";0
+329;"2017-04-10";"Repeater";2;"FM";"SvxReflector";"";4;"SK4TL/R";"Örebro / Suttarboda";"RV57";145.7125;-0.6;"1750 / DTMF 4";"QRV";59.2448;14.9124;"JO79KH";210;20;25;"";"Dipoles";0
+332;"2017-05-08";"Repeater";70;"FM";"";"";6;"SK6DQ/R";"Älvängen";"RU380";434.75;-2;114.8;"QRV";57.95;12.121;"JO67BW";"";"";25;"";"Dipole";0
+333;"2020-05-04";"Repeater";2;"FM";"";"";6;"SK6MA/R";"Tidaholm / Hökensås";"RV51";145.6375;-0.6;118.8;"QRV";58.13;14.042;"JO78AD";"";"";"";"";"";0
+334;"2024-04-16";"Repeater";2;"FM";"SvxReflector";"";7;"SK7REE";"Söderåsen / Stenestad";"RV52";145.65;-0.6;"";"QRV";56.0517;13.1047;"JO66NB";220;35;25;"SE";"4x dipole";1
+335;"2026-04-25";"Link";2;"FM";"AllStarLink";659900;7;"SK7REE";"Söderåsen / Stenestad";"";145.2375;"Simplex";79.7;"QRV";56.0517;13.1047;"JO66NB";210;25;50;"SE";"GP";0
+343;"2021-09-07";"Beacon";"6cm";"CW";"";"";7;"SM7DTE/B";"Gärsnäs";"";5760.841;"";"";"QRV";55.5611;14.2808;"JO75DN";86;8;40;"Omni";"";2
+344;"2021-09-07";"Beacon";3;"CW";"";"";7;"SM7DTE/B";"Gärsnäs";"";10368.841;"";"";"QRV";55.5611;14.2808;"JO75DN";86;8;40;"Omni";"";2
+356;"2023-09-19";"Repeater";2;"FM";"SvxReflector / Echolink";353167;7;"SK7RN/R";"Borgholm";"RV53";145.6625;-0.6;"1750 / 79.7 / DTMF *";"QRV";56.8406;16.6658;"JO86HU";56;20;20;"Omni";"4x Dipol";1
+357;"2023-09-19";"Repeater";2;"FM";"SvxReflector / Echolink";"";7;"SK7RN/R";"Mörbylånga";"RV50";145.625;-0.6;"1750 / 79.7 / DTMF *";"QRV";56.5151;16.4392;"JO86FM";70;24;60;"Omni";"4x Dipol";1
+358;"2020-12-03";"Repeater";2;"FM";"SvxReflector / Echolink";353167;7;"SK7RN/R";"Böda";"RV60";145.75;-0.6;"1750 / 79.7 / DTMF *";"QRV";57.2629;17.0297;"JO87MG";51;40;12;"Omni";"4x Dipol";1
+360;"2025-08-06";"Repeater";2;"FM";"";"";5;"SK5BN/R";"Norrköping / Kolmården";"RV48";145.6;-0.6;"1750 / 82.5 / DTMF 5";"QRV";58.6875;16.43;"JO88FQ";117;65;80;"";"";0
+361;"2022-03-20";"Repeater";70;"FM";"SvxReflector";"";5;"SK5BN/R";"Norrköping / Östra Eneby";"RU368";434.6;-2;"1750 / 82.5 / DTMF 5";"QRV";58.6042;16.125;"JO88BO";"";"";22;"";"";0
+362;"2025-12-19";"Repeater";70;"FM";"SvxReflector";"";5;"SK5LF/R";"Linköping";"RU386";434.825;-2;"82.5 / DTMF 5";"QRV";58.3995;15.6381;"JO78TJ";82;"";10;"";"Aerial OY AV1914-H (4-stack)";0
+363;"2024-11-08";"Repeater";2;"FM";"";"";7;"SK7RFJ";"Karlskrona";"RV60";145.75;-0.6;"1750 / 156.7";"QRV";56.2;15.62;"JO76TE";"";"";10;"Omni";"4 stackade dipoler";1
+364;"2017-11-26";"Repeater";70;"FM";"";"";7;"SK7FK/R";"Karlskrona";"RU380";434.75;-2;1750;"QRV";56.2;15.62;"JO76TE";20;90;"";"270°";"Aerial OY AV1914-H (4 stack 10dBi)";0
+365;"2024-06-06";"Repeater";2;"FM";"Echolink";700259;4;"SK4RGO";"Orsa / Grönklitt";"RV60";145.75;-0.6;"1750 / 85.4";"QRV";61.2168;14.5388;"JP71GF";"";"";"";"";"";0
+382;"2017-01-05";"Repeater";70;"DMR";"";"";5;"SA5BJM";"Uppsala / Fjuckby";"RU361";434.5125;-2;"CC 1";"QRV";59.9774;17.594;"JO89TX";"";"";"";"";"4x Dipole";0
+383;"2017-12-26";"Repeater";70;"FM";"";"";6;"SM6UXW/R";"Ulricehamn";"RU374";434.675;-2;118.8;"QRV";57.7923;13.4236;"JO67RT";"";"";"";"";"";0
+385;"2020-06-05";"Hotspot";70;"D-Star";"D-RATS";"";6;"SK6GB-D";"Mölndal";"";433.725;"Simplex";"DV Carrier";"QRV";57.6672;12.037;"JO67AQ";123;4;5;"Omni";"Diamond V-2000";2
+386;"2020-06-05";"Hotspot";2;"D-Star";"D-RATS";"";6;"SK6GB-D";"Mölndal";"";144.825;"Simplex";"DV Carrier";"QRV";57.6672;12.037;"JO67AQ";123;3;15;"Omni";"5/8";2
+387;"2019-12-20";"Repeater";70;"DMR";"Brandmeister";240770;7;"SK7HW";"Växjö";"RU376";434.7;-2;"CC 7";"QRV";56.8666;14.8833;"JO76KU";"";224;25;"";"";0
+389;"2020-05-04";"Hotspot";2;"D-Star";"ircDDB";"";6;"SK6MA-C";"Hjo";"";145.2125;"Duplex 0";"DV Carrier";"QRV";58.3014;14.2691;"JO78DH";"";"";"";"";"";0
+390;"2025-04-08";"Repeater";70;"DMR / D-Star";"Brandmeister / ircDDB";240026;7;"SK7RGM";"Olofström / Boafallsbacke";"RU377";434.7125;-2;"CC 7";"QRV";56.2292;14.4583;"JO76FF";215;35;23;"Omni";"Aerial Oy 4x dipol";1
+391;"2016-05-08";"Hotspot";2;"D-Star";"ircDDB";"";7;"SG7WDL-C";"Eneryda";"";145.2125;"Duplex 0";"DV Carrier";"QRV";56.7037;14.3349;"JO76EQ";159;6;20;"";"Diamond X-50";0
+392;"2020-11-26";"Hotspot";2;"D-Star";"ircDDB";"";7;"SG7HTP-C";"Sölvesborg";"";145.2375;"Simplex";"DV Carrier";"QRV";56.0428;14.5673;"JO76GB";6;7;20;"Omni";"Diamond X-30";2
+393;"2016-10-14";"Hotspot";2;"D-Star";"ircDDB";"";7;"SK7RRV-C";"Lönsboda";"";144.8875;"Duplex 0";"DV Carrier";"QRV";56.3952;14.3266;"JO76DJ";140;12;20;"Omni";"Diamond X-300";0
+395;"2022-10-19";"Repeater";70;"D-Star";"ircDDB";"";6;"SK6SA-B";"Guldheden";"RU361";434.5125;-2;"DV Carrier";"QRV";57.6785;11.9787;"JO57XQ";120;50;"";"";"";0
+396;"2022-05-08";"Repeater";2;"DMR / D-Star";"Brandmeister / ircDDB";240022;7;"SK7RNQ";"Gladsax";"RV46";145.575;-0.6;"CC 7 / SK7RNQ-C";"QRV";55.5611;14.2808;"JO75DN";85;45;150;"";"Aerial OY 4-stack";0
+397;"2017-05-22";"Hotspot";70;"D-Star";"ircDDB";"";6;"SG6JWU-B";"Halmstad";"";433.475;"Duplex 0";"DV Carrier";"QRV";56.6431;12.9321;"JO66LP";28;18;10;"Omni";"Dipole";0
+398;"2025-08-18";"Repeater";70;"FM / DMR / D-Star";"Brandmeister";240031;6;"SK6RKG";"Halmstad";"RU394";434.925;-2;114.8;"QRV";56.7614;13.0505;"JO66MS";162;55;25;"Omni";"Aerial OY";2
+400;"2014-09-28";"Hotspot";70;"D-Star";"ircDDB";"";0;"SEØYOS-C";"M/Y Erika";"";434.45;"Duplex 0";"DV Carrier";"QRV";59.3258;18.0063;"JO99AH";"";"";"";"";"";0
+406;"2025-08-06";"Hotspot";70;"D-Star";"ircDDB";"";3;"SK3GA-B";"Hudiksvall";"";434.475;"Duplex 0";"DV Carrier";"QRT";61.723;17.1;"JP81NR";60;34;20;"";"Aerial 4-stack";2
+407;"2014-12-23";"Repeater";2;"D-Star";"ircDDB";"";3;"SK3RFG-C";"Sundsvall / Klissberget";"RV47";145.5875;-0.6;"DV Carrier";"QRV";62.3785;17.202;"JP82OJ";320;60;20;"";"";0
+409;"2013-11-30";"Hotspot";2;"D-Star";"ircDDB";"";4;"SG4UOF-C";"Glanshammar";"";145.3375;"Duplex 0";"DV Carrier";"QRV";59.3726;15.433;"JO79RI";75;30;100;"";"";0
+411;"2016-10-25";"Repeater";70;"D-Star";"ircDDB";"";4;"SK4BW-B";"Borlänge";"RU392";434.9;-2;"DV Carrier";"QRV";60.4014;15.465;"JP70RJ";308;14;50;"Omni";"Aeriel OY 1914";0
+412;"2013-11-30";"Hotspot";70;"D-Star";"ircDDB";"";4;"SG4UZM-B";"Borlänge";"RU364";434.55;"Duplex 0";"DV Carrier";"QRV";60.5043;15.4517;"JP70RM";"";"";"";"";"";0
+413;"2013-11-30";"Hotspot";2;"D-Star";"ircDDB";"";5;"SG5TAH-C";"Flen / Orrhammar";"";145.3375;"Duplex 0";"DV Carrier";"QRV";59.0825;16.5693;"JO89GB";"";"";"";"";"";0
+414;"2023-11-17";"Hotspot";70;"DMR";"ircDDB";"";4;"SG4AXV";"Ekshärad";"";433.2;"Simplex";"DV Carrier";"QRV";60.1769;13.4925;"JP60RE";155;8;"";"Omni";"";2
+415;"2018-01-09";"Hotspot";70;"DMR / D-Star";"ircDDB";"";4;"SG4AXQ";"Sunne";"";432.5;"Duplex 0";"CC 1 / DV";"QRV";59.8459;13.1337;"JO69NU";"";"";45;"";"";0
+416;"2018-01-10";"Repeater";70;"FM";"";"";6;"SK6RPE";"Kungälv";"RU392";434.9;-2;114.8;"QRV";57.8564;11.9628;"JO57XU";"";"";"";"";"";0
+417;"2023-10-25";"Repeater";2;"FM";"Echolink";288856;6;"SM6VBT/R";"Mölndal";"RV56";145.7;-0.6;118.8;"QRV";57.65;12.0166;"JO67AP";"";"";"";"";"";0
+418;"2023-10-25";"Repeater";70;"FM";"Echolink";288856;6;"SM6VBT/R";"Mölndal";"RU376";434.7;-2;118.8;"QRV";57.65;12.0166;"JO67AP";"";"";"";"";"";0
+431;"2020-11-29";"Repeater";2;"FM / C4FM";"";"";1;"SK1RGU";"Endre";"RV62";145.775;-0.6;"1750 / 218.1";"QRV";57.6085;18.4743;"JO97FO";124;65;50;"Omni";"4 Dipole / 6dBi";1
+432;"2016-04-24";"Repeater";2;"FM / C4FM";"";"";3;"SK3JR/R";"Östersund";"RV60";145.75;-0.6;127.3;"QRV";63.1898;14.7668;"JP73JE";"";"";"";"";"";0
+433;"2014-09-28";"Repeater";70;"FM / C4FM";"";"";6;"SK6EI/R";"Skövde";"RU386";434.825;-2;114.8;"QRV";58.4177;13.8154;"JO68VK";300;20;50;"";"Aerial OY AV1914-H (4 stack 10dBi)";0
+434;"2022-10-01";"Repeater";2;"FM / C4FM";"SvxReflector";"";7;"SK7BQ/R";"Kristianstad";"RV59";145.7375;-0.6;79.7;"QRV";56.005;14.065;"JO76AA";"";"";"";"";"";0
+435;"2025-01-07";"Repeater";2;"FM / C4FM";"";"";7;"SK7REZ";"Blentarp / Romeleåsen";"RV54";145.675;-0.6;79.7;"QRT";55.5411;13.5875;"JO65TM";"";"";"";"";"";1
+436;"2015-05-07";"Repeater";70;"FM / C4FM";"";"";7;"SK7EM/R";"Blentarp / Romeleåsen";"RU388";434.85;-2;79.7;"QRV";55.5735;13.5235;"JO65SN";"";"";"";"";"4 Stack Arial";0
+437;"2026-03-20";"Repeater";2;"FM / C4FM";"Echolink";519122;7;"SK7RGM";"Olofström / Boafallsbacke";"RV56";145.7;-0.6;67;"QRV";56.2292;14.4583;"JO76FF";215;42;60;"Omni";"AV 1912, Aerial Oy 4x dipoler";1
+439;"2022-01-13";"Repeater";2;"FM";"SvxReflector";"";3;"SK3GK/R";"Sandviken / Kungsberget";"RV56";145.7;-0.6;"1750 / 127.3 / DTMF *";"QRV";60.75;16.49;"JP80FS";309;12;20;"Omni";"Diamond X-300";1
+440;"2025-10-04";"Repeater";70;"FM / C4FM";"SvxReflector";"";4;"SK4RVN";"Borlänge";"RU384";434.8;-2;85.4;"QRV";60.4014;15.465;"JP70RJ";308;14;40;"Omni";"Aeriel OY 1914";0
+441;"2024-03-05";"Repeater";70;"FM";"";"";6;"SK6LK/R";"Borås";"RU384";434.8;-2;114.8;"QRV";57.742;13.005;"JO67MR";"";"";"";"";"4x dipole";0
+445;"2025-06-27";"Repeater";2;"FM";"SvxReflector";"";7;"SK7RQX";"Hallandsås";"RV63";145.7875;-0.6;225.7;"QRV";56.3878;12.9624;"JO66LI";240;30;100;"Omni";"9.99 dBi";2
+446;"2017-08-02";"Repeater";2;"FM / C4FM";"";"";6;"SM6THE/R";"Skövde";"RV55";145.6875;-0.6;114.8;"QRV";58.4085;13.9304;"JO68XJ";131;10;100;"Omni";"2 stack Aerial Oy";0
+455;"2017-12-26";"Repeater";2;"FM / C4FM";"Wires-X";17084;6;"SM6UXW/R";"Ulricehamn";"RV54";145.675;-0.6;118.8;"QRV";57.8054;13.5072;"JO67ST";"";"";"";"";"";0
+456;"2020-06-03";"Repeater";2;"FM / DMR";"";"";6;"SK6DW/R";"Trollhättan";"RV61";145.7625;-0.6;"114.8 / CC 6";"QRV";58.275;12.29;"JO68DG";140;40;30;"NW";"Aerial OY AV1431 (2 stack 7dBi)";0
+533;"2020-05-13";"Repeater";70;"FM";"";"";6;"SL6BH/R";"Halmstad";"RU380";434.75;-2;114.8;"QRV";56.6875;12.875;"JO66KQ";50;22;25;90;"Aerial OY AV1914";2
+534;"2022-12-19";"Repeater";23;"FM";"";"";7;"SK7CY";"Helsingborg";"RM8";1297.2;-6;1750;"QRT";56.0464;12.6945;"JO66IB";"";"";"";"";"";0
+535;"2015-07-09";"Repeater";70;"FM";"";"";7;"SK7IJ/R";"Vetlanda";"RU370";434.625;-2;156.7;"QRV";57.499;15.244;"JO77OL";"";"";25;"";"";0
+536;"2023-10-20";"Repeater";2;"FM";"SvxReflector / Echolink";182956;7;"SK7MO/R";"Ljungby";"RV58";145.725;-0.6;"1750 / 94.8 / DTMF 1";"QRV";56.9026;13.946;"JO66XV";182;15;20;"Omni";"2x dipol";2
+537;"2025-05-24";"Repeater";70;"FM";"";"";7;"SK7RFH";"Nässjö";"RU388";434.85;-2;"1750 / 156,7 / DTMF 6";"QRV";57.65;14.7;"JO77IP";340;30;60;"Omni";"Aerial OY AV1915-H (2 stack 7dBi)";2
+539;"";"Repeater";2;"FM";"";"";7;"SK7RIH";"Oskarshamn";"RV58";145.725;-0.6;1750;"QRV";57.26;16.4;"JO87FG";"";"";"";"";"";0
+540;"";"Repeater";70;"FM";"";"";7;"SK7RIH/R";"Oskarshamn";"RU378";434.725;-2;1750;"QRV";57.26;16.4;"JO87EG";"";"";"";"";"";0
+541;"";"Repeater";6;"FM";"";"";7;"SK7RIH";"Oskarshamn";"RF91";51.91;-0.6;1750;"QRV";57.26;16.4;"JO87EG";"";"";"";"";"";0
+542;"";"Repeater";70;"FM";"";"";7;"SK7RJL/R";"Lund";"RU378";434.725;-2;79.7;"QRV";55.7292;13.2083;"JO65OR";"";"";"";"";"";0
+543;"2020-07-04";"Repeater";2;"FM";"";"";7;"SK5CN/R";"Hultsfred / Gåskullen";"RV61";145.7625;-0.6;"1750 / DTMF 5";"QRV";57.4948;15.8416;"JO77WL";"";"";"";"";"";2
+545;"2024-02-23";"Repeater";2;"FM";"";"";7;"SK7GH/R";"Bredaryd";"RV55";145.6875;-0.6;156.7;"QRV";57.1709;13.742;"JO67UE";158;15;20;"Omni";"2 stackade dipoler 5dBi";1
+546;"2026-02-17";"Repeater";2;"FM";"";"";7;"SK7DL/R";"Emmaboda";"RV62";145.775;-0.6;1750;"QRV";56.6314;15.5044;"JO76SP";"";"";"";"";"";1
+548;"";"Repeater";2;"FM";"";"";7;"SL7ZXW/R";"Nybro";"RV55";145.6875;-0.6;1750;"QRV";56.6875;15.7917;"JO76VQ";"";"";"";"";"";0
+550;"2023-06-19";"Repeater";70;"FM";"SvxReflector";"";2;"SK2RMR";"Storuman";"RU380";434.75;-2;"1750 / 107.2";"QRV";65.097;17.14;"JP85NC";510;30;80;"290 deg";"Aerial OY AV1914-H (4 stack 10dBi)";2
+551;"";"Repeater";2;"FM";"";"";3;"SM3VAC/R";"Nyland";"RV60";145.75;-0.6;1750;"QRV";63.01;17.74;"JP83UA";"";"";"";"";"";0
+552;"";"Repeater";70;"FM";"";"";3;"SM3VAC/R";"Nyland";"RU396";434.95;-1.6;1750;"QRV";63.01;17.74;"JP83UA";"";"";"";"";"";0
+554;"2025-08-07";"Repeater";70;"FM";"";"";7;"SM7LNT/R";"Mörrum";"RU386";434.825;-2;79.7;"QRT";56.1886;14.7473;"JO76IE";"";"";17;"";"";0
+585;"2017-01-11";"Repeater";70;"FM";"";"";2;"SK2RME";"Piteå";"RU368";434.6;-2;"1750 / 107.2";"QRV";65.3125;21.4959;"KP05RH";70;16;10;"Omni";"";0
+589;"2022-10-19";"Repeater";70;"FM";"";"";6;"SK6RDG";"Guldheden";"RU398";434.975;-2;"1750 / 114.8";"QRV";57.678;11.9783;"JO57XQ";120;50;"";"";"";0
+590;"2017-06-05";"Repeater";2;"FM";"";"";6;"SK6ROY";"Kinnekulle";"RV48";145.6;-0.6;"1750 / 114.8";"QRV";58.6;13.41;"JO68QO";"";"";"";"";"";0
+591;"2018-01-08";"Repeater";2;"FM";"Echolink";911050;4;"SK4HV/R";"Hagfors / Värmullsåsen";"RV54";145.675;-0.6;"1750 / 114.8";"QRV";60.0225;13.7602;"JP60VA";"";"";"";"";"";0
+592;"";"Repeater";2;"FM";"";"";6;"SK6LK/R";"Borås";"RV62";145.775;-0.6;"1750 / 114.8";"QRV";57.742;13.005;"JO67MR";"";"";"";"";"RX: GP / TX: dipoler 4-stack";0
+593;"2022-03-12";"Repeater";2;"FM";"";"";6;"SK6RIC";"Alingsås";"RV50";145.625;-0.6;"1750 / 114.8";"QRV";57.93;12.5362;"JO67GW";"";"";"";"";"";0
+594;"2022-03-12";"Repeater";70;"FM";"SvxReflector";"";6;"SK6RIC";"Alingsås";"RU370";434.625;-2;"1750 / 114.8";"QRV";57.93;12.5362;"JO67GW";"";"";"";"";"";0
+595;"2022-10-19";"Repeater";6;"FM";"";"";6;"SK6RFQ";"Guldheden";"RF87";51.87;-0.6;"1750 / 114.8 / DTMF 6";"QRV";57.6785;11.9787;"JO57XQ";120;50;40;"";"Dipole";0
+596;"2025-06-11";"Repeater";2;"FM";"";"";6;"SK6RJW";"Kungsbacka";"RV58";145.725;-0.6;114.8;"QRV";57.4874;12.077;"JO67AL";37;20;25;"Omni";"Diamond X-300 8.9 dBi";2
+603;"2016-03-19";"Repeater";70;"FM";"";"";3;"SK3RQE";"Forsa / Storberget";"RU374";434.675;-2;"1750 / 127.3";"QRV";61.688;16.875;"JP81KQ";"";"";"";"";"";0
+605;"2024-09-25";"Repeater";2;"FM";"SvxReflector";"";3;"SK3RQE";"Forsa / Storberget";"RV54";145.675;-0.6;"1750 / 127.3";"QRV";61.688;16.875;"JP81KQ";"";"";"";"";"";0
+606;"2022-03-27";"Repeater";70;"FM";"SvxReflector";"";3;"SK3GW";"Gävle";"RU390";434.875;-2;"1750 / 127.3 / DTMF *";"QRV";60.6422;17.1302;"JP80NP";150;93;30;"Omni";"";2
+607;"2022-03-27";"Repeater";70;"FM";"SvxReflector";"";3;"SK3GK";"Sandviken";"RU386";434.825;-2;"1750 / 127.3 / DTMF *";"QRV";60.75;16.49;"JP80FS";322;14;40;"Omni";"X-300";2
+610;"2022-10-01";"Repeater";2;"FM";"Echolink / SvxReflector";24393;7;"SK7HW/R";"Växjö / Hollstorp";"RV54";145.675;-0.6;"1750 / 156.7";"QRV";56.8666;14.8833;"JO76KU";205;180;20;"";"4 x dipoler";0
+611;"2015-07-09";"Repeater";2;"FM";"";"";7;"SK7IJ/R";"Vetlanda";"RV50";145.625;-0.6;"1750 / 156.7";"QRV";57.499;15.244;"JO77OL";"";"";"";"";"";0
+612;"2025-11-05";"Repeater";70;"FM";"";"";7;"SK7RGI";"Huskvarna";"RU380";434.75;-2;"1750 / 156.7 / DTMF 6";"QRV";57.8233;14.2934;"JO77DT";345;14;20;"Omni";"Colinjär GP +8dBi";1
+613;"2025-11-05";"Repeater";2;"FM";"";"";7;"SK7RGI";"Huskvarna";"RV60";145.75;-0.6;"1750 / 156.7 / DTMF 6";"QRV";57.8233;14.2934;"JO77DT";342;9;20;"Omni";"Stackad 5/8 +6dBi";1
+616;"2023-12-31";"Repeater";2;"FM";"";"";3;"SK3RQC";"Vemdalen";"RV50";145.625;-0.6;"1750 / 74.4";"QRT";62.4428;13.8667;"JP62WK";"";"";"";"";"";0
+617;"";"Repeater";2;"FM";"";"";4;"SK4EA/R";"Lindesberg";"RV55";145.6875;-0.6;"1750 / 74.4";"QRV";59.651;15.133;"JO79NP";229;23;25;"";"2 x dipoles";0
+618;"2016-05-22";"Repeater";70;"FM";"";"";4;"SK4RWQ";"Arvika / Valfjället";"RU382";434.775;-2;"1750 / 74.4";"QRV";59.7736;12.2336;"JO69CT";310;19;20;"Omni";"Stacked dipole";0
+620;"2025-06-21";"Repeater";2;"FM";"";"";4;"SK4RJJ";"Sunne / Blåbärskullen";"RV62";145.775;-0.6;74.4;"QRV";59.8367;12.8657;"JO69KU";425;50;20;"Omni";"4 stackade dipoler";1
+624;"2025-06-11";"Repeater";70;"FM";"";"";0;"SAØAZT/R";"Brottby";"RU384";434.8;-2;"1750 / 77.0";"QRV";59.4522;17.9731;"JO89XK";70;30;400;"";"4 stack";0
+635;"";"Repeater";2;"FM";"";"";5;"SK5DB/R";"Uppsala";"RV60";145.75;-0.6;"1750 / 82.5";"QRV";59.8542;17.7927;"JO89VU";"";"";"";"";"";0
+636;"2023-12-31";"Repeater";70;"FM";"";"";5;"SK5DB/R";"Uppsala";"RU380";434.75;-2;"1750 / 82.5";"QRT";59.8542;17.7907;"JO89VU";"";"";"";"";"";0
+637;"2024-02-19";"Repeater";2;"FM";"SvxReflector";"";5;"SK5RHQ";"Västerås";"RV62";145.775;-0.6;"136.5 / 82.5";"QRV";59.6181;16.5243;"JO89GO";"";"";"";"";"";1
+638;"2024-02-19";"Repeater";70;"FM";"SvxReflector";"";5;"SK5RHQ";"Västerås";"RU382";434.775;-2;"136.5 / 82.5";"QRV";59.6062;16.5576;"JO89GO";"";"";"";"";"";1
+639;"2015-10-24";"Repeater";2;"FM";"";"";4;"SK4BX/R";"Garphyttan / Storstenshöjden";"RV52";145.65;-0.6;"1750 / 74.4 / DTMF 1";"QRV";59.3316;14.9309;"JO79LH";"";"";"";"";"";0
+641;"2020-10-26";"Repeater";2;"FM";"IRLP";5799;4;"SK4RUV";"Leksand";"RV62";145.775;-0.6;"1750 / 85.4";"QRV";60.674;15.0175;"JP70MQ";470;40;"";"Omni";"8+8 dipoles";1
+645;"";"Repeater";70;"FM";"";"";3;"SM3LEI/R";"Årsunda";"RU372";434.65;1.6;"1750 / 88.5 / DTMF 1";"QRV";60.5164;16.7344;"JP80IM";"";"";"";"";"";0
+658;"2025-03-21";"Repeater";70;"FM";"SvxReflector";390539;0;"SKØCT/R";"Kista";"RU370";434.625;-2;77;"QRV";59.4;17.95;"JO89XJ";"";"";"";"";"";2
+660;"2014-09-28";"Repeater";70;"FM";"";"";0;"SMØYIX/R";"Söder";"RU378";434.725;-2;77;"QRV";59.303;18.085;"JO99BH";"";"";"";"";"";0
+662;"2025-05-29";"Repeater";70;"FM";"";"";0;"SKØYZ/R";"Vallentuna";"RU389";434.85;-2;77;"QRV";59.521;18.125;"JO99BM";"";"";"";"";"";0
+667;"2023-11-30";"Repeater";2;"FM";"";"";0;"SKØQO/R";"Haninge / Brandbergen";"RV55";145.6875;-0.6;77;"QRV";59.1704;18.1663;"JO99BE";120;30;25;"Omni";"";0
+668;"2023-11-30";"Repeater";70;"FM";"";"";0;"SKØQO/R";"Haninge / Brandbergen";"RU380";434.75;-2;77;"QRV";59.1704;18.1663;"JO99BE";120;30;25;"Omni";"";0
+673;"2021-09-07";"Beacon";1.5;"CW";"";"";7;"SM7DTE/B";"Gärsnäs";"";24048.843;"";"";"QRV";55.5611;14.2808;"JO75DN";86;8;70;"Omni";"";2
+678;"2025-11-05";"Repeater";10;"FM";"";"";7;"SK7RGI";"Huskvarna";"RH7";29.68;-0.1;"1750 / DTMF 6";"QRV";57.8233;14.2934;"JO77DT";342;9;20;"Omni";"1/2 GP +2dBi";1
+679;"2022-10-19";"Repeater";10;"FM";"";"";6;"SK6RFQ";"Guldheden";"RH7";29.68;-0.1;"1750 / 114.8 / DTMF 6";"QRV";57.6785;11.9787;"JO57XQ";120;50;"";"";"";0
+685;"2013-11-06";"Beacon";10;"CW";"";"";7;"SK7GH/B";"Värnamo";"";28.298;"";"";"QRV";57.23;14.13;"JO77BF";230;10;5;"Omni";"";0
+690;"";"Repeater";10;"FM";"";"";6;"SM6VBT/R";"Mölndal";"RH8";29.69;-0.1;118.8;"QRV";57.65;12.0166;"JO67AP";"";"";"";"";"";0
+694;"2017-09-17";"Link";23;"FM";"Echolink";839597;5;"SM5RVH";"Nyköping";"";1297.5;"";"Carrier";"QRV";58.71;16.975;"JO88LQ";38;10;50;"Omni";"Vertical";0
+696;"2025-09-30";"Repeater";2;"FM / DMR";"Brandmeister";240615;6;"SK6RFP";"Bengtsfors";"RV56";145.7;-0.6;"118.8 / CC 6";"QRV";59.0053;12.2525;"JO69CA";185;"3​5";25;"Omni";"2 stackad dipol";1
+697;"2025-09-30";"Repeater";70;"FM / DMR";"Brandmeister";240616;6;"SL6ZYW/R";"Bengtsfors";"RU375";434.6875;-2;"114.8 / CC 6";"QRV";59.0053;12.2525;"JO69CA";185;35;45;"Omni";"4 stackad dipol";1
+699;"2021-10-18";"Repeater";2;"FM";"SvxReflector";"";5;"SK5AS/R";"Linköping";"RV63";145.7875;-0.6;"82.5 / DTMF 5";"QRV";58.56;15.542;"JO78SN";275;130;25;"160°";"8 dBi";2
+700;"2023-12-01";"Repeater";2;"FM";"Echolink";788590;5;"SM5RYI/R";"Sala";"RV57";145.7125;-0.6;82.5;"QRV";59.938;16.625;"JO89HW";"";11;25;"Omni";"Rx: Diamond X-300<br>Tx: 2 stackade Vårgårda-dipoler";2
+701;"2020-12-03";"Repeater";70;"FM";"Echolink / SvxReflector";353167;7;"SK7RFL";"Algutsrum / Öland";"RU368";434.6;-2;"1750 / 79.7 / DTMF 0";"QRV";56.6828;16.5646;"JO86GQ";183;134;30;270;"4x Dipol";1
+705;"2025-12-07";"Repeater";70;"FM / DMR / C4FM";"Brandmeister";240009;0;"SKØRMT";"Täby";"RU379";434.7375;-2;77;"QRV";59.445;18.075;"JO99AK";40;20;40;"Omni";"";2
+706;"2015-07-25";"Link";2;"FM";"Echolink";954346;6;"SM6FZG";"Skårsjön";"";144.55;"Simplex";146.2;"QRV";57.544;12.079;"JO67AN";"";"";"";"";"";0
+709;"2016-01-09";"Link";2;"FM";"Echolink";954346;6;"SM6FZG";"Kortedala";"";144.6;"Simplex";146.2;"QRV";57.7613;12.0373;"JO67AS";"";"";"";"";"";0
+710;"2015-07-25";"Link";2;"FM";"Echolink";954346;6;"SM6FZG";"Långedrag";"";144.525;"Simplex";146.2;"QRV";57.6694;11.8555;"JO57WQ";"";"";"";"";"";0
+711;"2016-01-09";"Link";2;"FM";"Echolink";954346;6;"SM6FZG";"Hönö";"";144.625;"Simplex";146.2;"QRV";57.685;11.6456;"JO57TQ";"";"";"";"N";"3 el. Yagi";0
+713;"2022-10-18";"Link";2;"FM";"Echolink";954346;6;"SK6AG";"Guldheden";"";144.575;"Simplex";146.2;"QRV";57.68;11.97;"JO57XQ";120;50;"";"";"";1
+714;"2015-07-25";"Link";2;"FM";"Echolink";954346;6;"SM6FZG";"Mölnlycke";"";144.5875;"Simplex";146.2;"QRV";57.6493;12.1142;"JO67BP";"";"";"";"";"";0
+716;"2017-05-25";"Link";2;"FM";"Echolink";954346;6;"SM6FZG";"Borås";"";144.5125;"Simplex";146.2;"QRV";57.729;13.05;"JO67MR";"";"";"";"";"";0
+722;"2025-05-24";"Repeater";2;"FM";"";"";7;"SK7RFH";"Nässjö";"RV52";145.65;-0.6;"1750 / 156.7 / DTMF 6";"QRV";57.65;14.7;"JO77IP";520;175;40;"Omni";"Dipol";1
+730;"2025-06-04";"Repeater";2;"DMR";"Brandmeister";240333;3;"SK3WH";"Örnsköldsvik";"RV46";145.575;-0.6;"CC 3";"QRT";63.2963;18.7318;"JP93IH";68;15;"";"Omni";"7 dBi";2
+733;"2025-08-18";"Repeater";23;"FM";"";"";6;"SK6RKI";"Guldheden";"RM6";1297.15;-6;1750;"QRT";57.6785;11.9787;"JO57XQ";120;50;"";"";"";0
+734;"2021-03-31";"Repeater";2;"FM";"SvxReflector";"";6;"SK6IF/R";"Bokenäs";"RV48";145.6;-0.6;"1750 / 118.8 / DTMF 4";"QRV";58.31;11.64;"JO58TH";"";"";25;"";"";0
+735;"2021-03-31";"Repeater";70;"FM";"SvxReflector";"";6;"SK6IF/R";"Lysekil";"RU384";434.8;-2;118.8;"QRV";58.2755;11.4355;"JO58RG";"";"";"";"";"";0
+739;"2025-12-19";"Repeater";2;"FM";"SvxReflector";"";5;"SK5LF-2";"Linköping";"RV50";145.625;-0.6;"82.5 / DTMF 5";"QRT";58.56;15.542;"JO78SN";275;130;50;"160°";"8 dBi";2
+740;"2017-12-17";"Repeater";70;"DMR";"Brandmeister";240082;0;"SKØRYG";"Stockholm city";"RU397";434.9625;-2;"CC 0";"QRV";59.3345;18.0636;"JO99AI";"";"";"";"";"";0
+743;"2021-02-09";"Repeater";70;"FM / DMR / D-Star";"Brandmeister";240607518;6;"SA6APY";"Skara";"RU399";434.9875;-2;"114.8 / CC 6";"QRV";58.4;13.46;"JO68RJ";143;30;50;"Omni";"9 dBi";1
+744;"2014-10-04";"Repeater";70;"DMR";"Brandmeister";240701;7;"SK7RJL";"Lund";"RU367";434.5875;-2;"CC 7";"QRV";55.7348;13.2308;"JO65OR";"";42;40;"";"";0
+745;"2020-12-15";"Repeater";70;"DMR";"Brandmeister";240610;6;"SM6TKT/R";"Borås";"RU364";434.55;-2;"CC 6";"QRV";57.742;13.005;"JO67MR";160;20;180;"Omni";"X-510";2
+747;"2020-09-19";"Repeater";70;"DMR";"Brandmeister";240617;6;"SK6DG";"Alingsås";"RU363";434.5375;-2;"CC 6";"QRV";57.9151;12.5195;"JO67GV";"";60;30;"";"";2
+748;"2017-01-04";"Repeater";70;"DMR";"Brandmeister";240707;7;"SG7RFH";"Nässjö";"RU392";434.9;-2;"CC 7";"QRV";57.65;14.7;"JO77IP";"";"";"";"";"";0
+749;"2017-01-04";"Repeater";70;"DMR";"Brandmeister";240706;7;"SG7BNT";"Bruzaholm";"RU368";434.6;-2;"CC 7";"QRV";57.6436;15.2712;"JO77PP";"";"";8;"";"Diamond X-510";0
+751;"2017-12-25";"Repeater";70;"DMR";"Brandmeister";240007;0;"SMØWIU/R";"Nynäshamn";"RU369";434.6125;-2;"CC 0";"QRV";58.909;17.946;"JO88XV";"";"";50;"North";"Aerial OY AV1914-H (4 stack 10dBi)";0
+752;"2017-12-25";"Repeater";70;"DMR";"Brandmeister";240003;0;"SMØWIU/R";"Botkyrka";"RU390";434.875;-2;"CC 0";"QRV";59.2507;17.879;"JO89WG";100;20;100;"";"Aerial OY AV1914-H (4 stack 10dBi)";0
+753;"2020-04-04";"Repeater";70;"C4FM";"Brandmeister";"";0;"SKØNN";"Haninge";"RU363";434.5375;-2;"";"QRV";59.2404;18.2061;"JO99CF";100;"";100;180;"";0
+755;"2020-11-18";"Repeater";70;"DMR";"DMR Plus";240010;0;"SKØRMQ";"Tyresö";"RU361";434.5125;-2;"CC 12";"QRV";59.2975;18.173;"JO99CH";100;39;350;180;"4x Dipole";2
+756;"2025-01-09";"Repeater";70;"DMR";"Brandmeister";240201;2;"SK2RGJ";"Kiruna";"RU361";434.5125;-2;"CC 2";"QRV";67.8314;20.1876;"KP07CT";550;"";"";"";"";2
+757;"2016-10-25";"Repeater";70;"DMR";"Brandmeister";240401;4;"SK4BW";"Borlänge";"RU388";434.85;-2;"CC 12";"QRV";60.4014;15.465;"JP70RJ";308;14;50;"Omni";"Aeriel OY 1914";0
+758;"2022-10-19";"Repeater";70;"DMR";"Brandmeister";240602;6;"SK6AG";"Guldheden";"RU383";434.7875;-2;"CC 6";"QRV";57.6785;11.9787;"JO57XQ";120;50;25;"";"";0
+759;"2023-08-12";"Repeater";2;"DMR";"Brandmeister";240412;0;"SMØWIU-4";"Högdalen";"RV46";145.575;-0.6;"CC 0";"QRV";59.249;18.0719;"JO99AF";90;10;100;"Omni";"";2
+763;"2025-10-05";"Repeater";2;"FM";"SvxReflector";"";5;"SK5RKM-2";"Mariefred";"RV56";145.7;-0.6;82.5;"QRV";59.2579;17.2222;"JO89OG";"";"";80;"Omni";"";2
+764;"2020-11-19";"Repeater";70;"DMR";"Brandmeister";240420;4;"SK4WV";"Vansbro";"RU373";434.6625;-2;"CC 4";"QRV";60.505;14.0315;"JP70AM";"";113;50;"";"";0
+765;"2023-07-18";"Hotspot";70;"DMR";"Brandmeister";24051392;5;"SA5HAV";"Uppsala";"";434.375;"Simplex";"CC 5";"QRV";59.9511;17.82;"JO89VW";"";"";"";180;"";2
+766;"2018-02-27";"Repeater";2;"DMR";"Brandmeister";240708;7;"SG7RFH";"Nässjö";"RV47";145.5875;-0.6;"CC 7";"QRV";57.65;14.7;"JO77IP";340;30;20;"Omni";"2 stack";0
+770;"2025-11-11";"Repeater";2;"FM";"SvxReflector";"";0;"SKØRIX";"Stockholm";"RV50";145.625;-0.6;77;"QRV";59.3074;18.0123;"JO99AH";147;120;25;"Omni";"11.7 dBi";2
+771;"2023-02-24";"Repeater";70;"DMR";"Brandmeister";240305;3;"SK3GK";"Gävle";"RU376";434.7;-2;"CC 3";"QRV";60.6402;17.1335;"JP80NP";96;12;25;"Omni";"7 dBi";2
+775;"2025-05-26";"Repeater";70;"DMR";"Brandmeister";240025;0;"SGØRPF";"Rimbo";"RU383";434.7875;-2;"CC 0";"QRV";59.7984;18.1559;"JO99BT";15;10;10;"Omni";"X-510";2
+776;"2017-12-25";"Repeater";70;"DMR";"Brandmeister";240097;0;"SKØRYG";"Upplands Väsby";"RU381";434.7625;-2;"CC 0";"QRV";59.523;17.9251;"JO89XM";70;"";50;"";"Aerial OY AV1914-H (4 stack 10dBi)";0
+777;"2017-12-07";"Repeater";70;"DMR / D-Star";"Brandmeister";240203;2;"SK2DR";"Luleå";"RU392";434.9;-2;"CC 2";"QRV";65.6141;22.2024;"KP15CO";60;150;80;"Omni";"Aerial OY AV1915-H  (2 stack 7dBi)";0
+778;"2025-10-16";"Repeater";70;"DMR / D-Star";"Brandmeister";240301;3;"SK3RFG";"Sundsvall / Klissberget";"RU384";434.8;-2;"CC 1";"QRT";62.3785;17.202;"JP82OJ";320;60;20;"45°";"4 stack";0
+780;"2018-06-24";"Repeater";70;"DMR / D-Star";"Brandmeister";240208;2;"SK2RJH";"Kalix / Raggdynan";"RU380";434.75;-2;"CC 2";"QRV";65.92;22.833;"KP15KW";160;"";35;"Omni";"Aerial OY AV1914-H (4 stack 10dBi)";0
+781;"2017-10-05";"Repeater";70;"DMR / D-Star / C4FM";"Brandmeister";2403117;3;"SM3YFX";"Föllinge";"RU362";434.525;-2;"CC 3";"QRV";63.67;14.607;"JP73HQ";"";18;"";"";"";0
+783;"2022-12-19";"Repeater";70;"FM / DMR";"Brandmeister";240702;7;"SK7REE";"Söderåsen / Stenestad";"RU372";434.65;-2;"79.7 / CC 7";"QRV";56.0517;13.1047;"JO66NB";220;20;25;"";"4 stack dipole";0
+784;"2020-11-05";"Repeater";70;"FM / DMR";"Brandmeister";240501;5;"SL5ZYT/R";"Norrköping";"RU396";434.95;-2;"82.5 / CC 5";"QRV";58.6875;16.2917;"JO88DQ";150;30;"";"";"";2
+785;"2023-09-04";"Repeater";70;"FM / DMR";"Brandmeister";240563;5;"SG5BCG/R";"Knivsta";"RU362";434.525;-2;"82.5 / CC 5";"QRV";59.7255;17.7868;"JO89VR";"";"";"";"Omni";"X-300";2
+786;"2025-11-04";"Repeater";70;"FM / DMR";"Brandmeister";240509;5;"SM5DWC/R";"Linköping";"RU390";434.875;-2;"82.5 / CC 5";"QRT";58.5643;15.5266;"JO78SM";"";"";"";"";"";0
+787;"2018-04-02";"Repeater";2;"FM / DMR";"Brandmeister";240205;2;"SK2HG/R3";"Seskarö";"RV54";145.675;-0.6;"107.2 / CC 2";"QRV";65.7318;23.7242;"KP15UR";77;50;30;"Omni";"Aerial OY AV1312 (2 dBi)";0
+788;"2018-06-24";"Repeater";2;"FM / DMR";"Brandmeister";240207;2;"SK2HG/R5";"Kalix / Raggdynan";"RV58";145.725;-0.6;"107.2 / CC 2";"QRV";65.92;22.833;"KP15KW";160;"";75;"Omni";"Aerial OY AV1431 (2 stack 7dBi)";0
+789;"2018-06-24";"Repeater";70;"FM / DMR";"Brandmeister";240204;2;"SK2HG/RU5";"Kalix-Vattentorn";"RU378";434.725;-2;"107.2 / CC 2";"QRV";65.8596;23.1535;"KP15NU";45;"";5;"Omni";"Procom (2dBi)";0
+790;"2018-08-04";"Repeater";70;"FM / DMR";"Brandmeister";240024;0;"SKØRPF";"Sigtuna";"RU391";434.8875;-2;"123.0 / CC 0";"QRV";59.6368;17.8088;"JO89VP";"";"";"";"";"";0
+791;"2024-01-13";"Repeater";70;"FM / DMR";"Brandmeister";240607;6;"SK6RP/R";"Floda";"RU386";434.825;-2;"118.8 / CC 6";"QRV";57.809;12.3654;"JO67ET";"";"";25;"";"";1
+792;"2021-03-31";"Repeater";2;"FM / DMR";"SvxReflector / Brandmeister";240609;6;"SK6IF";"Tanumshede";"RV46";145.575;-0.6;"118.8 / CC 6";"QRV";58.7239;11.3252;"JO58PR";"";90;25;"210°";"2-Stackad dipol";2
+793;"2018-08-17";"Repeater";70;"FM / DMR";"Brandmeister";240712;7;"SK7REE";"Örkelljunga";"RU398";434.975;-2;"79.7 / CC 7";"QRV";56.28;13.27;"JO66PG";20;20;25;"Omni";"4x dipol";0
+809;"2023-12-28";"Repeater";70;"DMR";"Brandmeister";240290;2;"SK2AT";"Vännäs";"RU398";434.975;-2;"CC 2";"QRV";63.975;19.964;"JP93XX";250;35;25;"Omni";"Aerial OY AV1914-H (4 stack 10dBi)";2
+813;"2023-02-04";"Repeater";70;"C4FM";"Wires-X";31945;0;"SKØQO";"Bagarmossen";"RU366";434.575;-2;"";"QRV";59.2787;18.1257;"JO99BG";60;"";20;"";"";2
+814;"2020-03-21";"Repeater";70;"DMR";"Brandmeister";240008;0;"SKØNN/1";"Johanneshov";"RU394";434.925;-2;"CC 0";"QRV";59.2942;18.073;"JO99AH";120;"";20;"";"";0
+817;"2025-08-06";"Repeater";2;"FM";"Echolink";725736;3;"SK3GA/R";"Hudiksvall";"RV62";145.775;-0.6;127.3;"QRT";61.723;17.1;"JP81NR";80;34;30;"Omni";"6,3 dBi";2
+820;"2018-10-24";"Repeater";2;"FM / DMR";"Brandmeister";240324;3;"SK3RHU";"Hudiksvall";"RV57";145.7125;-0.6;"127.3 / CC 3";"QRV";61.723;17.1;"JP81NR";80;20;50;"Omni";"6,5 dBi";0
+824;"2018-11-01";"Repeater";70;"DMR";"Brandmeister";240325;3;"SK3RHU";"Hudiksvall";"RU366";434.575;-2;"CC 3";"QRV";61.723;17.1;"JP81NR";17;34;45;"Omni";"6.5 dBi";0
+826;"2018-11-13";"Repeater";70;"FM";"";"";5;"SK5BB/R";"Arboga / Kolsva";"RU390";434.875;-2;"Carrier";"QRV";59.6076;15.836;"JP79WO";"";"";"";"";"";0
+827;"2018-11-13";"Repeater";2;"FM";"";"";5;"SK5BB/R";"Arboga / Kolsva";"RV54";145.675;-0.6;"Carrier";"QRV";59.6076;15.836;"JP79WO";"";"";"";"";"";0
+829;"2024-02-23";"Repeater";70;"FM";"";"";7;"SK7GH/R";"Hillerstorp";"RU368";434.6;-2;156.7;"QRV";57.3426;13.8567;"JO67WI";280;10;5;"Omni";"5x 5/8";1
+834;"2018-12-15";"Repeater";70;"DMR";"Brandmeister";240017;0;"SMØWIU/R";"Dalarö";"RU387";434.8375;-2;"CC 0";"QRV";59.1353;18.4106;"JO99ED";"";15;"";"";"";0
+836;"2025-08-18";"Repeater";2;"FM";"SvxReflector";"";6;"SK6RKG";"Halmstad";"RV54";145.675;-0.6;114.8;"QRV";56.7614;13.0505;"JO66MS";162;52;20;"Omni";"Aerial OY";2
+837;"2023-09-12";"Repeater";2;"FM / C4FM";"SvxReflector";"";3;"SK3JR/R2";"Östersund / Brattåsen";"RV63";145.7875;-0.6;127.3;"QRV";63.1047;14.6022;"JP73HC";"";"";"";"";"";0
+838;"2019-01-02";"Link";70;"FM";"";"";3;"SM3KDR";"Krokom / Aspås";"";434.975;"Simplex";127.3;"QRV";63.3649;14.5147;"JP73GI";375;"";5;"Omni";"7,2 dBi";0
+839;"2023-11-23";"Repeater";2;"FM";"SvxReflector";"";0;"SKØNN/R";"Stockholm";"RV58";145.725;-0.6;77;"QRV";59.32;18.07;"JO99AH";"";"";50;"";"";0
+841;"2025-07-06";"Repeater";2;"FM";"SvxReflector";"";6;"SK6JX/R";"Falkenberg";"RV50";145.625;-0.6;"1750 / 118.8 / DTMF 1";"QRV";56.9027;12.4888;"JO66FV";15;12;20;"Omni";"";2
+842;"2025-11-11";"Repeater";2;"FM";"SvxReflector";"";0;"SKØCT/R";"Kista";"RV63";145.7875;-0.6;77;"QRT";59.4;17.95;"JO89XJ";"";"";"";"";"";2
+843;"2026-02-08";"Repeater";70;"FM";"";"";0;"SKØRYG";"Upplands Väsby";"RU374";434.675;-2;77;"QRV";59.5238;17.9224;"JO89XM";"";"";25;180;"Aerial OY AV1914 (4 stack 10dBi)";2
+848;"2025-03-09";"Repeater";2;"FM";"SvxReflector / Echolink / IRLP";"5908 / 8000";6;"SK6BA/R";"Skene";"RV48";145.6;-0.6;94.8;"QRV";57.5095;12.6;"JO67HM";150;18;80;"";"X-300 / 4 stack dipole";1
+849;"2025-03-09";"Repeater";70;"FM";"SvxReflector / Echolink / IRLP";"5908 / 8000";6;"SK6BA/R";"Skene";"RU396";434.95;-2;94.8;"QRV";57.5095;12.6;"JO67HM";150;18;80;"";"4x dipole";1
+851;"2025-02-09";"Hotspot";70;"DMR / D-Star / C4FM";"Brandmeister / ircDDB";2406268;6;"SK6BA-B";"Skene";"";433.5625;"Duplex 0";"DV Carrier";"QRV";57.495;12.656;"JO67HL";"";"";"";"Omni";"Diamond X50";0
+852;"2025-02-19";"Repeater";70;"FM";"";"";7;"SM7JPI/R";"Karlshamn";"RU394";434.925;-2;79.7;"QRV";56.1674;14.8601;"JO76KE";40;39;40;"Omni";"Diamond X-300N";2
+855;"2019-03-14";"Repeater";2;"DMR";"Brandmeister";240620;6;"SK6RKI";"Kortedala";"RV47";145.5875;-0.6;"CC 6";"QRV";57.7613;12.0373;"JO67AS";"";"";"";"";"";0
+856;"2020-01-21";"Repeater";2;"D-Star";"";"";5;"SK5BN-C";"Norrköping";"RV46";145.575;-0.6;"DV Carrier";"QRV";58.7156;16.0893;"JO88BR";180;40;25;"";"";2
+858;"2019-04-28";"Repeater";2;"FM";"";"";3;"SK3RET";"Bollnäs / Arbrå";"RV52";145.65;-0.6;"1750 / 127.3 / DTMF *5";"QRV";61.485;16.21;"JP81CL";"";"";"";"";"";0
+859;"2023-08-27";"Repeater";70;"FM / DMR";"Brandmeister";240524;5;"SG5DV";"Uppsala";"RU367";434.5875;-2;"82.5 / CC 5";"QRV";59.8507;17.6345;"JO89TU";48;20;50;"Omni";"Diamond X50";2
+860;"2023-08-27";"Repeater";2;"FM";"SvxReflector";"";5;"SG5DV";"Uppsala";"RV47";145.5875;-0.6;"1750 / 136.5 / DTMF *";"QRV";59.8507;17.6345;"JO89TU";48;20;40;"Omni";"Diamond X50";2
+861;"2023-04-23";"Repeater";2;"FM";"";"";4;"SK4EA/R";"Kopparberg";"RV48";145.6;-0.6;1750;"QRV";59.9223;15.0425;"JO79MW";409;34;12;180;"4 x dipoles";1
+862;"2019-05-06";"Repeater";70;"DMR";"Brandmeister";240777;7;"SK7BQ";"Kristianstad";"RU362";434.525;-2;"CC 7";"QRV";56.005;14.065;"JO76AA";"";42;20;"Omni";"";0
+863;"2025-10-16";"Repeater";70;"DMR";"Brandmeister";240444;4;"SA4BNA";"Arvika";"RU398";434.975;-2;"CC 4";"QRT";59.5793;12.5401;"JO69GN";75;8;15;"Omni";5;0
+864;"2019-05-13";"Repeater";70;"DMR";"Brandmeister";240704;7;"SA7BIK";"Höör";"RU393";434.9125;-2;"CC 7";"QRV";55.9567;13.5661;"JO65SW";"";40;20;"Omni";"";0
+870;"2025-05-18";"Repeater";6;"FM";"";"";5;"SK5LW/R";"Eskilstuna";"RF85";51.85;-0.6;82.5;"QRT";59.3919;16.4213;"JO89FJ";45;30;20;"";"GP";0
+871;"2019-05-30";"Repeater";70;"FM";"";"";5;"SK5VM/R";"Eskilstuna";"RU398";434.975;-2;82.5;"QRV";59.3561;16.5001;"JO89GI";23;30;25;"";"4 stackade dipoler";0
+872;"2023-12-10";"Repeater";2;"FM";"Echolink / SvxReflector";676702;5;"SK5LW/R";"Eskilstuna / Slytan";"RV49";145.6125;-0.6;82.5;"QRV";59.229;16.625;"JO89HF";100;30;85;"";"4 stackade dipoler";0
+873;"2025-06-11";"Repeater";70;"FM";"";"";6;"SK6RJW";"Kungsbacka";"RU378";434.725;-2;114.8;"QRV";57.4874;12.077;"JO67AL";37;20;15;"Omni";"Diamond 11.4 dBi";2
+874;"2022-01-16";"Repeater";2;"FM / DMR";"SVXReflector / Echolink / BM.";"284125 / 240603";6;"SK6QA/R";"Stenungsund";"RV57";145.7125;-0.6;"114.8 / CC 6";"QRV";58.0823;11.9943;"JO58XB";112;66;18;"180°";"Aerial OY 2x AV1312-2 (dipole 2dBi)";2
+875;"2019-07-03";"Repeater";2;"FM";"";"";2;"SK2CI";"Boden";"RV50";145.625;-0.6;"1750 / 107.2";"QRV";65.7869;21.526;"KP05SS";215;5;25;"Omni";"GP";0
+877;"2025-08-09";"Repeater";70;"D-Star";"ircDDB";"";6;"SK6DW/R";"Trollhättan";"RU390";434.875;-2;"";"QRV";58.275;12.29;"JO68DG";"";"";"";"";"";2
+878;"2019-07-17";"Repeater";70;"DMR";"Brandmeister";240094;0;"SKØEN";"Älmsta";"RU368";434.6;-2;"CC 0";"QRV";59.9733;18.8097;"JO99JX";40;40;25;"Omni";"10 dBi";0
+879;"2022-10-19";"Repeater";70;"FM";"SvxReflector";"";6;"SK6RFQ";"Guldheden";"RU372";434.65;-2;"1750 / 114.8 / DTMF 6";"QRV";57.6785;11.9787;"JO57XQ";120;50;"";"";"Aerial OY AV1914-H (4 stack 10dBi)";0
+880;"2022-10-19";"Repeater";2;"FM";"SvxReflector";"";6;"SK6RFQ";"Guldheden";"RV52";145.65;-0.6;"1750 / 114.8 / DTMF 6";"QRV";57.6785;11.9787;"JO57XQ";120;50;"";"";"TX: Aerial Oy AV1912 RX: GP-98";0
+883;"2025-10-19";"Repeater";2;"FM";"";"";0;"SKØBJ/R";"Nynäshamn";"RV57";145.7125;-0.6;123;"QRV";58.9055;17.9402;"JO88XV";80;45;25;"";"4 stackad Ariel OY";0
+884;"2024-04-21";"Repeater";2;"FM / DMR";"SvxReflector / Brandmeister";240604;6;"SK6IF";"Kungshamn";"RV54";145.675;-0.6;"94.8 / CC 6";"QRV";58.3569;11.257;"JO58PI";78;45;20;"120°";"Dipoles";0
+889;"2019-08-05";"Repeater";70;"DMR";"Brandmeister";240722;7;"SK7REE";"Helsingborg";"RU368";434.6;-2;"CC 7";"QRV";56.0362;12.704;"JO66IA";"";40;20;"";"6 dBi";0
+890;"2019-08-05";"Repeater";70;"DMR";"Brandmeister";240709;7;"SK7AF";"Eksjö";"RU365";434.5625;-2;"CC 7";"QRV";57.647;15.018;"JO77MP";"";7;25;"Omni";"10 dBi";0
+891;"2020-04-02";"Repeater";70;"FM / DMR";"Brandmeister";240430;4;"SK4KR";"Karlskoga";"RU384";434.8;-2;"CC 4";"QRV";59.3175;14.4812;"JO79FH";"";16;25;"Omni";"9 dBi";1
+892;"2019-08-05";"Repeater";70;"DMR";"Brandmeister";240410;4;"SK4RGL";"Falun";"RU370";434.625;-2;"CC 1";"QRV";60.6295;15.677;"JP70UP";"";"";"";"Omni";"";0
+893;"2025-05-25";"Repeater";2;"FM";"SvxReflector";"";4;"SK4RGL";"Falun";"RV50";145.625;-0.6;"1750 / 85.4";"QRV";60.6295;15.677;"JP70UP";"";"";40;"Omni";"";2
+894;"2019-08-05";"Repeater";70;"DMR";"Brandmeister";240340;3;"SK3JR";"Östersund / Brattåsen";"RU365";434.5625;-2;"CC 3";"QRV";63.1047;14.6022;"JP73HC";"";"";"";"Omni";"";0
+895;"2025-10-16";"Repeater";70;"DMR";"Brandmeister";240306;3;"SK3RFG";"Sundsvall / Nolby";"RU399";434.9875;-2;"CC 3";"QRT";62.3003;17.3635;"JP82QH";"";20;"";"Omni";"";0
+896;"2019-08-05";"Repeater";70;"DMR";"Brandmeister";240220;2;"SK2AZ";"Piteå";"RU388";434.85;-2;"CC 2";"QRV";65.3116;21.2746;"KP05PH";"";20;"";"Omni";"";0
+897;"2019-08-05";"Repeater";70;"DMR";"Brandmeister";240210;2;"SK2CI";"Boden";"RU384";434.8;-2;"CC 2";"QRV";65.8204;21.6003;"KP05TT";"";"";"";"Omni";"";0
+898;"2025-10-16";"Repeater";70;"DMR";"Brandmeister";240202;2;"SK2HG-2";"Kalix";"RU399";434.9875;-2;"CC 2";"QRT";65.8496;23.176;"KP15OU";"";10;"";"Omni";"5 dBi";0
+899;"2023-11-30";"Repeater";70;"DMR";"Brandmeister";240050;0;"SKØQO";"Haninge / Brandbergen";"RU365";434.5625;-2;"CC 0";"QRV";59.1704;18.1663;"JO99BE";120;30;"";"Omni";"10 dBi";0
+920;"2020-03-31";"Repeater";2;"FM / DMR";"Brandmeister";240440;4;"SK4RKD";"Karlskoga";"RV60";145.75;-0.6;"74.4 / CC 4";"QRV";59.378;14.435;"JO79FJ";250;23;50;"Omni";"Diamond X-510";1
+921;"2023-02-23";"Repeater";70;"D-Star";"ircDDB";"";5;"SK5UM-B";"Flen";"RU364";434.55;-2;"DV Carrier";"QRV";59.0502;16.63;"JO89HB";80;25;25;"Omni";"Vertical";1
+922;"2025-08-06";"Repeater";70;"FM";"SvxReflector";"";5;"SK5UM/R";"Flen / Öja";"RU380";434.75;-2;"1750 / 91.5";"Plan";59.0454;16.6296;"JO89HB";100;30;25;"";"4x dipole";1
+923;"2023-08-23";"Repeater";2;"DMR";"Brandmeister";240510;5;"SK5UM/R";"Flen";"RV51";145.6375;-0.6;"82.5 / CC 5";"QRV";59.0448;16.6282;"JO89HB";80;40;50;"Omni";"4x dipol, 6dBi";1
+925;"2022-09-07";"Repeater";70;"DMR";"Brandmeister";240621;6;"SK6RKI";"Öckerö";"RU388";434.85;-2;"CC 6";"QRV";57.7091;11.6431;"JO57TR";35;10;25;"Omni";"X-50";0
+926;"2022-09-07";"Repeater";2;"FM";"SvxReflector";"";6;"SK6RKI";"Öckerö";"RV60";145.75;-0.6;"1750 / 114.8";"QRV";57.7091;11.6431;"JO57TR";"";"";25;"Omni";"";0
+930;"2022-01-04";"Repeater";2;"FM / C4FM";"";"";7;"SK7JD/R";"Västervik";"RV54";145.675;-0.6;77;"QRV";57.7567;16.6182;"JO87HS";75;40;50;"Omni";"2 st. Procom GP";0
+954;"2026-02-15";"Beacon";70;"CW";"";"";1;"SK1BL/B";"Klintehamn";"";432.405;"";"";"QRV";57.3868;18.1872;"JO97CJ";65;60;50;"Omni";"Alford Slot";2
+955;"2026-02-15";"Beacon";2;"CW";"";"";1;"SK1VHF";"Klintehamn";"";144.447;"";"";"QRV";57.3868;18.1872;"JO97CJ";65;60;35;"Omni";"M2 loop";2
+956;"2025-05-26";"Beacon";2;"CW";"";"";2;"SK2VHF";"Vindeln / Buberget";"";144.457;"";"";"QRT";64.2292;19.625;"JP94TF";300;10;80;"N+SV";"2 x 4 el Que-Dee bearing N<br>10 el Que-Dee bearing SSV";0
+957;"2013-07-08";"Beacon";70;"CW";"";"";3;"SK3UHF";"Nordingrå / Rävsön";"";432.455;"";"";"QRV";62.9375;18.4583;"JP92FW";200;8;50;"Omni";"2 x dipole";0
+958;"2013-08-07";"Beacon";23;"CW";"";"";3;"SK3UHG";"Nordingrå / Rävsön";"";1296.855;"";"";"QRV";62.9375;18.4583;"JP92FW";200;10;30;"Omni";"Slotted waveguide";0
+959;"2013-08-07";"Beacon";3;"CW";"";"";4;"SK4BX/B";"Garphyttan / Ånnaboda";"";10368.96;"";"";"QRV";59.3542;14.9583;"JO79LI";270;10;"";"";"";0
+960;"2022-12-13";"Beacon";2;"PI4 - CW";"";"";4;"SK4MPI";"Borlänge";"";144.412;"";"";"QRV";60.335;15.299;"JP70PI";380;20;200;"NV+NO";"4x5 el Yagis";2
+961;"2023-10-18";"Beacon";3;"CW";"";"";6;"SK6YH/B";"Göteborg";"";10368.808;"";"";"QRV";57.6781;11.9802;"JO57XQ";135;40;1000;"184°";"Dish 33 dB";2
+962;"2013-08-07";"Beacon";2;"CW";"";"";7;"SK7VHF";"Sjöbo";"";144.461;"";"";"QRV";55.6875;13.7083;"JO65UQ";25;25;10;"Omni";"Halo";0
+967;"2025-11-03";"Beacon";23;"CW";"";"";1;"SK1UHG";"Klintehamn";"";1296.95;"";"";"QRV";57.3868;18.1872;"JO97CJ";65;60;30;"Omni";"Alford Slot";2
+968;"2014-11-03";"Beacon";70;"CW";"";"";4;"SK4BX/B";"Garphyttan / Storstenshöjden";"";432.46;"";"";"QRV";59.3316;14.9309;"JO79LH";270;10;50;"N E S W";"4x log per";0
+981;"2013-08-07";"Beacon";23;"CW";"";"";4;"SK4BX/B";"Garphyttan / Ånnaboda";"";1296.96;"";"";"QRV";59.3542;14.9583;"JO79LI";270;10;"";"";"";0
+982;"2013-08-07";"Beacon";"6cm";"CW";"";"";4;"SK4BX/B";"Garphyttan / Ånnaboda";"";5760.8;"";"";"QRT";59.3542;14.9583;"JO79LI";270;10;"";"";"";0
+983;"2025-05-27";"Beacon";23;"CW";"";"";2;"SK2SHF";"Vännäs";"";1296.985;"";"";"QRV";63.9;19.81;"JP93VU";250;50;10;"190 gr söder ";"Alford-slotantenn 3 dBd";2
+985;"2016-01-10";"Beacon";23;"CW";"";"";6;"SK6MHI";"Hönö";"";1296.8;"";"";"QRV";57.687;11.6456;"JO57TQ";40;30;30;"Omni";"Alford slot";0
+986;"2023-10-18";"Beacon";"6cm";"CW";"";"";6;"SK6MHI";"Göteborg";"";5760.8;"";"";"QRV";57.678;11.9784;"JO57XQ";135;40;10;"Omni";"WG slotted";2
+987;"2015-03-30";"Beacon";70;"CW";"";"";6;"SK6UHF";"Varberg / Veddige";"";432.412;"";"";"QRV";57.3025;12.382;"JO67EH";175;25;10;"Omni";"";0
+995;"2015-03-30";"Beacon";1.5;"CW";"";"";6;"SK6SHG";"Tjörn Island";"";24048.883;"";"";"QRV";57.979;11.625;"JO57TX";118;8;"2x1W";"N / S";"2xsector horn";0
+996;"2023-10-17";"Beacon";1.5;"CW";"";"";6;"SK6MHI";"Göteborg";"";24048.8;"";"";"QRV";57.678;11.9784;"JO57XQ";135;40;10;"Omni";"10 dBi";2
+1000;"2023-10-17";"Beacon";13;"CW";"";"";6;"SK6MHI";"Göteborg";"";2320.8;"";"";"QRT";57.678;11.9784;"JO57XQ";135;40;150;"Omni";"WG slotted";2
+1001;"2015-01-08";"Beacon";13;"CW";"";"";4;"SK4BX/B";"Garphyttan / Ånnaboda";"";2320.96;"";"";"QRT";59.3542;14.9583;"JO79LI";270;10;"";"";"";0
+1004;"2016-12-06";"Beacon";23;"CW";"";"";6;"SK6UHI";"Tjörn Island";"";1296.805;"";"";"QRV";57.979;11.625;"JO57TX";128;18;30;"Omni";"Alford slot";0
+1012;"2025-08-07";"Beacon";3;"CW";"";"";1;"SK1SHH";"Klintehamn";"";10368.855;"";"";"QRV";57.3868;18.1872;"JO97CJ";52;52;3;"Omni";"10 dB";2
+1013;"2018-10-03";"Beacon";6;"CW";"";"";3;"SK3SIX";"Östersund";"";50.468;"";"";"QRV";63.1047;14.6022;"JP73HC";480;7;15;"Omni";"X dipole";0
+1016;"2020-11-06";"Repeater";70;"DMR";"Brandmeister";240711;7;"SK7RJL";"Malmö";"RU382";434.775;-2;"CC 7";"QRV";55.5978;12.9846;"JO65LO";"";"";20;"";"";2
+1017;"2020-12-03";"Repeater";2;"FM";"Echolink / SvxReflector";353167;7;"SK7RFL";"Algutsrum / Öland";"RV48";145.6;-0.6;"1750 / 79.7 / DTMF 0";"QRV";56.6828;16.5646;"JO86GQ";172;126;50;270;"4x Dipol RX / 2x Dipol TX";1
+1018;"2019-10-06";"Repeater";70;"DMR";"Brandmeister";240740;7;"SK7RGI";"Jönköping";"RU398";434.975;-2;"CC 7";"QRV";57.7654;14.248;"JO77CS";250;50;40;"Omni";"Diamond X-5000N";0
+1019;"2024-09-25";"Repeater";2;"FM";"";"";3;"SK3YZ/R";"Forsa";"RV48";145.6;-0.6;127.3;"QRV";61.6666;16.8333;"JP81KQ";"";"";"";"";"";0
+1020;"2023-10-31";"Repeater";2;"FM";"SvxReflector / Echolink";278960;5;"SM5YMS";"Åtvidaberg";"RV53";145.6625;-0.6;82.5;"QRV";58.2072;15.878;"JO78XE";150;20;50;"Omni";"";1
+1021;"2025-10-22";"Repeater";70;"FM";"";"";5;"SM5YMS/R";"Linköping";"RU384";434.8;-2;1750;"QRT";58.5224;15.5237;"JO78SM";"";"";"";"";"";0
+1024;"2019-10-20";"Beacon";2;"CW";"";"";6;"SK6VHF";"Tjörn Island";"";144.406;"";"";"QRV";57.979;11.625;"JO57TX";122;12;10;"Omni";"M2 loop";0
+1025;"2025-05-23";"Repeater";2;"FM";"SvxReflector / Echolink";394667;0;"SKØMM/R";"Ingarö";"RV62";145.775;-0.6;77;"QRV";59.2602;18.5297;"JO99GG";58;18;25;"Omni";"4-stack dipol, Aerial Oy";2
+1027;"2025-10-01";"Link";2;"FM";"SvxReflector / Echolink / BM";352661;5;"SM5GXQ-L";"Norrköping";"";145.2375;"Simplex";"Carrier / DTMF";"QRV";58.5874;16.2011;"JO88CO";10;2;5;"Omni";"1/4";2
+1031;"2020-11-27";"Repeater";70;"DMR";"Brandmeister";240598;5;"SA5HAV/R";"Uppsala / Rasbo";"RU371";434.6375;-2;"CC 5";"QRV";59.9512;17.82;"JO89VW";"";15;25;"Omni";"X-200";1
+1032;"2025-02-15";"Repeater";70;"DMR";"";"";5;"SA5SEL";"Finspång";"RU376";434.7;-2;"";"QRV";58.7053;15.7592;"JO78VQ";"";"";25;"";"4-stack 10 dBi";2
+1034;"2025-06-16";"Beacon";23;"CW";"";"";7;"SK7GH/B";"Värnamo";"";1296.825;"";"";"QRV";57.1973;14.0063;"JO77AE";200;10;10;"Omni";"Alford slot";2
+1036;"2020-03-05";"Beacon";3;"CW";"";"";0;"SKØCT/B";"Stockholm";"";10368.84;"";"";"QRV";59.405;17.95;"JO89XJ";50;20;0.1;"Omni";"";2
+1037;"2020-12-03";"Repeater";70;"DMR / D-Star / C4FM";"Brandmeister / ircDDB / Wires-";240717;7;"SK7RFL";"Algutsrum / Öland";"RU364";434.55;-2;"CC 7";"QRV";56.6828;16.5646;"JO86GQ";180;134;20;290;"4x Dipol";1
+1038;"2020-04-04";"Repeater";70;"DMR";"Brandmeister";2405218;5;"SA5UTR";"Nyköping";"RU371";434.6375;-2;"CC 5";"Plan";58.7663;17.0204;"JO88MS";60;20;25;"Omni";"4 Stack 11 dBi";2
+1041;"2024-04-23";"Beacon";2;"CW";"";"";3;"SK3VHF";"Östersund";"";144.421;"";"";"QRT";63.1047;14.6022;"JP73HC";480;7;50;"180°";"2x 3 el. LFA-Quad";0
+1042;"2023-04-09";"Beacon";70;"CW";"";"";6;"SK6YH/B";"Tjörn Island";"";432.436;"";"";"QRT";57.979;11.625;"JO57TX";130;"";15;"Omni";"Alford slot";0
+1043;"2020-06-26";"Repeater";10;"FM";"";"";3;"SK3PH/R";"Delsbo";"RH8";29.69;-0.1;"";"Plan";61.8129;16.5597;"JP81GT";"";"";"";"Omni";"";0
+1048;"2023-04-09";"Beacon";23;"CW";"";"";2;"SK2DR/B";"Råneå";"";1296.937;"";"";"QRT";65.8568;22.3626;"KP15EU";"";"";14;"South";"Yagi";2
+1049;"2023-04-09";"Beacon";3;"CW";"";"";2;"SK2DR/B";"Råneå";"";10368.82;"";"";"QRT";65.8568;22.3626;"KP15EU";"";"";4;"South";"Slot";2
+1051;"2020-09-12";"Repeater";70;"DMR";"Brandmeister";240407;4;"SK4TL";"Örebro";"RU378";434.725;-2;"CC 4";"QRV";59.2552;15.1857;"JO79OG";"";10;"";"";"";0
+1052;"2025-08-06";"Repeater";2;"FM";"SvxReflector";"";6;"SG6WAL";"Vedum";"RV63";145.7875;-0.6;"1750 / 218.1";"Plan";58.1845;12.9151;"JO68KE";84;12;25;"Omni";"";2
+1054;"2024-02-22";"Repeater";2;"FM";"";"";7;"SK7GH/R";"Värnamo";"RV48";145.6;-0.6;"1750 / 156.7";"QRV";57.1816;14.0785;"JO77AE";200;10;10;"Omni";"5/8 Vertical";1
+1056;"2020-11-22";"Repeater";70;"FM";"";"";3;"SK3EK/R";"Sollefteå";"RU394";434.925;-2;"1750 / 127.3";"Plan";63.1828;17.2718;"JP83DE";"";"";"";"";"";0
+1057;"2025-02-23";"Repeater";70;"DMR";"Brandmeister";240029;7;"SA7BJF/R";"Södra Vi";"RU373";434.6625;-2;"CC 7";"QRV";57.7423;15.8038;"JO77VR";166;17;20;"Omni";"X-50";1
+1058;"2022-11-23";"Link";2;"DMR";"FreeDMR";2405127;5;"SA5KBE";"Stigtomta";"";145.2875;"Simplex";"CC 5";"QRV";58.8191;16.7939;"JO88JT";45;14;25;"";"";2
+1064;"2023-11-17";"Repeater";2;"D-Star";"ircDDB";"";4;"SG4AXV";"Ekshärad";"RV48";145.6;-0.6;"DV Carrier";"QRV";60.1769;13.4925;"JP60RE";155;14;25;"Omni";"Diamond";2
+1067;"2021-02-16";"Beacon";3;"CW";"";"";6;"SK6WW/B";"Karlsborg / Vaberget";"";10368.835;"";"";"QRV";58.5376;14.4597;"JO78FM";240;20;7;"Omni";"22 slots wg";2
+1070;"2021-04-09";"Repeater";70;"DMR";"Brandmeister";240005;7;"SK7JD";"Västervik";"RU374";434.675;-2;"CC 7";"QRV";57.7937;16.5758;"JO87HS";15;10;25;"Omni";"5/8 / 5dBi";2
+1071;"2025-08-09";"Repeater";2;"FM / DMR";"Brandmeister";2400595;7;"SG7WSE";"Ekenässjön";"RV57";145.7125;-0.6;"156.7 / CC 7";"Plan";57.4858;15.03;"JO77ML";"";"";25;"Omni";"";2
+1072;"2021-03-22";"Hotspot";2;"DMR";"Brandmeister";2407335;7;"SG7WSE";"Ekenässjön";"";144.85;"Simplex";"CC 7";"QRV";57.4858;15.03;"JO77ML";218;10;15;"180°";"Diamond X-300N";2
+1073;"2022-03-10";"Repeater";70;"FM / DMR";"Brandmeister";"";7;"SA7KSI/R";"Tomelilla";"RU371";434.6375;-2;"79.7 / CC 7";"Plan";55.5425;13.9559;"JO65XN";90;12;50;"Omni";"";2
+1078;"2021-09-26";"Hotspot";2;"DMR";"Brandmeister";2400437;4;"SA4ATZ";"Malung";"";144.8375;"Simplex";"CC 4";"QRV";60.6852;13.7168;"JP60UQ";"";"";5;"Omni";"X510";2
+1080;"2025-07-04";"Repeater";70;"DMR";"Brandmeister";240013;0;"SAØAZT";"Vallentuna";"RU364";434.55;-2;"CC 0";"QRV";59.5833;18.3333;"JO99EO";66;24;25;"Omni";"13 dBi";2
+1084;"2021-05-05";"Link";2;"FM";"Echolink";954346;6;"SM6FZG";"Kungsbacka";"";144.65;"Simplex";146.2;"QRV";57.4874;12.077;"JO67AL";"";"";"";"";"";0
+1085;"2021-05-05";"Link";2;"FM";"Echolink";954346;6;"SM6FZG";"Myggenäs";"";144.6625;"Simplex";146.2;"QRV";58.0564;11.7428;"JO58UB";"";"";"";"";"";0
+1086;"2021-05-07";"Link";2;"FM";"Echolink";954346;6;"SM6FZG";"Guldheden";"";144.675;"Simplex";146.2;"QRV";57.68;11.97;"JO57XQ";120;50;"";"";"";0
+1087;"2022-10-19";"Link";6;"FM";"Echolink";954346;6;"SM6FZG";"Guldheden";"";51.55;"Simplex";146.2;"QRV";57.6785;11.9787;"JO57XQ";120;50;"";"";"";0
+1088;"2021-05-13";"Beacon";10;"CW";"";"";3;"SM3KDR";"Krokom / Aspås";"";28.286;"";"";"QRV";63.3603;14.5218;"JP73GI";380;5;1;"E-W";"Hertz Dipole";0
+1092;"2026-02-17";"Repeater";70;"FM";"";"";7;"SK7DL";"Emmaboda";"RU383";434.7875;-2;79.7;"QRV";56.6314;15.5044;"JO76SP";170;15;25;"Omni";"Srio440-8, 8.15Dbi";1
+1093;"2026-01-19";"Repeater";70;"FM / C4FM";"Wires-X";77861;5;"SA5OHR/R";"Norrköping";"RU373";434.6625;-2;"";"QRT";58.6053;16.1426;"JO88BO";52;36;50;"Omni";"4-stack";1
+1096;"2021-08-08";"Repeater";70;"FM";"SvxReflector";"";6;"SM6SXJ";"Torup / Galtabo";"RU391";434.8875;-2;"1750 / 114.8 / DTMF 1";"QRV";57.0106;12.9843;"JO67LA";150;10;20;"Omni";"Diamond";2
+1098;"2021-09-06";"Repeater";2;"FM";"SvxReflector";2407151;7;"SK7JL";"Spjutsbygd";"RV58";145.725;-0.6;79.7;"QRV";56.3121;15.5971;"JO76TH";135;40;50;"Omni";"2-Stack Aerial Oy";1
+1103;"2021-11-03";"Link";2;"FM";"SvxReflector";"";5;"SA5BJM";"Uppsala / Fjuckby";"";144.575;"Simplex";"Carrier";"QRV";59.9774;17.594;"JO89TX";"";"";"";"Omni";"";0
+1104;"2021-11-03";"Link";70;"FM";"SvxReflector";"";5;"SA5BJM";"Uppsala / Fjuckby";"";433.45;"Simplex";"Carrier";"QRV";59.9774;17.594;"JO89TX";"";"";"";"Omni";"";0
+1107;"2022-12-03";"Repeater";2;"FM";"SvxReflector";"";4;"SK4KO";"Sälen / Lindvallen";"RV48";145.6;-0.6;"1750 / 85.4";"QRV";61.1532;13.1711;"JP61OD";800;"";"";"";"";0
+1111;"2022-01-13";"Repeater";2;"FM";"SvxReflector";"";3;"SK3RQE";"";"RV48";145.6;-0.6;"";"QRV";61.8972;17.1506;"JP81NV";"";"";"";"";"";0
+1112;"2025-11-04";"Repeater";6;"FM";"SvxReflector";"";5;"SK5RHT";"Linköping";"RF99";51.99;-0.6;"82.5 / DTMF 5";"QRT";58.5666;15.5387;"JO78SN";145;25;50;"160°";"Dipoles 5dBi";2
+1114;"2022-08-16";"Repeater";70;"FM";"SvxReflector";"";3;"SK3W";"Österfärnebo";"RU388";434.85;-2;127.3;"QRV";60.2916;16.75;"JP80JH";127;70;5;"Omni";"10 dB";2
+1115;"2023-02-23";"Repeater";2;"FM";"";"";5;"SK5UM/R";"Flen";"RV61";145.7625;-0.6;103.5;"QRV";59.046;16.625;"JO89HB";100;30;50;"Omni";"4x dipole";1
+1117;"2022-05-08";"Repeater";2;"DMR / D-Star";"Brandmeister / ircDDB";240718;7;"SK7RMQ";"Linderöd";"RV47";145.5875;-0.6;"CC 14 / SK7RMQ-C";"QRV";55.9166;13.75;"JO65VW";170;45;125;"";"Aerial OY 4-stack";0
+1118;"2022-05-12";"Repeater";2;"FM / DMR / D-Star / C4FM";"Brandmeister";240230;2;"SK2AU/R";"Skellefteå";"RV47";145.5875;-0.6;107.2;"QRV";64.7788;20.9541;"KP04LS";10;8;10;"Omni";"Vertical";2
+1119;"2024-05-21";"Link";70;"FM";"SvxReflector";"";4;"SA4THA";"Älvdalen";"";434.5;"Simplex";250.3;"QRV";61.2375;14.0451;"JP71AF";"";"";"";"Omni";"";0
+1120;"2022-05-12";"Link";2;"FM";"SVXReflector";"";7;"SM7FLD";"Everöd";"";145.2375;"Simplex";"";"QRV";55.8998;14.0972;"JO75BV";"";"";"";"Omni";"";0
+1121;"2022-05-26";"Link";2;"FM";"SvxReflector";"";6;"SM6VAG";"Hjo";"";145.2375;"Simplex";"Carrier";"QRV";58.25;14.0186;"JO78AG";"";"";5;"Omni";"";2
+1122;"2025-09-30";"Link";2;"FM";"SvxReflector / Echolink / BM";352661;7;"SM7GXQ";"Färjestaden";"";145.2375;"Simplex";"Carrier / DTMF";"QRT";56.6449;16.4635;"JO86FP";10;8;5;"Omni";"Discone";2
+1123;"2023-07-25";"Beacon";6;"CW";"";"";6;"SK6EI/B";"Skövde";"";50.46;"";"";"QRV";58.4016;13.8196;"JO68VJ";300;30;10;"South";"Moxon";2
+1125;"2022-07-18";"Repeater";70;"FM";"SvxReflector";"";2;"SJ2W/R";"Skellefteå";"RU374";434.675;-2;"1750 / 107.2";"QRV";64.7672;20.9771;"KP04LS";30;"";20;"Omni";"Aerial OY";2
+1127;"2022-08-16";"Repeater";23;"FM";"";"";6;"SK6RIC";"Alingsås";"RM1";1297.025;-6;"Carrier";"QRV";57.9151;12.5195;"JO67GV";"";"";10;"Omni";"";2
+1128;"2022-09-07";"Link";2;"FM";"SvxReflector";"";4;"SM4FBD";"Nybble";"";145.3;"Simplex";"Carrier";"QRV";59.1111;14.1663;"JO79BC";"";"";5;"Omni";"";2
+1129;"2022-10-13";"Link";2;"FM";"SvxReflector";24042;4;"SK4EA-L";"Lindesberg";"";145.3;"Simplex";136.5;"QRV";59.5967;15.2066;"JO79OO";128;48;20;"Omni";"6.2 dBi";2
+1131;"2022-03-20";"Hotspot";2;"D-Star";"";"";6;"SG6YOW";"Alingsås";"";144.85;"Simplex";"Duplex +";"QRV";57.9246;12.5444;"JO67GW";80;12;20;"Omni";"Diamond X-300";2
+1132;"2023-07-23";"Repeater";70;"FM";"SvxReflector";"";2;"SJ2W";"Burträsk";"RU396";434.95;-2;107.2;"QRV";64.5241;20.6118;"KP04HM";60;60;50;"Omni";"7 dB";2
+1136;"2023-09-15";"Repeater";70;"DMR";"Brandmeister";240003;0;"SMØWIU-2";"Södertälje";"RU390";434.875;-2;"CC 0";"QRV";59.1903;17.6178;"JO89TE";75;10;60;"Omni";"Aerial OY AV-1914";2
+1138;"2023-07-31";"Repeater";2;"FM";"";"";5;"SK5WR/R";"Motala";"RV59";145.7375;-0.6;"1750 / 91.5";"QRV";58.5222;15.1309;"JO78NM";105;10;20;"Omni";"3x 5/8 / 8dBi";2
+1139;"2023-03-31";"Repeater";2;"FM / DMR";"SvxReflector / Brandmeister";240601;6;"SL6ZAQ";"Uddevalla";"RV59";145.7375;-0.6;"114.8 / CC 6";"QRV";58.2964;11.8584;"JO58WH";170;40;20;200;"Aerial Oy AV1312, 2.2 dbi";0
+1140;"2023-09-20";"Repeater";2;"FM";"SvxReflector / Echolink";138904;7;"SM7HZK/R";"Moheda";"RV51";145.6375;-0.6;"1750 / 225.7 / DTMF 1";"QRV";56.9987;14.5844;"JO76HX";190;10;18;"Omni";"";2
+1141;"2023-07-02";"Link";2;"FM";"SvxReflector";2404109;4;"SM4MXN";"Orsa";"";145.275;"Simplex";"";"QRV";61.1108;14.6382;"JP71HC";220;15;5;"Omni";"GP";2
+1142;"2021-09-12";"Link";2;"FM";"SvxReflector / Echolink";802163;6;"SM6TZL/L";"Örby";"";145.2375;"Simplex";"Carrier";"QRV";57.474;12.707;"JO67IL";60;5;5;"Omni";"1/4";2
+1143;"2023-07-31";"Repeater";70;"DMR / D-Star";"Brandmeister / ircDDB";240027;7;"SK7RPQ";"Malmö";"RU369";434.6125;-2;"CC 7 / XLX/XRF699 B";"QRV";55.5781;13.0089;"JO65MN";130;120;50;"Omni";"2x dipol";1
+1144;"2026-02-15";"Repeater";2;"FM / C4FM";"Wires-X";96312;6;"SK6WW/R";"Karlsborg";"RV61";145.7625;-0.6;94.8;"QRV";58.5375;14.4434;"JO78FM";230;20;20;"Omni";"GP";2
+1145;"2023-09-10";"Repeater";70;"FM";"SvxReflector / Echolink";353167;7;"SK7RN/R";"Borgholm";"RU382";434.775;-2;79.7;"QRV";56.8406;16.6658;"JO86HU";63;27;20;"Omni";"8x dipol";1
+1146;"2025-10-16";"Repeater";70;"DMR";"Brandmeister";240308;4;"SA4BHE-R";"Smedjebacken";"RU371";434.6375;-2;"CC 4";"QRT";60.1596;15.3995;"JP70GD";250;24;25;"Omni";"AV1914";2
+1147;"2023-10-15";"Repeater";70;"FM";"";"";0;"SKØMT/R";"Vallentuna";"RU376";434.7;-2;77;"QRV";59.5043;18.1373;"JO99BM";88;23;40;"Omni";"10 dBi";2
+1148;"2024-08-24";"Repeater";70;"DMR";"Brandmeister";240030;0;"SKØNN-2";"Haninge";"RU371";434.6375;-2;"CC 0";"QRV";59.17;18.1694;"JO99CE";90;30;25;"Omni";"";0
+1149;"2023-10-17";"Repeater";10;"FM";"SvxReflector";"";5;"SK5RHT";"Linköping";"RH5";29.66;-0.1;82.5;"QRV";58.3289;15.9372;"JO78XH";130;16;100;"Omni";"3 dB";1
+1150;"2024-07-11";"Beacon";3;"CW";"";"";6;"SK6MHI";"Göteborg";"";10368.8;"";"";"QRV";57.678;11.9784;"JO57XQ";135;40;50;"Omni";"WG slotted";2
+1152;"2025-08-06";"Repeater";70;"DMR";"Brandmeister";"";6;"SA6ATX/R";"Dingle ";"RU391";434.8875;-2;"CC 6";"Plan";58.5208;11.551;"JO58SM";100;10;25;"Omni";"Dipol";2
+1155;"2024-05-05";"Repeater";70;"FM / C4FM";"";"";6;"SK6RFQ";"Guldheden";"RU368";434.6;-2;114.8;"QRV";57.6785;11.9787;"JO57XQ";120;50;10;"Omni";"Vertikal RX: GP-98";2
+1157;"2024-01-12";"Link";70;"FM";"AllStarLink";58973;6;"SM6TZL/L";"Örby";"";434.225;"Simplex";"Carrier";"QRV";57.474;12.707;"JO67IL";60;5;5;"Omni";"1/4";2
+1158;"2024-03-25";"Repeater";70;"FM";"";"";6;"SM6WNR/R";"Vårgårda";"RU388";434.85;-2;"1750 / 118.8";"QRV";58.0191;12.8303;"JO68JA";200;30;30;"Omni";"3dB";1
+1160;"2024-09-26";"Link";2;"FM";"SvxReflector";"";7;"SK7RN";"Borgholm";"V25";145.3125;"Simplex";"1750 / DTMF *";"QRV";56.8809;16.6574;"JO86HV";15;12;25;"Omni";"X50";2
+1161;"2025-03-28";"Repeater";2;"FM";"SvxReflector";240740;7;"SK7RGI";"Jönköping";"RV56";145.7;-0.6;"1750 / 156.7 / DTMF 6";"QRV";57.7654;14.248;"JO77CS";352;52;50;"Omni";"2-stack Dipoler, 7.7 dBi";1
+1162;"2025-01-21";"Repeater";70;"FM";"";"";7;"SA7BVQ/R";"Eslöv";"RU385";434.8125;-2;79.7;"QRV";55.8246;13.2855;"JO65PT";"";"";30;"Omni";"Areal Oy AV1914";1
+1163;"2025-05-25";"Repeater";2;"FM";"SvxReflector";"";4;"SK4AV";"Karlstad";"RV46";145.575;-0.6;74.4;"QRV";59.4251;13.4838;"JO69RK";"";70;25;"Omni";"";2
+1164;"2025-02-23";"Link";70;"FM";"AllStarLink / Echolink";"59163 / 825603";7;"SA7BJF";"Södra Vi";"";433.5;"Simplex";"";"QRV";57.7423;15.8038;"JO77VR";150;17;1;"Omni";"X-30";1
+1189;"2025-04-06";"Repeater";70;"FM";"SvxReflector";"";7;"SK7RSZ";"Hallandsås";"RU373";434.6625;-2;79.7;"QRV";56.3878;12.9624;"JO66LI";240;30;20;"Omni";"8.3 dBd";1
+1190;"2025-03-24";"Repeater";70;"DMR / D-Star";"Brandmeister";240715;7;"SK7RRV";"Lönsboda";"RU396";434.95;-2;"CC 7";"Plan";56.3939;14.3208;"JO76DJ";140;10;1;"Omni";"Dipol 2.7 dBi";2
+1195;"2025-11-30";"Repeater";2;"FM / DMR / D-Star";"Brandmeister";2405156;5;"SA5RTG";"Järlåsa";"RV50";145.575;-0.6;"";"Plan";59.93;17.12;"JO89MV";100;15;25;"Omni";"Diamond X510N";2
+1196;"2025-05-27";"Repeater";2;"FM";"";"";3;"SK3JR";"Raftsjöhöjden";"RV55";145.6875;-0.6;127.3;"QRV";63.6165;14.9929;"JP73LO";530;"";"";"Omni";"";1
+1197;"2025-12-17";"Repeater";2;"FM";"";"";0;"SKØYZ";"Vallentuna";"RV54";145.675;-0.6;77;"QRV";59.521;18.125;"JO99BM";"";"";"";"";"";0
+1198;"2025-06-03";"Repeater";70;"DMR";"Brandmeister";240012;3;"SK3LH";"Örnsköldsvik";"RU382";434.775;-2;"CC 3";"QRV";63.2963;18.7318;"JP93IH";68;15;"";"Omni";"7 dBi";2
+1199;"2025-07-04";"Repeater";2;"DMR";"Brandmeister";240095;0;"SKØEN";"Älmsta";"RV59";145.7375;-0.6;"77.0 / CC 0";"QRV";59.9624;18.8097;"JO99JX";60;40;25;"Omni";"6 dBi";2
+1200;"2025-07-23";"Repeater";2;"DMR";"Brandmeister";240019;0;"SMØWIU-6";"Nynäshamn";"RV49";145.5875;-0.6;"CC 0";"QRV";58.909;17.946;"JO88XV";60;20;50;"225°";"Aerial OY AV1430";2
+1201;"2025-07-31";"uW QTH";"";"";"";"";0;"";"Stockholm / Hammarbybacken";"";"";"";"";"";59.2984;18.109;"JO99BH31CP";87;"";"";"360°";"";0
+1202;"2025-07-31";"uW QTH";"";"";"";"";0;"";"Vallentuna / Högdalatippen";"";"";"";"";"";59.5182;18.1236;"JO99BM44UJ";63;"";"";"360°";"";0
+1203;"2025-07-31";"uW QTH";"";"";"";"";0;"";"Sollentuna / Väsjöbacken";"";"";"";"";"";59.4526;17.9725;"JO89XK68RP";82;"";"";"360°";"";0
+1204;"2025-07-31";"uW QTH";"";"";"";"";0;"";"Huddinge / Flottsbrobacken";"";"";"";"";"";59.2265;17.8836;"JO89WF64BJ";97;"";"";"360°";"";0
+1205;"2025-07-31";"uW QTH";"";"";"";"";0;"";"Södertörn / Tornberget";"";"";"";"";"";59.1369;18.0142;"JO99AD12RV";111;"";"";"360°";"";0
+1206;"2025-07-31";"uW QTH";"";"";"";"";0;"";"Skärholmen / Vårbergstoppen";"";"";"";"";"";59.2711;17.8795;"JO89WG55NC";74;"";"";"360°";"";0
+1207;"2025-08-04";"uW QTH";"";"";"";"";0;"";"Järfälla / Görveln, Bruket skidbacke";"";"";"";"";"";59.4322;17.775;"JO89VK33AS";53;"";"";"360°";"";0
+1208;"2025-07-31";"uW QTH";"";"";"";"";0;"";"Nynäshamn / Trehörningen";"";"";"";"";"";58.8921;17.9489;"JO88XV34VD";33;"";"";"360°";"";0
+1209;"2025-07-31";"uW QTH";"";"";"";"";0;"";"Brevik / Telegrafberget";"";"";"";"";"";59.2229;18.3586;"JO99EF33BM";77;"";"";"360°";"";0
+1210;"2025-08-03";"uW QTH";"";"";"";"";6;"";"Hönö / vattentorn";"";"";"";"";"";57.6848;11.6458;"JO57TQ74MJ";"";"";"";"";"";0
+1211;"2025-08-03";"uW QTH";"";"";"";"";6;"";"Vallda / Gate Klova";"";"";"";"";"";57.4354;11.9093;"JO57WK94DM";"";"";"";"";"";0
+1212;"2025-08-03";"uW QTH";"";"";"";"";6;"";"Falkenberg / Glommen";"";"";"";"";"";56.9312;12.35;"JO66EW23AM";"";"";"";"";"";0
+1213;"2025-08-03";"uW QTH";"";"";"";"";7;"";"Mölle / Kullens fyr";"";"";"";"";"";56.3019;12.452;"JO66FH42GL";60;"";"";"Väst - Ostnordost";"";0
+1214;"2025-08-25";"uW QTH";"";"";"";"";7;"";"Mölle / Håkull";"";"";"";"";"";0;0;"JO66GG38FV";181;"";"";"Nord";"";0
+1215;"2025-08-03";"uW QTH";"";"";"";"";6;"";"Måseskär";"";"";"";"";"";58.0939;11.3309;"JO58PC92RN";"";"";"";"";"";0
+1216;"2025-08-03";"uW QTH";"";"";"";"";6;"";"Kungshamn";"";"";"";"";"";58.3562;11.2527;"JO58PI05IM";"";"";"";"";"";0
+1217;"2025-08-03";"uW QTH";"";"";"";"";6;"";"Varberg / Apelviks höjd";"";"";"";"";"";0;0;"JO67CC92HS";"";"";"";"";"";0
+1218;"2025-08-03";"uW QTH";"";"";"";"";6;"";"Vallda / Lerkils Hamn";"";"";"";"";"";57.4513;11.9128;"JO57WK98NI";"";"";"";"";"";0
+1219;"2025-08-25";"uW QTH";"";"";"";"";7;"";"Arild";"";"";"";"";"";0;0;"JO66GG86RE";2;"";"";"NNV - OSO";"";0
+1220;"2025-08-03";"uW QTH";"";"";"";"";7;"";"Torekov / Torekovs hamn";"";"";"";"";"";56.4274;12.6232;"JO66HK42TO";"";"";"";"";"";0
+1221;"2025-08-25";"uW QTH";"";"";"";"";7;"";"Båstad / Hovs Hallar";"";"";"";"";"";0;0;"JO66IL52KN";50;"";"";"ONO - Väst - VSV";"";0
+1222;"2025-08-03";"uW QTH";"";"";"";"";7;"";"Båstad / Kattviks Hamn";"";"";"";"";"";56.4631;12.7555;"JO66JL01QE";50;"";"";"Sydväst - Nordost";"";0
+1223;"2025-08-03";"uW QTH";"";"";"";"";7;"";"Båstad / Svenstad";"";"";"";"";"";56.4335;12.7701;"JO66JK24KB";146;"";"";"Norr";"";0
+1224;"2025-08-03";"uW QTH";"";"";"";"";7;"";"Båstad / Finnsbo";"";"";"";"";"";56.4177;12.8802;"JO66KK50PG";148;"";"";"Norr";"";0
+1225;"2025-08-03";"uW QTH";"";"";"";"";7;"";"Båstad / Lya Skolväg";"";"";"";"";"";56.4107;12.8788;"JO66KJ58LO";"";"";"";"Norr";"";0
+1226;"2025-08-03";"uW QTH";"";"";"";"";4;"";"Svärdsjö / Enviksberget";"";"";"";"";446;60.871;16.135;"JP80BU69FB";"";"";"";"Sydost - Sydväst";"";0
+1227;"2025-08-03";"uW QTH";"";"";"";"";4;"";"Nyhammar / Storslättberget";"";"";"";"";"";60.2888;14.8934;"JP70KG79FI";411;"";"";"Öst - Sydväst";"";0
+1228;"2025-12-11";"uW QTH";"";"";"";"";4;"";"Svärdsjö / Flyberget";"";"";"";"";"";0;0;"JP70XQ31JN";399;16;"";"360°";"";0
+1232;"2025-08-08";"uW QTH";"";"";"";"";0;"";"Grisslehamn / Singö";"";"";"";"";"";0;0;"JP90JE62XA";6;"";"";"Nord - Öst";"";0
+1234;"2025-08-25";"uW QTH";"";"";"";"";6;"";"Karlsborg / Klintens utsiktsplats";"";"";"";"";"";0;0;"JO78FM48VW";179;"";"";"Öst - Syd";"";0
+1235;"2025-08-25";"uW QTH";"";"";"";"";6;"";"Braehus";"";"";"";"";"";0;0;"JO78GB02NR";228;"";"";"Väst";"";0
+1236;"2025-08-25";"uW QTH";"";"";"";"";0;"";"Kunstaberget / Adelsö";"";"";"";"";"";0;0;"JO89RJ88JA";48;5;"";"360°";"";0
+1237;"2025-08-25";"uW QTH";"";"";"";"";5;"";"Tärnsjö / Skekarsbo utsiktstorn";"";"";"";"";"";0;0;"JP80KF21NA";77;20;"";"360°";"";0
+1238;"2025-08-25";"uW QTH";"";"";"";"";5;"";"Stavsjö / Vensbrinksberget utsiktstorn";"";"";"";"";"";0;0;"JO88DS99IS";124;12;"";"360°";"";0
+1239;"2025-08-25";"uW QTH";"";"";"";"";5;"";"Eskilstuna / utsiktsplats";"";"";"";"";"";0;0;"JO89GI47EO";36;"";"";"";"";0
+1240;"2025-08-25";"uW QTH";"";"";"";"";0;"";"Norrtälje / utsiktsplats";"";"";"";"";"";0;0;"JO99IS41GL";15;"";"";"Syd, Nord";"";0
+1241;"2025-08-25";"uW QTH";"";"";"";"";5;"";"Sala / Grävlingsbergets utsiktstorn";"";"";"";"";"";0;0;"JO89BV79QG";119;5;"";"360°";"";0
+1242;"2025-08-25";"uW QTH";"";"";"";"";5;"";"Sala / Mattssons utsiktstorn";"";"";"";"";"";0;0;"JO89EW88FR";119;20;"";"360°";"";0
+1243;"2025-08-25";"uW QTH";"";"";"";"";1;"";"Visby / Södra Hällarnas utsiktsplats";"";"";"";"";"";0;0;"JO97DO18IG";21;"";"";"Väst - Nord";"";0
+1244;"2025-08-25";"uW QTH";"";"";"";"";1;"";"Hallshuk / fyren";"";"";"";"";"";0;0;"JO97IW91VR";21;"";"";"NO - Nord - NV";"";0
+1245;"2025-08-25";"uW QTH";"";"";"";"";1;"";"Fridhem / Högklint utsiktsplats";"";"";"";"";"";0;0;"JO97CO43EX";36;"";"";"Nord - SydVäst";"";0
+1246;"2025-08-25";"uW QTH";"";"";"";"";1;"";"Katthammarsvik / Torsburgen utsiktstorn";"";"";"";"";"";0;0;"JO97IJ69FV";65;10;"";"360°";"";0
+1247;"2025-08-25";"uW QTH";"";"";"";"";1;"";"Visby / Strandvägen parkering";"";"";"";"";"";0;0;"JO97DP43FN";1;"";"";"Nord - Väst";"";0
+1248;"2025-08-27";"uW QTH";"";"";"";"";4;"";"Örebro / Kvarntorpshögen";"";"";"";"";"";0;0;"JO79PD00OH";139;"";"";"360°";"";0
+1249;"2025-08-27";"uW QTH";"";"";"";"";0;"";"Södertälje / Korpbergets utsiktsplats";"";"";"";"";"";0;0;"JO89TG40CF";69;"";"";"Syd, Väst";"";0
+1250;"2025-08-27";"uW QTH";"";"";"";"";7;"";"Klåveröd / Höjehalls utsiktstorn";"";"";"";"";"";0;0;"JO66NB70VS";210;5;"";"Sydligt";"";0
+1251;"2025-08-27";"uW QTH";"";"";"";"";5;"";"Nyköpng / Stendörrens utsiktstorn";"";"";"";"";"";0;0;"JO88QR79HB";22;12;"";"Sydligt";"";0
+1252;"2025-12-12";"uW QTH";"";"";"";"";3;"";"Ytterhogdal / Fnuschen utsiktstorn";"";"";"";"";"";0;0;"JP72KD11SA";607;15;"";"360°";"";0
+1253;"2025-08-28";"uW QTH";"";"";"";"";5;"";"Söderköping / Ramunderberget";"";"";"";"";"";0;0;"JO88DL95AX";70;"";"";"SydVäst";"";0
+1254;"2025-08-28";"uW QTH";"";"";"";"";4;"";"Kil / Rennstadssnipan utsiktstorn";"";"";"";"";"";0;0;"JO69NO08GB";253;12;"";"";"";0
+1255;"2025-08-28";"uW QTH";"";"";"";"";4;"";"Arvika / Ryggestadsberget";"";"";"";"";"";0;0;"JO69GU80PK";192;20;"";"SydVäst - Väst";"";0
+1256;"2025-08-28";"uW QTH";"";"";"";"";6;"";"Kungsbacka / Tölöberg vattentorn";"";"";"";"";"";0;0;"JO67BL08BU";30;"";"";"360°";"";0
+1257;"2025-09-06";"uW QTH";"";"";"";"";5;"";"Uppsala";"";"";"";"";"";0;0;"JO89TV44NM";48;30;"";"360°";"";0
+1258;"2026-03-25";"Repeater";70;"FM";"";"";7;"SK7RGM/L";"Sölvesborg";"RU370";434.625;-2;67;"QRV";56.0489;14.5844;"JO76HB";68;66;15;"Omni";"Diamond X-300";2
+1259;"2026-01-01";"Repeater";70;"FM";"";"";0;"SKØUX";"Vallentuna";"RU386";434.825;-2;"";"Plan";59.5043;18.1373;"JO99BM";88;23;"";"Omni";"";0
+1260;"2026-02-24";"Repeater";2;"FM";"SvxReflector";"";1;"SM1SBI/R";"Visby";"RV52";145.65;-0.6;71.9;"QRV";57.5699;18.2846;"JO97DN";"";"";"";"Omni";"";0
+1261;"2025-11-15";"Link";2;"FM";"SvxReflector";"";6;"SA6BWX";"Borås";"";145.2875;"Simplex";118.8;"QRV";57.7333;12.9458;"JO67LR";143;10;5;"Omni";"X50";2
+1262;"2025-01-01";"Link";2;"FM";"SvxReflector";"";6;"SM6JVU";"Kullavik";"";145.2875;"Simplex";"";"QRV";57.5482;11.9429;"JO57XN";20;5;5;"Omni";"";2
+1263;"2025-11-30";"Repeater";70;"FM / DMR";"Brandmeister";240015;0;"SK0VR";"Värmdö";"RU398";434.975;-2;"77.0 / CC 0";"QRV";59.3142;18.3183;"JO99DH";80;50;40;"Omni";"9 dBi";1
+1264;"2025-11-30";"Repeater";70;"FM / DMR";"Brandmeister";240016;0;"SK0VR-0";"Djurö";"RU367";434.5875;-2;"77.0 / CC 0";"QRV";59.2996;18.673;"JO99IH";60;20;25;"Omni";"9 dBi";2
+1265;"2025-12-02";"Repeater";70;"";"";"";5;"SA5OHR";"Norrköping";"RU363";434.5375;-2;"";"Plan";58.6053;16.1426;"JO88BO";"";"";"";"";"";0
+1266;"2025-12-07";"Repeater";2;"FM";"";"";0;"SKØMG";"Södertälje";"RV52";145.65;-0.6;"1750 / 77.0";"QRV";59.1746;17.6;"JO89TE";"";"";"";"Omni";"";0
+1267;"2025-12-08";"Repeater";70;"FM";"";"";6;"SK6RP";"Lerum";"RU382";434.775;-2;"1750 / 114.8";"QRV";57.8809;12.3227;"JO67DV";90;7;25;"Omni";"X300";2
+1268;"2025-12-09";"uW QTH";"";"";"";"";3;"";"Sundsvall / Södra Berget, utsiktstorn";"";"";"";"";"";0;0;"JP82PI88QN";240;22;"";"360°";"";0
+1269;"2025-12-10";"uW QTH";"";"";"";"";3;"";"Sundsvall / Munkbyn, Flataklocken";"";"";"";"";"";0;0;"JP82DJ82UT";465;"";"";"360°";"";0
+1270;"2025-12-09";"uW QTH";"";"";"";"";2;"";"Skellefteå / Kalvträsk, Vitbergensnaturreservat";"";"";"";"";"";0;0;"JP94UP61VA";486;18;"";"360°";"";0
+1271;"2025-12-09";"uW QTH";"";"";"";"";2;"";"Boden / Stegras industriområde";"";"";"";"";"";0;0;"KP05VT46AO";50;20;"";"360°";"";0
+1272;"2025-12-09";"uW QTH";"";"";"";"";3;"";"Kramfors / Lövvik, Höga Kusten leden";"";"";"";"";"";0;0;"JP92BT20EJ";240;6;"";"Sydost - Sydväst";"";0
+1273;"2025-12-09";"uW QTH";"";"";"";"";5;"";"Strängnäs / Åkers, Stenhuggarmon";"";"";"";"";"";0;0;"JO89NE69OM";92;10;"";"360°";"";0
+1274;"2025-12-09";"uW QTH";"";"";"";"";0;"";"Norrtälje / Gräddö, Marö";"";"";"";"";"";0;0;"JO99MQ67RX";16;35;"";"360°";"";0
+1275;"2025-12-09";"uW QTH";"";"";"";"";0;"";"Stockholm / Nacka, Velamsunds naturreservat";"";"";"";"";"";0;0;"JO99DI70BR";70;4;"";"Sydost - Sydväst";"";0
+1276;"2025-12-09";"uW QTH";"";"";"";"";6;"";"Varberg / Naturum Getterön";"";"";"";"";"";0;0;"JO67DD10AS";6;12;"";"360°";"";0
+1277;"2025-12-10";"uW QTH";"";"";"";"";6;"";"Lysekil / utsiktstorn";"";"";"";"";"";0;0;"JO58RG15UL";15;4;"";"360°";"";0
+1278;"2025-12-12";"uW QTH";"";"";"";"";4;"";"Skinnaråsberget";"";"";"";"";"";0;0;"JP70JO78PL";497;8;"";"360°";"";0
+1279;"2025-12-12";"uW QTH";"";"";"";"";4;"";"Enviken / Spjärshällen utsiktstorn";"";"";"";"";"";0;0;"JP70WV47BX";506;7;"";"360°";"";0
+1280;"2025-12-13";"uW QTH";"";"";"";"";6;"";"Skee / Björnerödspiggen";"";"";"";"";"";0;0;"JO59QA83IA";222;10;"";"360°";"";0
+1281;"2025-12-13";"uW QTH";"";"";"";"";7;"";"Rösslösa Galgbacke";"";"";"";"";"";0;0;"JO86FL09NA";57;2;"";"360°";"";0
+1282;"2025-12-13";"uW QTH";"";"";"";"";5;"";"Jönåker / St Bengtsbergets brandtorn";"";"";"";"";"";0;0;"JO88IQ66CA";87;17;"";"360°";"";0
+1283;"2025-12-13";"uW QTH";"";"";"";"";3;"";"Tåsjöberget";"";"";"";"";"";0;0;"JP74XF26AE";635;10;"";"360°";"";0
+1284;"2025-12-15";"Repeater";2;"FM / DMR";"Brandmeister";"";4;"SK4RA/R";"Ludvika";"RV53";145.6625;-0.6;"85.4 / CC 4";"Plan";60.1239;15.1436;"JP70NC";260;36;25;"Omni";"2-stack dipol, Aerial Oy";2
+1285;"2026-01-27";"Repeater";70;"FM";"SvxReflector";"";5;"SM5SBI";"Stallarholmen";"RU396";434.95;-2;82.5;"QRV";59.3899;17.2166;"JO89OI";"";"";50;"Omni";"";0
+1286;"2026-02-08";"Repeater";70;"DMR";"Brandmeister";240080;0;"SKØRYG-5";"Arlanda";"RU393";434.9125;-2;"CC 0";"QRV";59.6193;17.9865;"JO89XO";60;24;50;"Omni";"Aerial OY AV1914-H (4 stack 10dBi)";2
+1287;"2026-03-04";"Beacon";"6cm";"CW";"";"";0;"SKØCT/B";"Kvarnberget";"";5760.903;"";"";"QRV";59.504;18.1379;"JO99BM";60;6;60;"Omni";"Alford slot";2
+1288;"2026-03-30";"Repeater";2;"FM";"";"";7;"SK7RBK";"Hörja";"RV61";145.7625;-0.6;"1750 / 79.7 / DTMF 0";"Plan";56.2364;13.6335;"JO66TF";185;20;75;"Omni";"Procom Dipole 2-stack";1
+1289;"2026-04-25";"Link";2;"FM";"AllStarLink";659900;7;"SA7AKU";"Växjö";"";145.2375;"Simplex";79.7;"QRV";56.8795;14.7787;"JO76JV";220;30;20;"180°";"Moxon 3dBi";2
