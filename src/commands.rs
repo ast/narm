@@ -98,12 +98,14 @@ pub struct NearArgs {
     /// Search radius in kilometres.
     #[arg(long, default_value_t = 50.0)]
     pub radius: f64,
-    /// Filter by band column (e.g. 2, 70, 23).
-    #[arg(long)]
-    pub band: Option<String>,
-    /// Filter by mode column (case-insensitive: fm, dmr, c4fm, dstar).
-    #[arg(long)]
-    pub mode: Option<String>,
+    /// Filter by band (e.g. 2, 70, 23). Comma-separated and/or
+    /// repeated: --band 2,70 or --band 2 --band 70.
+    #[arg(long, value_delimiter = ',')]
+    pub band: Vec<String>,
+    /// Filter by mode (case-insensitive: fm, dmr, c4fm, dstar).
+    /// Comma-separated and/or repeated.
+    #[arg(long, value_delimiter = ',')]
+    pub mode: Vec<String>,
     /// Maximum number of results (default: no limit).
     #[arg(long)]
     pub limit: Option<usize>,

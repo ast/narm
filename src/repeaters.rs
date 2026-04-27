@@ -50,8 +50,10 @@ pub struct NearMatch {
 
 #[derive(Debug, Clone, Default)]
 pub struct NearFilter {
-    pub band: Option<String>,
-    pub mode: Option<String>,
+    /// Empty means "any band". Match against the `band` column verbatim.
+    pub bands: Vec<String>,
+    /// Empty means "any mode". Compared case-insensitively.
+    pub modes: Vec<String>,
     pub limit: Option<usize>,
 }
 
@@ -292,7 +294,8 @@ pub fn count_rows(conn: &Connection) -> Result<i64> {
 }
 
 /// Find repeaters within `radius_km` of (`lat`,`lng`), with optional band/mode
-/// filters and result cap. Sorted ascending by distance.
+/// filters and result cap. Sorted ascending by distance. Empty `bands`/`modes`
+/// vecs mean "no filter".
 pub fn find_near(
     conn: &Connection,
     lat: f64,
@@ -302,22 +305,45 @@ pub fn find_near(
 ) -> Result<Vec<NearMatch>> {
     let (lat_min, lat_max, lng_min, lng_max) = bbox(lat, lng, radius_km);
 
-    let mut stmt = conn.prepare(
+    let mut sql = String::from(
         r#"
         SELECT id, updated, type, band, mode, network, network_id, district,
                call, city, channel, output, tx_shift, access, status,
                lat, lng, locator, masl, magl, watt_pep, dir, ant, backup
           FROM repeaters
          WHERE lat IS NOT NULL AND lng IS NOT NULL
-           AND lat BETWEEN ?1 AND ?2
-           AND lng BETWEEN ?3 AND ?4
-           AND (?5 IS NULL OR band = ?5)
-           AND (?6 IS NULL OR LOWER(mode) = LOWER(?6))
+           AND lat BETWEEN ? AND ?
+           AND lng BETWEEN ? AND ?
         "#,
-    )?;
+    );
 
+    let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![
+        Box::new(lat_min),
+        Box::new(lat_max),
+        Box::new(lng_min),
+        Box::new(lng_max),
+    ];
+
+    if !filter.bands.is_empty() {
+        sql.push_str(" AND band IN (");
+        sql.push_str(&vec!["?"; filter.bands.len()].join(","));
+        sql.push(')');
+        for b in &filter.bands {
+            params.push(Box::new(b.clone()));
+        }
+    }
+    if !filter.modes.is_empty() {
+        sql.push_str(" AND LOWER(mode) IN (");
+        sql.push_str(&vec!["?"; filter.modes.len()].join(","));
+        sql.push(')');
+        for m in &filter.modes {
+            params.push(Box::new(m.to_lowercase()));
+        }
+    }
+
+    let mut stmt = conn.prepare(&sql)?;
     let rows = stmt.query_map(
-        params![lat_min, lat_max, lng_min, lng_max, filter.band, filter.mode],
+        rusqlite::params_from_iter(params.iter().map(|p| &**p as &dyn rusqlite::ToSql)),
         row_to_repeater,
     )?;
 
@@ -484,20 +510,34 @@ mod tests {
         assert_eq!(big.len(), 2);
         assert!(big[0].distance_km < big[1].distance_km);
 
-        // Band filter excludes the 70 cm one.
+        // Single-band filter excludes the 70 cm one.
         let only_2m = find_near(
             &conn,
             57.71,
             11.97,
             5000.0,
             &NearFilter {
-                band: Some("2".into()),
+                bands: vec!["2".into()],
                 ..Default::default()
             },
         )
         .unwrap();
         assert_eq!(only_2m.len(), 1);
         assert_eq!(only_2m[0].repeater.band.as_deref(), Some("2"));
+
+        // Multi-band filter pulls in both 2 m and 70 cm.
+        let two_bands = find_near(
+            &conn,
+            57.71,
+            11.97,
+            5000.0,
+            &NearFilter {
+                bands: vec!["2".into(), "70".into()],
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(two_bands.len(), 2);
 
         // FTS hit on city.
         let fts_hits = fts_search(&conn, "Angered", 10).unwrap();

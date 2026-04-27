@@ -95,11 +95,13 @@ cargo test
   Re-imports update in place via the stable SSA =id=.
 - =repeaters near <locator> | <lat> <lng>= :: List repeaters
   within a radius of a location. Flags: =--radius <km>=
-  (default 50), =--band <2|70|...>=, =--mode <fm|dmr|...>=,
-  =--limit <N>= (default: no limit), =--tsv= (pipe-friendly
-  default is an aligned table). Examples: =narm repeaters near
-  JO67AT --radius 30 --mode fm=; =narm repeaters near 57.7
-  11.97 --band 2 --tsv=.
+  (default 50), =--band <list>=, =--mode <list>=,
+  =--limit <N>= (default: no limit), =--tsv= (pipe-friendly;
+  default is an aligned table). =--band= and =--mode= accept
+  comma-separated values, repeated flags, or a mix
+  (=--band 2,70=, =--band 2 --band 70=, =--band 2,70 --band 23=).
+  Examples: =narm repeaters near JO67AT --radius 30 --mode fm=;
+  =narm repeaters near 57.7 11.97 --band 2,70 --tsv=.
 - =completions <shell>= :: Emit shell completions
   (=bash=, =zsh=, =fish=, =elvish=, =powershell=) to stdout.
 

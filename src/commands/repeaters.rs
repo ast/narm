@@ -35,8 +35,8 @@ fn run_near(db_path: &Path, args: &NearArgs) -> Result<()> {
     let (lat, lng) = parse_location(&args.location)?;
     let conn = repeaters::open_db(db_path)?;
     let filter = NearFilter {
-        band: args.band.clone(),
-        mode: args.mode.clone(),
+        bands: args.band.clone(),
+        modes: args.mode.clone(),
         limit: args.limit,
     };
     let hits = repeaters::find_near(&conn, lat, lng, args.radius, &filter)?;
