@@ -29,6 +29,7 @@
 //! Channel records (16 bytes each) live at EEPROM `0x0000`; channel
 //! names (16 bytes ASCII, NUL/0xFF padded) live at `0xf50`.
 
+use std::io::{Read, Write};
 use std::time::Duration;
 
 use serialport::SerialPort;
@@ -285,6 +286,12 @@ fn build_frame(payload: &[u8]) -> Vec<u8> {
 }
 
 // -------- I/O --------
+//
+// All protocol functions are generic over the underlying byte
+// stream: they take `&mut P where P: Read + Write + ?Sized`. In
+// production we pass `&mut *port` from a `Box<dyn SerialPort>`
+// (serialport::SerialPort: Read + Write); in tests we pass a
+// `MockPort` with split incoming/outgoing buffers.
 
 pub fn open_port(port: &str) -> Result<Box<dyn SerialPort>, UvK5Error> {
     serialport::new(port, BAUD)
@@ -293,20 +300,20 @@ pub fn open_port(port: &str) -> Result<Box<dyn SerialPort>, UvK5Error> {
         .map_err(Into::into)
 }
 
-fn read_exact(port: &mut dyn SerialPort, n: usize) -> Result<Vec<u8>, UvK5Error> {
+fn read_exact<P: Read + ?Sized>(port: &mut P, n: usize) -> Result<Vec<u8>, UvK5Error> {
     let mut buf = vec![0u8; n];
     port.read_exact(&mut buf)?;
     Ok(buf)
 }
 
-fn send(port: &mut dyn SerialPort, payload: &[u8]) -> Result<(), UvK5Error> {
+fn send<P: Write + ?Sized>(port: &mut P, payload: &[u8]) -> Result<(), UvK5Error> {
     let frame = build_frame(payload);
     port.write_all(&frame)?;
     port.flush()?;
     Ok(())
 }
 
-fn recv(port: &mut dyn SerialPort) -> Result<Vec<u8>, UvK5Error> {
+fn recv<P: Read + ?Sized>(port: &mut P) -> Result<Vec<u8>, UvK5Error> {
     let header = read_exact(port, 4)?;
     if header[0] != HEADER_MAGIC[0] || header[1] != HEADER_MAGIC[1] || header[3] != 0 {
         return Err(UvK5Error::BadHeader([
@@ -326,7 +333,7 @@ fn recv(port: &mut dyn SerialPort) -> Result<Vec<u8>, UvK5Error> {
 }
 
 /// Send hello packet and return the firmware identity string.
-pub fn say_hello(port: &mut dyn SerialPort) -> Result<String, UvK5Error> {
+pub fn say_hello<P: Read + Write + ?Sized>(port: &mut P) -> Result<String, UvK5Error> {
     send(port, &HELLO)?;
     let reply = recv(port)?;
     if reply.len() < 5 {
@@ -353,7 +360,11 @@ fn build_read_payload(offset: u16, len: u8) -> ReadCommand {
     }
 }
 
-fn read_mem(port: &mut dyn SerialPort, offset: u16, len: u8) -> Result<Vec<u8>, UvK5Error> {
+fn read_mem<P: Read + Write + ?Sized>(
+    port: &mut P,
+    offset: u16,
+    len: u8,
+) -> Result<Vec<u8>, UvK5Error> {
     let payload = build_read_payload(offset, len);
     send(port, payload.as_bytes())?;
     let reply = recv(port)?;
@@ -385,7 +396,11 @@ fn build_write_payload(offset: u16, data: &[u8]) -> Vec<u8> {
     out
 }
 
-fn write_mem(port: &mut dyn SerialPort, offset: u16, data: &[u8]) -> Result<(), UvK5Error> {
+fn write_mem<P: Read + Write + ?Sized>(
+    port: &mut P,
+    offset: u16,
+    data: &[u8],
+) -> Result<(), UvK5Error> {
     let payload = build_write_payload(offset, data);
     send(port, &payload)?;
     let reply = recv(port)?;
@@ -414,7 +429,7 @@ fn write_mem(port: &mut dyn SerialPort, offset: u16, data: &[u8]) -> Result<(), 
 
 /// Send the radio-reset packet (`dd 05 00 00`). The radio reboots so
 /// the freshly-uploaded image takes effect immediately.
-pub fn reset_radio(port: &mut dyn SerialPort) -> Result<(), UvK5Error> {
+pub fn reset_radio<P: Write + ?Sized>(port: &mut P) -> Result<(), UvK5Error> {
     send(port, &[0xDD, 0x05, 0x00, 0x00])
 }
 
@@ -423,7 +438,10 @@ pub fn reset_radio(port: &mut dyn SerialPort) -> Result<(), UvK5Error> {
 /// or a `WRITABLE_SIZE` (0x1d00) channel-and-settings-only image.
 /// Always writes exactly the first 0x1d00 bytes; the factory
 /// calibration block at `0x1d00..0x2000` is never touched.
-pub fn write_eeprom(port: &mut dyn SerialPort, image: &[u8]) -> Result<usize, UvK5Error> {
+pub fn write_eeprom<P: Read + Write + ?Sized>(
+    port: &mut P,
+    image: &[u8],
+) -> Result<usize, UvK5Error> {
     if image.len() != WRITABLE_SIZE && image.len() != EEPROM_SIZE {
         return Err(UvK5Error::BadImageSize { got: image.len() });
     }
@@ -441,7 +459,7 @@ pub fn write_eeprom(port: &mut dyn SerialPort, image: &[u8]) -> Result<usize, Uv
 }
 
 /// Download the full 8 KiB EEPROM as a single byte vector.
-pub fn read_eeprom(port: &mut dyn SerialPort) -> Result<Vec<u8>, UvK5Error> {
+pub fn read_eeprom<P: Read + Write + ?Sized>(port: &mut P) -> Result<Vec<u8>, UvK5Error> {
     let _firmware = say_hello(port)?;
     let mut eeprom = Vec::with_capacity(EEPROM_SIZE);
     let mut addr: u16 = 0;
@@ -559,6 +577,48 @@ fn decode_tones(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::{self, Cursor};
+
+    /// Half-duplex mock port: reads consume from `incoming`; writes
+    /// accumulate into `outgoing`. Tests pre-seed `incoming` with the
+    /// bytes the radio "would have" sent, run the protocol function,
+    /// then assert behaviour on the captured `outgoing` bytes.
+    struct MockPort {
+        incoming: Cursor<Vec<u8>>,
+        outgoing: Vec<u8>,
+    }
+
+    impl MockPort {
+        fn new(incoming: Vec<u8>) -> Self {
+            Self {
+                incoming: Cursor::new(incoming),
+                outgoing: Vec::new(),
+            }
+        }
+    }
+
+    impl io::Read for MockPort {
+        fn read(&mut self, buf: &mut [u8]) -> io::Result<usize> {
+            self.incoming.read(buf)
+        }
+    }
+
+    impl io::Write for MockPort {
+        fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+            self.outgoing.write(buf)
+        }
+        fn flush(&mut self) -> io::Result<()> {
+            self.outgoing.flush()
+        }
+    }
+
+    /// Build a complete inbound frame the way the radio would send
+    /// it, given an un-XOR'd payload.
+    fn radio_reply(payload: &[u8]) -> Vec<u8> {
+        // Same wire shape as `build_frame` — the radio uses the same
+        // framing it expects from us.
+        build_frame(payload)
+    }
 
     #[test]
     fn xor_round_trip() {
@@ -1151,5 +1211,109 @@ mod tests {
             }
             _ => panic!("expected FM mode"),
         }
+    }
+
+    // ===== mock-port I/O regression tests =====
+
+    #[test]
+    fn send_writes_a_well_formed_frame() {
+        let mut port = MockPort::new(Vec::new());
+        send(&mut port, &HELLO).unwrap();
+        // Frame layout: header (4) + xor(payload+crc) (8+2) + footer (2)
+        assert_eq!(port.outgoing.len(), 4 + HELLO.len() + 2 + 2);
+        assert_eq!(&port.outgoing[..2], &HEADER_MAGIC);
+        assert_eq!(port.outgoing[2] as usize, HELLO.len());
+        assert_eq!(&port.outgoing[port.outgoing.len() - 2..], &FOOTER_MAGIC);
+    }
+
+    #[test]
+    fn recv_returns_un_xored_payload_for_well_formed_frame() {
+        let payload = vec![0x18, 0x05, 0x20, 0x00, b'k', b'5', b'_', b'2'];
+        let mut port = MockPort::new(radio_reply(&payload));
+        let got = recv(&mut port).unwrap();
+        assert_eq!(got, payload);
+    }
+
+    #[test]
+    fn recv_rejects_bad_header_magic() {
+        let mut port = MockPort::new(vec![0x00, 0x00, 0x04, 0x00, 0, 0, 0, 0, 0, 0, 0xDC, 0xBA]);
+        match recv(&mut port) {
+            Err(UvK5Error::BadHeader(h)) => assert_eq!(h, [0x00, 0x00, 0x04, 0x00]),
+            other => panic!("expected BadHeader, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn recv_rejects_bad_footer_magic() {
+        // Valid header + body, but footer's last two bytes are wrong.
+        let body = vec![0u8; 2];
+        let mut bytes = Vec::new();
+        bytes.extend_from_slice(&HEADER_MAGIC);
+        bytes.push(body.len() as u8);
+        bytes.push(0);
+        bytes.extend_from_slice(&body);
+        bytes.extend_from_slice(&[0x00, 0x00, 0xFF, 0xFF]); // wrong footer
+        let mut port = MockPort::new(bytes);
+        match recv(&mut port) {
+            Err(UvK5Error::BadFooter(f)) => assert_eq!(&f[2..], &[0xFF, 0xFF]),
+            other => panic!("expected BadFooter, got {other:?}"),
+        }
+    }
+
+    /// Build a write-reply frame the radio would send for `addr_echo`.
+    fn write_reply_frame(opcode: u8, addr_echo: u16) -> Vec<u8> {
+        // 8-byte WriteReply payload: opcode | 3 pad | addr_lo addr_hi | 2 pad
+        let payload = vec![
+            opcode,
+            0,
+            0,
+            0,
+            (addr_echo & 0xFF) as u8,
+            (addr_echo >> 8) as u8,
+            0,
+            0,
+        ];
+        radio_reply(&payload)
+    }
+
+    #[test]
+    fn write_mem_succeeds_when_radio_echoes_correct_address() {
+        let mut port = MockPort::new(write_reply_frame(WRITE_REPLY_OPCODE, 0x0080));
+        write_mem(&mut port, 0x0080, &[0xAA; 4]).unwrap();
+        // Outgoing should be a properly framed write command.
+        assert_eq!(&port.outgoing[..2], &HEADER_MAGIC);
+        assert_eq!(&port.outgoing[port.outgoing.len() - 2..], &FOOTER_MAGIC);
+    }
+
+    #[test]
+    fn write_mem_rejects_wrong_opcode() {
+        let mut port = MockPort::new(write_reply_frame(0x99, 0x0080));
+        match write_mem(&mut port, 0x0080, &[0; 4]) {
+            Err(UvK5Error::BadWriteReply { offset, .. }) => assert_eq!(offset, 0x0080),
+            other => panic!("expected BadWriteReply, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn write_mem_rejects_address_mismatch() {
+        // Opcode is fine but the radio echoed the wrong address.
+        let mut port = MockPort::new(write_reply_frame(WRITE_REPLY_OPCODE, 0x0100));
+        match write_mem(&mut port, 0x0080, &[0; 4]) {
+            Err(UvK5Error::BadWriteAddress { expected, got }) => {
+                assert_eq!(expected, 0x0080);
+                assert_eq!(got, 0x0100);
+            }
+            other => panic!("expected BadWriteAddress, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn say_hello_extracts_firmware_string() {
+        // Payload: opcode 0x18 + 3 padding bytes + ASCII firmware tag.
+        let mut payload = vec![0x18, 0x05, 0x20, 0x00];
+        payload.extend_from_slice(b"k5prog-v0.42\x00\x00");
+        let mut port = MockPort::new(radio_reply(&payload));
+        let fw = say_hello(&mut port).unwrap();
+        assert_eq!(fw, "k5prog-v0.42");
     }
 }
