@@ -118,9 +118,10 @@ const HEADER_MAGIC: [u8; 2] = [0xAB, 0xCD];
 const FOOTER_MAGIC: [u8; 2] = [0xDC, 0xBA];
 
 /// Cyclic XOR key used by the radio for protocol obfuscation.
-/// Verbatim from CHIRP's `xorarr` table (uvk5.py).
+/// Same bytes as CHIRP's `xorarr` table (uvk5.py); CHIRP writes them
+/// as decimal, we keep hex here for byte-twiddle readability.
 const XOR_KEY: [u8; 16] = [
-    22, 108, 20, 230, 46, 145, 13, 64, 33, 53, 213, 64, 19, 3, 233, 128,
+    0x16, 0x6C, 0x14, 0xE6, 0x2E, 0x91, 0x0D, 0x40, 0x21, 0x35, 0xD5, 0x40, 0x13, 0x03, 0xE9, 0x80,
 ];
 
 const HELLO: [u8; 8] = [0x14, 0x05, 0x04, 0x00, 0x6A, 0x39, 0x57, 0x64];
