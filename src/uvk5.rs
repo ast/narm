@@ -55,6 +55,21 @@ struct ReadCommand {
 const READ_OP: [u8; 4] = [0x1B, 0x05, 0x08, 0x00];
 const PROTO_MAGIC: [u8; 4] = [0x6A, 0x39, 0x57, 0x64];
 
+impl ReadCommand {
+    /// Build a read-block command for the given EEPROM `offset` and
+    /// chunk `len`. Pure constructor — pair with `as_bytes()` to get
+    /// the wire bytes.
+    fn new(offset: u16, len: u8) -> Self {
+        Self {
+            op: READ_OP,
+            offset: U16::new(offset),
+            data_len: len,
+            pad: 0,
+            magic: PROTO_MAGIC,
+        }
+    }
+}
+
 /// Write-block command header (12 bytes, followed by raw `data`
 /// bytes). Wire layout matches CHIRP `_writemem`:
 ///   `1d 05 [dlen+8] 00 [addr_lo addr_hi] [dlen] 01 6a 39 57 64
@@ -69,6 +84,23 @@ struct WriteHeader {
     data_len: u8,
     one: u8,        // 0x01
     magic: [u8; 4], // 0x6A 0x39 0x57 0x64
+}
+
+impl WriteHeader {
+    /// Build a write-block header for the given EEPROM `offset` and
+    /// `data_len`. Caller appends the variable-length data after
+    /// `as_bytes()`.
+    fn new(offset: u16, data_len: u8) -> Self {
+        Self {
+            op: WRITE_OP,
+            payload_len: data_len + 8,
+            pad1: 0,
+            offset: U16::new(offset),
+            data_len,
+            one: 1,
+            magic: PROTO_MAGIC,
+        }
+    }
 }
 
 const WRITE_OP: [u8; 2] = [0x1D, 0x05];
@@ -349,24 +381,12 @@ pub fn say_hello<P: Read + Write + ?Sized>(port: &mut P) -> Result<String, UvK5E
     Ok(fw)
 }
 
-/// Build the read-block command (pre-framing). Pure for testing.
-fn build_read_payload(offset: u16, len: u8) -> ReadCommand {
-    ReadCommand {
-        op: READ_OP,
-        offset: U16::new(offset),
-        data_len: len,
-        pad: 0,
-        magic: PROTO_MAGIC,
-    }
-}
-
 fn read_mem<P: Read + Write + ?Sized>(
     port: &mut P,
     offset: u16,
     len: u8,
 ) -> Result<Vec<u8>, UvK5Error> {
-    let payload = build_read_payload(offset, len);
-    send(port, payload.as_bytes())?;
+    send(port, ReadCommand::new(offset, len).as_bytes())?;
     let reply = recv(port)?;
     // Reply: [0x1B, ..., addr_lo, addr_hi, len, 0x00, data...]
     // CHIRP slices `rep[8:]`.
@@ -380,16 +400,7 @@ fn read_mem<P: Read + Write + ?Sized>(
 /// guarantees `data.len() <= 0xff - 8`. Returns header + data
 /// concatenated as a `Vec<u8>` since `data` is variable-length.
 fn build_write_payload(offset: u16, data: &[u8]) -> Vec<u8> {
-    let dlen = data.len() as u8;
-    let header = WriteHeader {
-        op: WRITE_OP,
-        payload_len: dlen + 8,
-        pad1: 0,
-        offset: U16::new(offset),
-        data_len: dlen,
-        one: 1,
-        magic: PROTO_MAGIC,
-    };
+    let header = WriteHeader::new(offset, data.len() as u8);
     let mut out = Vec::with_capacity(12 + data.len());
     out.extend_from_slice(header.as_bytes());
     out.extend_from_slice(data);
@@ -824,20 +835,20 @@ mod tests {
     }
 
     #[test]
-    fn build_read_payload_matches_chirp_format() {
+    fn read_command_matches_chirp_format() {
         // CHIRP `_readmem`:
         //   payload = b"\x1b\x05\x08\x00" + struct.pack("<HBB", off, len, 0)
         //             + b"\x6a\x39\x57\x64"
         // For offset=0x0080, len=0x80:
         //   1b 05 08 00 80 00 80 00 6a 39 57 64
         assert_eq!(
-            build_read_payload(0x0080, 0x80).as_bytes(),
+            ReadCommand::new(0x0080, 0x80).as_bytes(),
             &[
                 0x1B, 0x05, 0x08, 0x00, 0x80, 0x00, 0x80, 0x00, 0x6A, 0x39, 0x57, 0x64
             ],
         );
         assert_eq!(
-            build_read_payload(0x1F80, 0x80).as_bytes(),
+            ReadCommand::new(0x1F80, 0x80).as_bytes(),
             &[
                 0x1B, 0x05, 0x08, 0x00, 0x80, 0x1F, 0x80, 0x00, 0x6A, 0x39, 0x57, 0x64
             ],
@@ -850,7 +861,7 @@ mod tests {
         //   prefix = AB CD len 00, suffix = DC BA, total = len+8.
         for payload in [
             HELLO.to_vec(),
-            build_read_payload(0, 0x80).as_bytes().to_vec(),
+            ReadCommand::new(0, 0x80).as_bytes().to_vec(),
             build_write_payload(0x0040, &[0xAB; 64]),
         ] {
             let frame = build_frame(&payload);
