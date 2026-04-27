@@ -26,8 +26,92 @@
 use std::time::Duration;
 
 use serialport::SerialPort;
+use zerocopy::byteorder::little_endian::U32;
+use zerocopy::{FromBytes, Immutable, KnownLayout};
 
 use crate::channel::{Bandwidth, Channel, Mode, Power};
+
+/// On-wire layout of a single channel record (16 bytes at EEPROM
+/// offset `0x0000 + slot * 16`). Mirrors CHIRP's `MEM_FORMAT` struct
+/// in `uvk5.py`; field order and sizes are load-bearing — do not
+/// reorder. Multi-byte fields are little-endian.
+///
+/// Bit-packed bytes (`codeflags`, `flags1`, `flags2`, `dtmf_flags`)
+/// stay as `u8` here; the decoder unpacks the individual bits below.
+#[repr(C)]
+#[derive(FromBytes, Immutable, KnownLayout, Debug, Clone, Copy)]
+struct ChannelRecord {
+    /// RX frequency in 10 Hz units.
+    freq: U32,
+    /// TX offset in 10 Hz units (sign comes from `flags1.shift`).
+    offset: U32,
+    rxcode: u8,
+    txcode: u8,
+    /// `tx_codeflag:4 | rx_codeflag:4` — 0=none, 1=CTCSS, 2=DCS,
+    /// 3=DCS-reversed.
+    codeflags: u8,
+    /// `?:3 | enable_am:1 | ?:1 | is_in_scanlist:1 | shift:2`.
+    flags1: u8,
+    /// `?:3 | bclo:1 | txpower:2 | bandwidth:1 | freq_reverse:1`.
+    flags2: u8,
+    dtmf_flags: u8,
+    step: u8,
+    scrambler: u8,
+}
+
+impl ChannelRecord {
+    fn is_empty(&self) -> bool {
+        let f = self.freq.get();
+        f == 0 || f == 0xFFFF_FFFF
+    }
+
+    fn rx_hz(&self) -> u64 {
+        self.freq.get() as u64 * 10
+    }
+
+    fn offset_hz(&self) -> u64 {
+        self.offset.get() as u64 * 10
+    }
+
+    /// Signed TX shift derived from the `shift` bits + offset.
+    /// `0b01` → +, `0b10` → −, anything else → 0.
+    fn shift_hz(&self) -> i64 {
+        let off = self.offset_hz() as i64;
+        match self.flags1 & 0b11 {
+            0b01 => off,
+            0b10 => -off,
+            _ => 0,
+        }
+    }
+
+    fn enable_am(&self) -> bool {
+        (self.flags1 >> 4) & 1 != 0
+    }
+
+    fn bandwidth(&self) -> Bandwidth {
+        if (self.flags2 >> 1) & 1 == 0 {
+            Bandwidth::Wide
+        } else {
+            Bandwidth::Narrow
+        }
+    }
+
+    fn power(&self) -> Power {
+        match (self.flags2 >> 2) & 0b11 {
+            0b10 => Power::High,
+            0b01 => Power::Mid,
+            _ => Power::Low,
+        }
+    }
+
+    fn tx_codeflag(&self) -> u8 {
+        (self.codeflags >> 4) & 0x0F
+    }
+
+    fn rx_codeflag(&self) -> u8 {
+        self.codeflags & 0x0F
+    }
+}
 
 const BAUD: u32 = 38400;
 const HEADER_MAGIC: [u8; 2] = [0xAB, 0xCD];
@@ -340,55 +424,16 @@ pub fn decode_channels(eeprom: &[u8]) -> Result<DecodeReport, UvK5Error> {
 
     for i in 0..CHANNEL_COUNT {
         let off = i * CHANNEL_SIZE;
-        let rec = &eeprom[off..off + CHANNEL_SIZE];
-        let freq_raw = u32::from_le_bytes([rec[0], rec[1], rec[2], rec[3]]);
-        if freq_raw == 0 || freq_raw == 0xFFFF_FFFF {
+        let rec = ChannelRecord::ref_from_bytes(&eeprom[off..off + CHANNEL_SIZE])
+            .expect("CHANNEL_SIZE matches ChannelRecord size_of");
+        if rec.is_empty() {
             continue;
         }
-        let offset_raw = u32::from_le_bytes([rec[4], rec[5], rec[6], rec[7]]);
-
-        // Frequency stored in 10 Hz units.
-        let rx_hz = (freq_raw as u64) * 10;
-        let offset_hz = (offset_raw as u64) * 10;
-
-        let rxcode = rec[8];
-        let txcode = rec[9];
-        let codeflags = rec[10];
-        let rx_codeflag = codeflags & 0x0F;
-        let tx_codeflag = (codeflags >> 4) & 0x0F;
-
-        let flags1 = rec[11];
-        let shift = flags1 & 0b11;
-        let enable_am = (flags1 >> 4) & 1 != 0;
-
-        let flags2 = rec[12];
-        let bandwidth_bit = (flags2 >> 1) & 1;
-        let txpower_bits = (flags2 >> 2) & 0b11;
-
-        let name = read_channel_name(eeprom, i);
-
-        let bandwidth = if bandwidth_bit == 0 {
-            Bandwidth::Wide
-        } else {
-            Bandwidth::Narrow
-        };
-
-        let power = match txpower_bits {
-            0b10 => Power::High,
-            0b01 => Power::Mid,
-            _ => Power::Low,
-        };
-
-        let shift_hz: i64 = match shift {
-            0b01 => offset_hz as i64,    // +
-            0b10 => -(offset_hz as i64), // -
-            _ => 0,                      // none
-        };
 
         let (tone_tx_hz, tone_rx_hz, dcs_code) =
-            decode_tones(tx_codeflag, txcode, rx_codeflag, rxcode);
-
-        let mode = if enable_am {
+            decode_tones(rec.tx_codeflag(), rec.txcode, rec.rx_codeflag(), rec.rxcode);
+        let bandwidth = rec.bandwidth();
+        let mode = if rec.enable_am() {
             Mode::Am {
                 bandwidth,
                 tone_tx_hz,
@@ -404,15 +449,16 @@ pub fn decode_channels(eeprom: &[u8]) -> Result<DecodeReport, UvK5Error> {
             }
         };
 
+        let name = read_channel_name(eeprom, i);
         channels.push(Channel {
             name: if name.is_empty() {
                 format!("CH{:03}", i + 1)
             } else {
                 name
             },
-            rx_hz,
-            shift_hz,
-            power,
+            rx_hz: rec.rx_hz(),
+            shift_hz: rec.shift_hz(),
+            power: rec.power(),
             scan: true,
             mode,
             source: None,
