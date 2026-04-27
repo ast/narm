@@ -156,7 +156,7 @@ mod tests {
 
     #[test]
     fn decode_jo67at_matches_csv_centre() {
-        // SA6AR/R in repeaters.csv: lat=57.8125, lng=12.0417, locator=JO67AT.
+        // SA6AR/R in docs/repeaters_2026_04_27.csv: lat=57.8125, lng=12.0417, locator=JO67AT.
         let p = decode("JO67AT").unwrap();
         approx(p.lat, 57.8125, 1e-4);
         approx(p.lng, 12.0417, 1e-4);
