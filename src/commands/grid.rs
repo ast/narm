@@ -1,10 +1,17 @@
 use anyhow::{Context, Result};
+use clap::Args;
 
 use narm::{LatLng, encode};
 
-use crate::commands::GridArgs;
-
 const DEFAULT_ENCODE_LENGTH: usize = 6;
+
+#[derive(Args, Debug)]
+pub struct GridArgs {
+    /// Either a Maidenhead locator (e.g. JO67AT) — one arg —
+    /// or a "lat lng" pair (e.g. 57.8125 12.0417) — two args.
+    #[arg(num_args = 1..=2, value_name = "LOCATOR | LAT LNG")]
+    pub input: Vec<String>,
+}
 
 pub fn run(args: &GridArgs) -> Result<()> {
     match args.input.as_slice() {

@@ -1,7 +1,7 @@
 use std::fs;
 use std::path::PathBuf;
 
-use narm::{Mode, NarmError, Power};
+use narm::{Mode, ModeKind, NarmError, Power};
 
 fn sample_path() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/sample.toml")
@@ -20,9 +20,9 @@ fn loads_and_validates_sample() {
     assert!(matches!(gb3we.mode, Mode::Fm { .. }));
     assert_eq!(gb3we.source.as_deref(), Some(sample_path().as_path()));
 
-    assert_eq!(cfg.channels[2].mode.kind(), "dmr");
-    assert_eq!(cfg.channels[3].mode.kind(), "dstar");
-    assert_eq!(cfg.channels[4].mode.kind(), "c4fm");
+    assert_eq!(cfg.channels[2].mode.kind(), ModeKind::Dmr);
+    assert_eq!(cfg.channels[3].mode.kind(), ModeKind::Dstar);
+    assert_eq!(cfg.channels[4].mode.kind(), ModeKind::C4fm);
 }
 
 #[test]

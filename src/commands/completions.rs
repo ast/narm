@@ -1,10 +1,16 @@
 use std::io;
 
 use anyhow::Result;
-use clap::CommandFactory;
-use clap_complete::generate;
+use clap::{Args, CommandFactory};
+use clap_complete::{Shell, generate};
 
-use crate::commands::{Cli, CompletionsArgs};
+use crate::commands::Cli;
+
+#[derive(Args, Debug)]
+pub struct CompletionsArgs {
+    /// Shell to generate completions for.
+    pub shell: Shell,
+}
 
 pub fn run(args: &CompletionsArgs) -> Result<()> {
     let mut cmd = Cli::command();

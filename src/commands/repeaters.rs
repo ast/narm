@@ -1,10 +1,84 @@
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, anyhow};
+use clap::{Args, Subcommand};
 
 use narm::repeaters::{self, NearFilter, NearMatch, Repeater, SearchFilter};
 
-use crate::commands::{ImportRepeatersArgs, NearArgs, RepeatersArgs, RepeatersCommand, SearchArgs};
+#[derive(Args, Debug)]
+pub struct RepeatersArgs {
+    /// SQLite database path. Defaults to $XDG_DATA_HOME/narm/repeaters.db.
+    #[arg(long, env = "NARM_DB", global = true)]
+    pub db: Option<PathBuf>,
+    #[command(subcommand)]
+    pub command: RepeatersCommand,
+}
+
+#[derive(Subcommand, Debug)]
+pub enum RepeatersCommand {
+    /// Import a SSA repeater CSV (https://www.ssa.se/vushf/repeatrar-fyrar/).
+    #[command(visible_alias = "i")]
+    Import(ImportRepeatersArgs),
+    /// List repeaters within a radius of a location.
+    #[command(visible_alias = "n")]
+    Near(NearArgs),
+    /// Full-text search over call, city, district, network (FTS5).
+    #[command(visible_alias = "s")]
+    Search(SearchArgs),
+}
+
+#[derive(Args, Debug)]
+pub struct ImportRepeatersArgs {
+    /// Path to the SSA repeaters CSV.
+    pub csv: PathBuf,
+}
+
+#[derive(Args, Debug)]
+pub struct NearArgs {
+    /// Maidenhead locator (one arg) or "lat lng" coords (two args).
+    #[arg(num_args = 1..=2, value_name = "LOCATOR | LAT LNG")]
+    pub location: Vec<String>,
+    /// Search radius in kilometres.
+    #[arg(long, default_value_t = 50.0)]
+    pub radius: f64,
+    /// Filter by band (e.g. 2, 70, 23). Comma-separated and/or
+    /// repeated: --band 2,70 or --band 2 --band 70.
+    #[arg(long, value_delimiter = ',')]
+    pub band: Vec<String>,
+    /// Filter by mode (case-insensitive: fm, dmr, c4fm, dstar).
+    /// Comma-separated and/or repeated.
+    #[arg(long, value_delimiter = ',')]
+    pub mode: Vec<String>,
+    /// Maximum number of results (default: no limit).
+    #[arg(long)]
+    pub limit: Option<usize>,
+    /// Emit tab-separated output instead of an aligned table.
+    #[arg(long)]
+    pub tsv: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct SearchArgs {
+    /// Free-text query (terms ANDed together, FTS5 metacharacters like
+    /// `-`, `:`, `*` are treated literally). Pass --raw to use FTS5
+    /// syntax directly (e.g. `call:SK6*`, `A AND B`, `-noise`).
+    pub query: String,
+    /// Filter by band (comma-separated and/or repeated).
+    #[arg(long, value_delimiter = ',')]
+    pub band: Vec<String>,
+    /// Filter by mode (comma-separated and/or repeated, case-insensitive).
+    #[arg(long, value_delimiter = ',')]
+    pub mode: Vec<String>,
+    /// Maximum number of results (default: no limit).
+    #[arg(long)]
+    pub limit: Option<usize>,
+    /// Emit tab-separated output instead of an aligned table.
+    #[arg(long)]
+    pub tsv: bool,
+    /// Pass the query verbatim to FTS5 (no escaping).
+    #[arg(long)]
+    pub raw: bool,
+}
 
 pub fn run(args: &RepeatersArgs) -> Result<()> {
     let db_path = match &args.db {

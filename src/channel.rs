@@ -101,15 +101,48 @@ pub enum Mode {
 }
 
 impl Mode {
-    pub fn kind(&self) -> &'static str {
+    pub fn kind(&self) -> ModeKind {
         match self {
-            Mode::Fm { .. } => "fm",
-            Mode::Dmr { .. } => "dmr",
-            Mode::Dstar { .. } => "dstar",
-            Mode::C4fm { .. } => "c4fm",
-            Mode::P25 { .. } => "p25",
-            Mode::M17 { .. } => "m17",
+            Mode::Fm { .. } => ModeKind::Fm,
+            Mode::Dmr { .. } => ModeKind::Dmr,
+            Mode::Dstar { .. } => ModeKind::Dstar,
+            Mode::C4fm { .. } => ModeKind::C4fm,
+            Mode::P25 { .. } => ModeKind::P25,
+            Mode::M17 { .. } => ModeKind::M17,
         }
+    }
+}
+
+/// Discriminant of [`Mode`] without the per-mode payload. Used by
+/// [`crate::radio::RadioSpec::supported_modes`] and the compile
+/// filter. Display gives the kebab-case wire form (`"fm"`, `"dmr"`,
+/// `"dstar"`, `"c4fm"`, `"p25"`, `"m17"`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum ModeKind {
+    Fm,
+    Dmr,
+    Dstar,
+    C4fm,
+    P25,
+    M17,
+}
+
+impl ModeKind {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            ModeKind::Fm => "fm",
+            ModeKind::Dmr => "dmr",
+            ModeKind::Dstar => "dstar",
+            ModeKind::C4fm => "c4fm",
+            ModeKind::P25 => "p25",
+            ModeKind::M17 => "m17",
+        }
+    }
+}
+
+impl std::fmt::Display for ModeKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(self.as_str())
     }
 }
 
@@ -133,28 +166,12 @@ pub enum NarmError {
         first: Option<PathBuf>,
         second: Option<PathBuf>,
     },
-    #[error(
-        "channel {name}: rx_hz {hz} outside any supported ham band{}",
-        format_loc(source_path)
-    )]
-    OutOfBand {
-        name: String,
-        hz: u64,
-        source_path: Option<PathBuf>,
-    },
 }
 
 fn format_dup_locs(first: &Option<PathBuf>, second: &Option<PathBuf>) -> String {
     match (first, second) {
         (Some(a), Some(b)) => format!(": in {} and {}", a.display(), b.display()),
         _ => String::new(),
-    }
-}
-
-fn format_loc(source: &Option<PathBuf>) -> String {
-    match source {
-        Some(p) => format!(" (in {})", p.display()),
-        None => String::new(),
     }
 }
 
@@ -217,6 +234,10 @@ fn load_dir(dir: &Path) -> Result<Config, NarmError> {
     Ok(merged)
 }
 
+/// Structural validation: duplicate channel-name detection. Per-radio
+/// frequency / mode coverage is checked at compile time against the
+/// target radio's [`crate::radio::RadioSpec`], not here — a config
+/// that's invalid for one radio may be perfectly valid for another.
 pub fn validate(cfg: &Config) -> Result<(), NarmError> {
     let mut seen: HashMap<&str, &Option<PathBuf>> = HashMap::new();
     for ch in &cfg.channels {
@@ -228,18 +249,6 @@ pub fn validate(cfg: &Config) -> Result<(), NarmError> {
             });
         }
         seen.insert(&ch.name, &ch.source);
-        if !in_supported_band(ch.rx_hz) {
-            return Err(NarmError::OutOfBand {
-                name: ch.name.clone(),
-                hz: ch.rx_hz,
-                source_path: ch.source.clone(),
-            });
-        }
     }
     Ok(())
-}
-
-fn in_supported_band(hz: u64) -> bool {
-    // 2 m: 144–148 MHz, 70 cm: 420–450 MHz. Extend as more radios land.
-    (144_000_000..=148_000_000).contains(&hz) || (420_000_000..=450_000_000).contains(&hz)
 }
