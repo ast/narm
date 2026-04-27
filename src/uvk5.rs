@@ -32,10 +32,60 @@
 use std::time::Duration;
 
 use serialport::SerialPort;
-use zerocopy::byteorder::little_endian::U32;
-use zerocopy::{FromBytes, Immutable, KnownLayout};
+use zerocopy::byteorder::little_endian::{U16, U32};
+use zerocopy::{FromBytes, Immutable, IntoBytes, KnownLayout};
 
 use crate::channel::{Bandwidth, Channel, Mode, Power};
+
+// -------- on-wire layouts as zerocopy structs --------
+
+/// Read-block command, sent to the radio. Wire layout matches CHIRP
+/// `_readmem`: `1b 05 08 00 [addr_lo addr_hi] [len] 00 6a 39 57 64`.
+#[repr(C)]
+#[derive(IntoBytes, Immutable, Debug)]
+struct ReadCommand {
+    op: [u8; 4], // 0x1B 0x05 0x08 0x00
+    offset: U16,
+    data_len: u8,
+    pad: u8,        // 0x00
+    magic: [u8; 4], // 0x6A 0x39 0x57 0x64
+}
+
+const READ_OP: [u8; 4] = [0x1B, 0x05, 0x08, 0x00];
+const PROTO_MAGIC: [u8; 4] = [0x6A, 0x39, 0x57, 0x64];
+
+/// Write-block command header (12 bytes, followed by raw `data`
+/// bytes). Wire layout matches CHIRP `_writemem`:
+///   `1d 05 [dlen+8] 00 [addr_lo addr_hi] [dlen] 01 6a 39 57 64
+///    [data...]`.
+#[repr(C)]
+#[derive(IntoBytes, Immutable, Debug)]
+struct WriteHeader {
+    op: [u8; 2],     // 0x1D 0x05
+    payload_len: u8, // dlen + 8
+    pad1: u8,        // 0x00
+    offset: U16,
+    data_len: u8,
+    one: u8,        // 0x01
+    magic: [u8; 4], // 0x6A 0x39 0x57 0x64
+}
+
+const WRITE_OP: [u8; 2] = [0x1D, 0x05];
+
+/// Reply to a write-block command: the radio echoes the request's
+/// address back at bytes 4..6. We only care about `opcode` (must be
+/// `0x1E`) and `offset` (must equal the requested offset); reply may
+/// contain additional trailing bytes which we ignore.
+#[repr(C)]
+#[derive(FromBytes, Immutable, KnownLayout, Debug)]
+struct WriteReply {
+    opcode: u8, // expect 0x1E
+    _pad1: [u8; 3],
+    offset: U16,
+    _pad2: [u8; 2],
+}
+
+const WRITE_REPLY_OPCODE: u8 = 0x1E;
 
 /// On-wire layout of a single channel record (16 bytes at EEPROM
 /// offset `0x0000 + slot * 16`). Mirrors CHIRP's `MEM_FORMAT` struct
@@ -292,29 +342,20 @@ pub fn say_hello(port: &mut dyn SerialPort) -> Result<String, UvK5Error> {
     Ok(fw)
 }
 
-/// Build the read-block command payload (pre-framing). Pure for
-/// testing. Wire layout matches CHIRP `_readmem`:
-///   `1b 05 08 00 [addr_lo addr_hi] [len] 00 6a 39 57 64`.
-fn build_read_payload(offset: u16, len: u8) -> [u8; 12] {
-    [
-        0x1B,
-        0x05,
-        0x08,
-        0x00,
-        (offset & 0xFF) as u8,
-        (offset >> 8) as u8,
-        len,
-        0x00,
-        0x6A,
-        0x39,
-        0x57,
-        0x64,
-    ]
+/// Build the read-block command (pre-framing). Pure for testing.
+fn build_read_payload(offset: u16, len: u8) -> ReadCommand {
+    ReadCommand {
+        op: READ_OP,
+        offset: U16::new(offset),
+        data_len: len,
+        pad: 0,
+        magic: PROTO_MAGIC,
+    }
 }
 
 fn read_mem(port: &mut dyn SerialPort, offset: u16, len: u8) -> Result<Vec<u8>, UvK5Error> {
     let payload = build_read_payload(offset, len);
-    send(port, &payload)?;
+    send(port, payload.as_bytes())?;
     let reply = recv(port)?;
     // Reply: [0x1B, ..., addr_lo, addr_hi, len, 0x00, data...]
     // CHIRP slices `rep[8:]`.
@@ -324,39 +365,44 @@ fn read_mem(port: &mut dyn SerialPort, offset: u16, len: u8) -> Result<Vec<u8>, 
     Ok(reply[8..].to_vec())
 }
 
-/// Build the write-block command payload (pre-framing). Pure function so
-/// it's unit-testable against the documented CHIRP wire format. Caller
-/// guarantees `data.len() <= 0xff - 8`.
+/// Build the write-block command bytes (pre-framing). Caller
+/// guarantees `data.len() <= 0xff - 8`. Returns header + data
+/// concatenated as a `Vec<u8>` since `data` is variable-length.
 fn build_write_payload(offset: u16, data: &[u8]) -> Vec<u8> {
     let dlen = data.len() as u8;
-    // Layout (little-endian addr, matches CHIRP `_writemem`):
-    //   1d 05 [dlen+8] 00 [addr_lo addr_hi] [dlen] 01 6a 39 57 64 [data...]
-    let mut payload = Vec::with_capacity(12 + data.len());
-    payload.extend_from_slice(&[0x1D, 0x05]);
-    payload.push(dlen + 8);
-    payload.push(0x00);
-    payload.push((offset & 0xFF) as u8);
-    payload.push((offset >> 8) as u8);
-    payload.push(dlen);
-    payload.push(0x01);
-    payload.extend_from_slice(&[0x6A, 0x39, 0x57, 0x64]);
-    payload.extend_from_slice(data);
-    payload
+    let header = WriteHeader {
+        op: WRITE_OP,
+        payload_len: dlen + 8,
+        pad1: 0,
+        offset: U16::new(offset),
+        data_len: dlen,
+        one: 1,
+        magic: PROTO_MAGIC,
+    };
+    let mut out = Vec::with_capacity(12 + data.len());
+    out.extend_from_slice(header.as_bytes());
+    out.extend_from_slice(data);
+    out
 }
 
 fn write_mem(port: &mut dyn SerialPort, offset: u16, data: &[u8]) -> Result<(), UvK5Error> {
     let payload = build_write_payload(offset, data);
     send(port, &payload)?;
     let reply = recv(port)?;
-    // Expected reply: [0x1E, 0x05, ?, 0x00, addr_lo, addr_hi, ...]
-    if reply.len() < 6 || reply[0] != 0x1E {
-        let head_len = reply.len().min(8);
-        return Err(UvK5Error::BadWriteReply {
-            offset,
-            reply: reply[..head_len].to_vec(),
-        });
-    }
-    let echoed = u16::from_le_bytes([reply[4], reply[5]]);
+    // Reply: WriteReply struct (8 bytes) possibly followed by trailing
+    // bytes the radio echoes back. Use `ref_from_prefix` so a longer
+    // reply still parses cleanly.
+    let parsed = match WriteReply::ref_from_prefix(&reply) {
+        Ok((r, _trailer)) if r.opcode == WRITE_REPLY_OPCODE => r,
+        _ => {
+            let head_len = reply.len().min(8);
+            return Err(UvK5Error::BadWriteReply {
+                offset,
+                reply: reply[..head_len].to_vec(),
+            });
+        }
+    };
+    let echoed = parsed.offset.get();
     if echoed != offset {
         return Err(UvK5Error::BadWriteAddress {
             expected: offset,
@@ -665,7 +711,7 @@ mod tests {
         let payload = build_write_payload(0x0080, &[0x00, 0x01, 0x02, 0x03]);
         assert_eq!(
             payload,
-            vec![
+            [
                 0x1D, 0x05, 0x0C, 0x00, 0x80, 0x00, 0x04, 0x01, 0x6A, 0x39, 0x57, 0x64, 0x00, 0x01,
                 0x02, 0x03,
             ],
@@ -725,14 +771,14 @@ mod tests {
         // For offset=0x0080, len=0x80:
         //   1b 05 08 00 80 00 80 00 6a 39 57 64
         assert_eq!(
-            build_read_payload(0x0080, 0x80),
-            [
+            build_read_payload(0x0080, 0x80).as_bytes(),
+            &[
                 0x1B, 0x05, 0x08, 0x00, 0x80, 0x00, 0x80, 0x00, 0x6A, 0x39, 0x57, 0x64
             ],
         );
         assert_eq!(
-            build_read_payload(0x1F80, 0x80),
-            [
+            build_read_payload(0x1F80, 0x80).as_bytes(),
+            &[
                 0x1B, 0x05, 0x08, 0x00, 0x80, 0x1F, 0x80, 0x00, 0x6A, 0x39, 0x57, 0x64
             ],
         );
@@ -744,7 +790,7 @@ mod tests {
         //   prefix = AB CD len 00, suffix = DC BA, total = len+8.
         for payload in [
             HELLO.to_vec(),
-            build_read_payload(0, 0x80).to_vec(),
+            build_read_payload(0, 0x80).as_bytes().to_vec(),
             build_write_payload(0x0040, &[0xAB; 64]),
         ] {
             let frame = build_frame(&payload);
