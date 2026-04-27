@@ -138,6 +138,16 @@ cargo test
   =narm radio read --port /dev/ttyUSB0 --radio quansheng-uv-k5
   > my-uvk5.toml=; =narm radio read --port /dev/ttyUSB0
   --radio quansheng-uv-k5 --format raw --out backup.bin=.
+- =radio write --port <port> --radio <radio> --from <file>= ::
+  Upload a raw EEPROM image (from a previous =radio read
+  --format raw=) back to the radio. Only the first 0x1d00
+  (7424) bytes are ever written; the factory calibration block
+  at 0x1d00..0x2000 is preserved unconditionally. Input file
+  must be either 0x1d00 or 0x2000 bytes — the latter has its
+  calibration tail silently dropped. The radio is reset after
+  write so changes take effect immediately. Currently only
+  =--radio quansheng-uv-k5=. Example: =narm radio write --port
+  /dev/ttyUSB0 --radio quansheng-uv-k5 --from backup.bin=.
 - =completions <shell>= :: Emit shell completions
   (=bash=, =zsh=, =fish=, =elvish=, =powershell=) to stdout.
 

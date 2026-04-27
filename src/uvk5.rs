@@ -1,9 +1,13 @@
-//! Quansheng UV-K5 / UV-K5(8) wire protocol — read-side.
+//! Quansheng UV-K5 / UV-K5(8) wire protocol — read & write.
 //!
 //! Reverse-engineered from CHIRP's `chirp/drivers/uvk5.py`
-//! (kk7ds/chirp on GitHub, MIT licence). This module implements the
-//! download path only — handshake, EEPROM block reads, and channel
-//! decoding into narm [`Channel`]s. No write/upload.
+//! (kk7ds/chirp on GitHub, MIT licence). Covers handshake, EEPROM
+//! block reads (channel decoding into narm [`Channel`]s), block
+//! writes back to the radio, and the post-write reset.
+//!
+//! **Safety**: `write_eeprom` only ever touches the first
+//! [`WRITABLE_SIZE`] (`0x1d00`) bytes — bytes `0x1d00..0x2000` hold
+//! factory calibration and are deliberately never overwritten.
 //!
 //! Wire framing on the cable (38400 8N1):
 //!
@@ -39,7 +43,13 @@ const HELLO: [u8; 8] = [0x14, 0x05, 0x04, 0x00, 0x6A, 0x39, 0x57, 0x64];
 
 /// 8 KiB of EEPROM, read in 128-byte chunks.
 pub const EEPROM_SIZE: usize = 0x2000;
+/// CHIRP's `PROG_SIZE` — bytes 0x0000..0x1d00 are channels + settings
+/// and safe to overwrite. The remaining 0x300 bytes are factory
+/// calibration; narm refuses to write there to avoid bricking the
+/// radio's RX/TX alignment.
+pub const WRITABLE_SIZE: usize = 0x1d00;
 const READ_BLOCK: u8 = 0x80;
+const WRITE_BLOCK: u8 = 0x80;
 
 /// Channel record block — 200 channels × 16 bytes at 0x0000.
 const CHANNEL_COUNT: usize = 200;
@@ -79,6 +89,12 @@ pub enum UvK5Error {
     NoHelloReply,
     #[error("eeprom too short: got {got} bytes, expected {EEPROM_SIZE}")]
     ShortEeprom { got: usize },
+    #[error("image must be exactly {WRITABLE_SIZE} or {EEPROM_SIZE} bytes (got {got})")]
+    BadImageSize { got: usize },
+    #[error("write reply at offset 0x{offset:04x}: bad opcode/payload {reply:02x?}")]
+    BadWriteReply { offset: u16, reply: Vec<u8> },
+    #[error("write reply at offset 0x{expected:04x} echoed wrong addr 0x{got:04x}")]
+    BadWriteAddress { expected: u16, got: u16 },
 }
 
 // -------- pure protocol primitives (no I/O) --------
@@ -208,6 +224,76 @@ fn read_mem(port: &mut dyn SerialPort, offset: u16, len: u8) -> Result<Vec<u8>, 
         return Err(UvK5Error::ShortEeprom { got: reply.len() });
     }
     Ok(reply[8..].to_vec())
+}
+
+/// Build the write-block command payload (pre-framing). Pure function so
+/// it's unit-testable against the documented CHIRP wire format. Caller
+/// guarantees `data.len() <= 0xff - 8`.
+fn build_write_payload(offset: u16, data: &[u8]) -> Vec<u8> {
+    let dlen = data.len() as u8;
+    // Layout (little-endian addr, matches CHIRP `_writemem`):
+    //   1d 05 [dlen+8] 00 [addr_lo addr_hi] [dlen] 01 6a 39 57 64 [data...]
+    let mut payload = Vec::with_capacity(12 + data.len());
+    payload.extend_from_slice(&[0x1D, 0x05]);
+    payload.push(dlen + 8);
+    payload.push(0x00);
+    payload.push((offset & 0xFF) as u8);
+    payload.push((offset >> 8) as u8);
+    payload.push(dlen);
+    payload.push(0x01);
+    payload.extend_from_slice(&[0x6A, 0x39, 0x57, 0x64]);
+    payload.extend_from_slice(data);
+    payload
+}
+
+fn write_mem(port: &mut dyn SerialPort, offset: u16, data: &[u8]) -> Result<(), UvK5Error> {
+    let payload = build_write_payload(offset, data);
+    send(port, &payload)?;
+    let reply = recv(port)?;
+    // Expected reply: [0x1E, 0x05, ?, 0x00, addr_lo, addr_hi, ...]
+    if reply.len() < 6 || reply[0] != 0x1E {
+        let head_len = reply.len().min(8);
+        return Err(UvK5Error::BadWriteReply {
+            offset,
+            reply: reply[..head_len].to_vec(),
+        });
+    }
+    let echoed = u16::from_le_bytes([reply[4], reply[5]]);
+    if echoed != offset {
+        return Err(UvK5Error::BadWriteAddress {
+            expected: offset,
+            got: echoed,
+        });
+    }
+    Ok(())
+}
+
+/// Send the radio-reset packet (`dd 05 00 00`). The radio reboots so
+/// the freshly-uploaded image takes effect immediately.
+pub fn reset_radio(port: &mut dyn SerialPort) -> Result<(), UvK5Error> {
+    send(port, &[0xDD, 0x05, 0x00, 0x00])
+}
+
+/// Upload an EEPROM image to the radio. Accepts either a full
+/// `EEPROM_SIZE` (0x2000) blob (calibration tail is silently dropped)
+/// or a `WRITABLE_SIZE` (0x1d00) channel-and-settings-only image.
+/// Always writes exactly the first 0x1d00 bytes; the factory
+/// calibration block at `0x1d00..0x2000` is never touched.
+pub fn write_eeprom(port: &mut dyn SerialPort, image: &[u8]) -> Result<usize, UvK5Error> {
+    if image.len() != WRITABLE_SIZE && image.len() != EEPROM_SIZE {
+        return Err(UvK5Error::BadImageSize { got: image.len() });
+    }
+    let writable = &image[..WRITABLE_SIZE];
+    let _firmware = say_hello(port)?;
+
+    let mut addr: u16 = 0;
+    while (addr as usize) < WRITABLE_SIZE {
+        let start = addr as usize;
+        let end = (start + WRITE_BLOCK as usize).min(WRITABLE_SIZE);
+        write_mem(port, addr, &writable[start..end])?;
+        addr = addr.saturating_add(WRITE_BLOCK as u16);
+    }
+    Ok(WRITABLE_SIZE)
 }
 
 /// Download the full 8 KiB EEPROM as a single byte vector.
@@ -473,6 +559,42 @@ mod tests {
         assert!(report.channels.is_empty());
         assert_eq!(report.warnings.len(), 1);
         assert!(report.warnings[0].contains("AM"));
+    }
+
+    #[test]
+    fn build_write_payload_matches_chirp_format() {
+        // CHIRP `_writemem(serport, data, offset)`:
+        //   payload = b"\x1d\x05" + struct.pack("<BBHBB", dlen+8, 0,
+        //             offset, dlen, 1) + b"\x6a\x39\x57\x64" + data
+        //
+        // For data = b"\x00\x01\x02\x03" at offset 0x0080:
+        //   1d 05 0c 00  80 00 04 01  6a 39 57 64  00 01 02 03
+        let payload = build_write_payload(0x0080, &[0x00, 0x01, 0x02, 0x03]);
+        assert_eq!(
+            payload,
+            vec![
+                0x1D, 0x05, 0x0C, 0x00, 0x80, 0x00, 0x04, 0x01, 0x6A, 0x39, 0x57, 0x64, 0x00, 0x01,
+                0x02, 0x03,
+            ],
+        );
+    }
+
+    #[test]
+    fn build_write_payload_for_full_block() {
+        // 128-byte block at offset 0x1c80 (last writable block before
+        // the calibration boundary at 0x1d00).
+        let data: Vec<u8> = (0..128u8).collect();
+        let payload = build_write_payload(0x1C80, &data);
+        // Header + footer-ish framing fields = 12 bytes; data = 128.
+        assert_eq!(payload.len(), 12 + 128);
+        assert_eq!(&payload[0..2], &[0x1D, 0x05]);
+        assert_eq!(payload[2], 128 + 8); // dlen+8
+        assert_eq!(payload[3], 0x00);
+        assert_eq!(&payload[4..6], &[0x80, 0x1C]); // 0x1c80 LE
+        assert_eq!(payload[6], 128); // dlen
+        assert_eq!(payload[7], 0x01);
+        assert_eq!(&payload[8..12], &[0x6A, 0x39, 0x57, 0x64]);
+        assert_eq!(&payload[12..], &data[..]);
     }
 
     #[test]
