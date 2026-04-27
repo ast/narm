@@ -155,6 +155,16 @@ The repeaters database lives at
 =$XDG_DATA_HOME/narm/repeaters.db= by default; override with
 =--db <path>= or =NARM_DB= env (loaded via =dotenvy=).
 
+* Attribution
+
+The UV-K5 protocol implementation in =src/uvk5.rs= is
+derived from [[https://github.com/kk7ds/chirp][CHIRP]]
+(GPL-3.0 at the project level, GPL-2.0-or-later for the
+=uvk5.py= file specifically). See [[file:NOTICE.md][NOTICE.md]]
+for the full attribution and licence implications. narm
+itself has no license file yet — see NOTICE.md for the
+options under consideration.
+
 * Crates used
 
 =clap= (derive + env), =clap_complete=, =serde= (derive),

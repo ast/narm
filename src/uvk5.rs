@@ -1,9 +1,15 @@
 //! Quansheng UV-K5 / UV-K5(8) wire protocol — read & write.
 //!
-//! Reverse-engineered from CHIRP's `chirp/drivers/uvk5.py`
-//! (kk7ds/chirp on GitHub, MIT licence). Covers handshake, EEPROM
-//! block reads (channel decoding into narm [`Channel`]s), block
-//! writes back to the radio, and the post-write reset.
+//! Derived from CHIRP's `chirp/drivers/uvk5.py` (kk7ds/chirp on
+//! GitHub, **GPL-2.0-or-later** per that file's header; the CHIRP
+//! project is GPL-3.0 at the top level). The protocol opcodes,
+//! magic bytes, XOR key, EEPROM offsets, and channel-record
+//! layout all come from there. See `NOTICE.md` at the repo root
+//! for the full attribution and licensing implications.
+//!
+//! Covers handshake, EEPROM block reads (channel decoding into
+//! narm [`Channel`]s), block writes back to the radio, and the
+//! post-write reset.
 //!
 //! **Safety**: `write_eeprom` only ever touches the first
 //! [`WRITABLE_SIZE`] (`0x1d00`) bytes — bytes `0x1d00..0x2000` hold
