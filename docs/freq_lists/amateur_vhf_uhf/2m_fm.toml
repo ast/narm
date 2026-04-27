@@ -1,0 +1,307 @@
+# Amateur 2 m FM channels (rhb-full v2.2.1, table 5.3.3, p. 30).
+# IARU R1 numbering. V17–V47 are simplex; RV48–RV63 are repeater
+# output frequencies (use shift_hz = -600 kHz to TX). Annotations from
+# the PDF "Anm" column are appended to the channel name.
+# X-suffix channels (R0X, R1X…) appeared when 12.5 kHz spacing was
+# introduced for repeaters.
+
+[[channels]]
+name = "2m V17"
+rx_hz = 145_212_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V18 S9"
+rx_hz = 145_225_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V19 INET GW"
+rx_hz = 145_237_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V20 S10"
+rx_hz = 145_250_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V21"
+rx_hz = 145_262_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V22 S11"
+rx_hz = 145_275_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V23 INET GW"
+rx_hz = 145_287_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V24 S12 RTTY"
+rx_hz = 145_300_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V25"
+rx_hz = 145_312_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V26 S13"
+rx_hz = 145_325_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V27 INET GW"
+rx_hz = 145_337_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V28 S14"
+rx_hz = 145_350_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V29"
+rx_hz = 145_362_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V30 S15 DV Anrop"
+rx_hz = 145_375_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V31"
+rx_hz = 145_387_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V32 S16"
+rx_hz = 145_400_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V33"
+rx_hz = 145_412_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V34 S17 Scout"
+rx_hz = 145_425_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V35"
+rx_hz = 145_437_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V36 S18"
+rx_hz = 145_450_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V37"
+rx_hz = 145_462_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V38 S19"
+rx_hz = 145_475_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V39"
+rx_hz = 145_487_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V40 S20 FM Anrop"
+rx_hz = 145_500_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V41"
+rx_hz = 145_512_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V42 S21"
+rx_hz = 145_525_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V43"
+rx_hz = 145_537_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V44 S22"
+rx_hz = 145_550_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V45"
+rx_hz = 145_562_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V46 S23"
+rx_hz = 145_575_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V47"
+rx_hz = 145_587_500
+mode = "fm"
+scan = true
+
+# Repeater output frequencies (RV48–RV63 / R0–R7 with X half-channels).
+# Use shift_hz = -600_000 if you want to TX into the repeater input.
+
+[[channels]]
+name = "2m RV48 R0"
+rx_hz = 145_600_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV49 R0X"
+rx_hz = 145_612_500
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV50 R1"
+rx_hz = 145_625_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV51 R1X"
+rx_hz = 145_637_500
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV52 R2"
+rx_hz = 145_650_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV53 R2X"
+rx_hz = 145_662_500
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV54 R3"
+rx_hz = 145_675_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV55 R3X"
+rx_hz = 145_687_500
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV56 R4"
+rx_hz = 145_700_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV57 R4X"
+rx_hz = 145_712_500
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV58 R5"
+rx_hz = 145_725_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV59 R5X"
+rx_hz = 145_737_500
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV60 R6"
+rx_hz = 145_750_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV61 R6X"
+rx_hz = 145_762_500
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV62 R7"
+rx_hz = 145_775_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m RV63 R7X"
+rx_hz = 145_787_500
+shift_hz = -600_000
+mode = "fm"
+scan = true

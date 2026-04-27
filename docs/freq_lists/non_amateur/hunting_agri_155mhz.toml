@@ -1,0 +1,48 @@
+# Jakt och jordbruksfrekvenser 155 MHz (rhb-full v2.2.1, table 19, p. 23).
+# Hunting, agriculture, forestry. 5 W. K3/K4 share with marine VHF L1/L2.
+# Notes:
+#   ^R restricted on Swedish territorial / inland waters (see PTSFS 2018:3)
+#   ^M shared with marine VHF (leisure boats use as L1/L2)
+#   ^P PMR / Friluftskanal (general PMR use)
+
+[[channels]]
+name = "Jakt K6 (R)"
+rx_hz = 155_400_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt K1 (R)"
+rx_hz = 155_425_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt K7 (R)"
+rx_hz = 155_450_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt K2 (R)"
+rx_hz = 155_475_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt K3 / Marin L1"
+rx_hz = 155_500_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt K4 / Marin L2"
+rx_hz = 155_525_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt K5 / PMR Friluftskanal"
+rx_hz = 156_000_000
+mode = "fm"
+scan = true

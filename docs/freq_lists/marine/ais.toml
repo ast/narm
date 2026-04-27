@@ -1,0 +1,16 @@
+# Marine AIS — Automatic Identification System.
+# rhb-full v2.2.1, table on p. 27. Digital traffic, transponder.
+# Mode is GMSK (4-FSK-like); recorded as FM so the file parses, but
+# expect digital data, not voice. Useful for scanner activity detection.
+
+[[channels]]
+name = "AIS1"
+rx_hz = 161_975_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "AIS2"
+rx_hz = 162_025_000
+mode = "fm"
+scan = true

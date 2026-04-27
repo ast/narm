@@ -1,0 +1,53 @@
+# Kortdistansradio (KDR / SRBR) — 444 MHz business band.
+# rhb-full v2.2.1, table 21, p. 24. 2 W, license-free, CTCSS recommended.
+# Traditional 25 kHz raster only. A finer 12.5 / 6.25 kHz raster also
+# exists (table 22) but is not extracted here — bare 25 kHz channels are
+# what most SRBR radios use.
+
+[[channels]]
+name = "SRBR K1"
+rx_hz = 444_600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SRBR K2"
+rx_hz = 444_625_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SRBR K3"
+rx_hz = 444_800_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SRBR K4"
+rx_hz = 444_825_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SRBR K5"
+rx_hz = 444_850_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SRBR K6"
+rx_hz = 444_875_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SRBR K7"
+rx_hz = 444_925_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SRBR K8"
+rx_hz = 444_975_000
+mode = "fm"
+scan = true

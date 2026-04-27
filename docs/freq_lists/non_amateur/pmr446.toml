@@ -1,0 +1,117 @@
+# PMR446 (rhb-full v2.2.1, table 20, p. 23–24).
+# Open band 446.0–446.2 MHz. Max 500 mW, fixed antenna, no repeater use.
+# K1–K8 traditional analog FM. K9–K16 (D1–D8) recommended for digital
+# (DPMR), though either may be used analog or digital. 12.5 kHz channel
+# spacing, FM deviation max 2.5 kHz (narrowband).
+
+[[channels]]
+name = "PMR446 K1"
+rx_hz = 446_006_250
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K2"
+rx_hz = 446_018_750
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K3"
+rx_hz = 446_031_250
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K4"
+rx_hz = 446_043_750
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K5"
+rx_hz = 446_056_250
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K6"
+rx_hz = 446_068_750
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K7"
+rx_hz = 446_081_250
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K8"
+rx_hz = 446_093_750
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K9 / D1 (DPMR)"
+rx_hz = 446_106_250
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K10 / D2 (DPMR)"
+rx_hz = 446_118_750
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K11 / D3 (DPMR)"
+rx_hz = 446_131_250
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K12 / D4 (DPMR)"
+rx_hz = 446_143_750
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K13 / D5 (DPMR)"
+rx_hz = 446_156_250
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K14 / D6 (DPMR)"
+rx_hz = 446_168_750
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K15 / D7 (DPMR)"
+rx_hz = 446_181_250
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K16 / D8 (DPMR)"
+rx_hz = 446_193_750
+mode = "fm"
+bandwidth = "narrow"
+scan = true

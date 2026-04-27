@@ -1,0 +1,579 @@
+# Marin VHF (rhb-full v2.2.1, table 23, p. 26).
+# Swedish marine VHF allocation. SRC certificate required for TX.
+# Each PDF row with both Skepp (ship) and Kust (shore/coast) frequencies
+# is split into two channels here so a scanner picks up both sides.
+# Channel 16 (156.800) is the calling/distress channel.
+# Channel 70 (156.525) is DSC (digital selective calling) — TX prohibited
+# for voice, but RX is useful.
+# L1/L2 are leisure boat channels (shared with Jakt 155 K3/K4).
+# F1–F3 are fishing channels.
+
+[[channels]]
+name = "MarVHF 01 Ship"
+rx_hz = 156_050_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 01 Shore"
+rx_hz = 160_650_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 02 Ship"
+rx_hz = 156_100_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 02 Shore"
+rx_hz = 160_700_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 03 Ship"
+rx_hz = 156_150_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 03 Shore"
+rx_hz = 160_750_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 04 Ship"
+rx_hz = 156_200_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 04 Shore"
+rx_hz = 160_800_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 05 Ship"
+rx_hz = 156_250_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 05 Shore"
+rx_hz = 160_850_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 06 Ship"
+rx_hz = 156_300_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 07 Ship"
+rx_hz = 156_350_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 07 Shore"
+rx_hz = 160_950_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 08 Ship"
+rx_hz = 156_400_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 09 Ship"
+rx_hz = 156_450_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 10 Ship"
+rx_hz = 156_500_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 11 Ship"
+rx_hz = 156_550_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 12 Ship"
+rx_hz = 156_600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 13 Ship"
+rx_hz = 156_650_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 14 Ship"
+rx_hz = 156_700_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 15 Ship"
+rx_hz = 156_750_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 16 Anrop/Nöd"
+rx_hz = 156_800_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 17 Ship"
+rx_hz = 156_850_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 18 Ship"
+rx_hz = 156_900_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 18 Shore"
+rx_hz = 161_500_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 19 Ship"
+rx_hz = 156_950_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 19 Shore"
+rx_hz = 161_550_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 20 Ship"
+rx_hz = 157_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 20 Shore"
+rx_hz = 161_600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 21 Ship"
+rx_hz = 157_050_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 21 Shore"
+rx_hz = 161_650_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 22 Ship"
+rx_hz = 157_100_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 22 Shore"
+rx_hz = 161_700_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 23 Ship"
+rx_hz = 157_150_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 23 Shore"
+rx_hz = 161_750_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 24 Ship"
+rx_hz = 157_200_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 24 Shore"
+rx_hz = 161_800_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 25 Ship"
+rx_hz = 157_250_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 25 Shore"
+rx_hz = 161_850_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 26 Ship"
+rx_hz = 157_300_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 26 Shore"
+rx_hz = 161_950_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 27 Ship"
+rx_hz = 157_350_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 27 Shore"
+rx_hz = 161_950_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 28 Ship"
+rx_hz = 157_400_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 28 Shore"
+rx_hz = 162_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 60 Ship"
+rx_hz = 156_025_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 60 Shore"
+rx_hz = 160_625_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 61 Ship"
+rx_hz = 156_075_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 61 Shore"
+rx_hz = 160_675_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 62 Ship"
+rx_hz = 156_125_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 62 Shore"
+rx_hz = 160_725_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 63 Ship"
+rx_hz = 156_175_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 63 Shore"
+rx_hz = 160_775_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 64 Ship"
+rx_hz = 156_225_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 64 Shore"
+rx_hz = 160_825_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 65 Ship"
+rx_hz = 156_275_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 65 Shore"
+rx_hz = 160_875_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 66 Ship"
+rx_hz = 156_325_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 66 Shore"
+rx_hz = 160_925_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 67 Ship"
+rx_hz = 156_375_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 68 Ship"
+rx_hz = 156_425_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 69 Ship"
+rx_hz = 156_475_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 70 DSC"
+rx_hz = 156_525_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 71 Ship"
+rx_hz = 156_575_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 72 Ship"
+rx_hz = 156_625_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 73 Ship"
+rx_hz = 156_675_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 74 Ship"
+rx_hz = 156_725_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 75 Ship"
+rx_hz = 156_775_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 76 Ship"
+rx_hz = 156_825_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 77 Ship"
+rx_hz = 156_875_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 78 Ship"
+rx_hz = 156_925_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 78 Shore"
+rx_hz = 161_525_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 79 Ship"
+rx_hz = 156_975_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 79 Shore"
+rx_hz = 161_575_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 80 Ship"
+rx_hz = 157_025_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 80 Shore"
+rx_hz = 161_625_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 81 Ship"
+rx_hz = 157_075_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 81 Shore"
+rx_hz = 161_675_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 82 Ship"
+rx_hz = 157_125_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 82 Shore"
+rx_hz = 161_725_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 83 Ship"
+rx_hz = 157_175_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 83 Shore"
+rx_hz = 161_775_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 84 Ship"
+rx_hz = 157_225_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 84 Shore"
+rx_hz = 161_825_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 85 Ship"
+rx_hz = 157_325_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 85 Shore"
+rx_hz = 161_925_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 86 Ship"
+rx_hz = 157_325_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 86 Shore"
+rx_hz = 161_925_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 87 Ship"
+rx_hz = 157_375_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 88 Ship"
+rx_hz = 157_425_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF L1 Leisure"
+rx_hz = 155_500_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF L2 Leisure"
+rx_hz = 155_525_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF F1 Fishing"
+rx_hz = 155_625_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF F2 Fishing"
+rx_hz = 155_775_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF F3 Fishing"
+rx_hz = 155_825_000
+mode = "fm"
+scan = true

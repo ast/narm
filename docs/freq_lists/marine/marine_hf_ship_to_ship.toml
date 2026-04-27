@@ -1,0 +1,251 @@
+# Primary HF ship-to-ship channels (rhb-full v2.2.1, table on p. 46).
+# 7 channels (A–G) across the 8 marine HF bands. Mode is SSB (J3E);
+# recorded as FM so the file parses. Empty cells in the source table
+# (no allocation on that band) are simply omitted here.
+
+# Channel A
+[[channels]]
+name = "HF4 A Ship-to-Ship"
+rx_hz = 4_146_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF6 A Ship-to-Ship"
+rx_hz = 6_224_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF8 A Ship-to-Ship"
+rx_hz = 8_294_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF12 A Ship-to-Ship"
+rx_hz = 12_353_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF16 A Ship-to-Ship"
+rx_hz = 16_528_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF18 A Ship-to-Ship"
+rx_hz = 18_825_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF22 A Ship-to-Ship"
+rx_hz = 22_159_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF25 A Ship-to-Ship"
+rx_hz = 25_100_000
+mode = "fm"
+scan = true
+
+# Channel B
+[[channels]]
+name = "HF4 B Ship-to-Ship"
+rx_hz = 4_149_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF6 B Ship-to-Ship"
+rx_hz = 6_227_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF8 B Ship-to-Ship"
+rx_hz = 8_297_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF12 B Ship-to-Ship"
+rx_hz = 12_356_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF16 B Ship-to-Ship"
+rx_hz = 16_531_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF18 B Ship-to-Ship"
+rx_hz = 18_828_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF22 B Ship-to-Ship"
+rx_hz = 22_162_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF25 B Ship-to-Ship"
+rx_hz = 25_103_000
+mode = "fm"
+scan = true
+
+# Channel C
+[[channels]]
+name = "HF6 C Ship-to-Ship"
+rx_hz = 6_230_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF12 C Ship-to-Ship"
+rx_hz = 12_359_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF16 C Ship-to-Ship"
+rx_hz = 16_534_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF18 C Ship-to-Ship"
+rx_hz = 18_831_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF22 C Ship-to-Ship"
+rx_hz = 22_165_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF25 C Ship-to-Ship"
+rx_hz = 25_106_000
+mode = "fm"
+scan = true
+
+# Channel D
+[[channels]]
+name = "HF12 D Ship-to-Ship"
+rx_hz = 12_362_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF16 D Ship-to-Ship"
+rx_hz = 16_537_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF18 D Ship-to-Ship"
+rx_hz = 18_834_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF22 D Ship-to-Ship"
+rx_hz = 22_168_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF25 D Ship-to-Ship"
+rx_hz = 25_109_000
+mode = "fm"
+scan = true
+
+# Channel E
+[[channels]]
+name = "HF12 E Ship-to-Ship"
+rx_hz = 12_365_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF16 E Ship-to-Ship"
+rx_hz = 16_540_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF18 E Ship-to-Ship"
+rx_hz = 18_837_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF22 E Ship-to-Ship"
+rx_hz = 22_171_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF25 E Ship-to-Ship"
+rx_hz = 25_112_000
+mode = "fm"
+scan = true
+
+# Channel F
+[[channels]]
+name = "HF16 F Ship-to-Ship"
+rx_hz = 16_543_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF18 F Ship-to-Ship"
+rx_hz = 18_840_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF22 F Ship-to-Ship"
+rx_hz = 22_174_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF25 F Ship-to-Ship"
+rx_hz = 25_115_000
+mode = "fm"
+scan = true
+
+# Channel G
+[[channels]]
+name = "HF16 G Ship-to-Ship"
+rx_hz = 16_546_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF18 G Ship-to-Ship"
+rx_hz = 18_843_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF22 G Ship-to-Ship"
+rx_hz = 22_177_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF25 G Ship-to-Ship"
+rx_hz = 25_118_000
+mode = "fm"
+scan = true

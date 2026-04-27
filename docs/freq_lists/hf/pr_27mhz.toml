@@ -1,0 +1,272 @@
+# PR-bandet 27 MHz / CB (rhb-full v2.2.1, table 7.1, p. 43–44).
+# 4 W RMS ERP max. AM, FM and SSB allowed (USB primarily for SSB).
+# K3A / K7A / K11A / K19A are radio control (RC) channels — RC use
+# only, not voice. K11A is a former emergency frequency. K24 is the
+# traditional SSB calling channel. Mode recorded as FM (most common
+# scanner-friendly demod); real mode varies AM/FM/SSB.
+# Note the non-monotonic numbering around K22–K25 (K23=27.255 follows
+# K22=27.225, then K24=27.235 SSB).
+
+[[channels]]
+name = "PR27 K1"
+rx_hz = 26_965_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K2"
+rx_hz = 26_975_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K3"
+rx_hz = 26_985_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K3A RC"
+rx_hz = 26_995_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K4"
+rx_hz = 27_005_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K5"
+rx_hz = 27_015_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K6"
+rx_hz = 27_025_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K7"
+rx_hz = 27_035_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K7A RC"
+rx_hz = 27_045_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K8"
+rx_hz = 27_055_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K9"
+rx_hz = 27_065_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K10"
+rx_hz = 27_075_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K11"
+rx_hz = 27_085_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K11A (was nödfrek.)"
+rx_hz = 27_095_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K12"
+rx_hz = 27_105_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K13"
+rx_hz = 27_115_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K14"
+rx_hz = 27_125_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K15"
+rx_hz = 27_135_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K16"
+rx_hz = 27_155_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K17"
+rx_hz = 27_165_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K18"
+rx_hz = 27_175_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K19"
+rx_hz = 27_185_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K19A RC"
+rx_hz = 27_195_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K20"
+rx_hz = 27_205_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K21"
+rx_hz = 27_215_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K22"
+rx_hz = 27_225_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K23"
+rx_hz = 27_255_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K24 SSB"
+rx_hz = 27_235_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K25"
+rx_hz = 27_245_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K26"
+rx_hz = 27_265_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K27"
+rx_hz = 27_275_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K28"
+rx_hz = 27_285_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K29"
+rx_hz = 27_295_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K30"
+rx_hz = 27_305_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K31"
+rx_hz = 27_315_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K32"
+rx_hz = 27_325_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K33"
+rx_hz = 27_335_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K34"
+rx_hz = 27_345_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K35"
+rx_hz = 27_355_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K36"
+rx_hz = 27_365_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K37"
+rx_hz = 27_375_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K38"
+rx_hz = 27_385_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K39"
+rx_hz = 27_395_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR27 K40"
+rx_hz = 27_405_000
+mode = "fm"
+scan = true

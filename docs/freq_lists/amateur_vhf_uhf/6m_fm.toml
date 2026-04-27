@@ -1,0 +1,305 @@
+# Amateur 6 m FM channels (rhb-full v2.2.1, table 5.3.2, p. 29).
+# IARU R1 channel numbering. F50–F80 are simplex; RF81–RF99 are
+# repeater output frequencies (the band's standard repeater shift
+# applies — typically -500 kHz, but check per-repeater data).
+# Old single-letter aliases (Tidigare column) are appended in parens.
+
+[[channels]]
+name = "6m F50"
+rx_hz = 51_500_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F51 Anrop"
+rx_hz = 51_510_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F52"
+rx_hz = 51_520_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F53"
+rx_hz = 51_530_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F54"
+rx_hz = 51_540_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F55"
+rx_hz = 51_550_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F56"
+rx_hz = 51_560_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F57"
+rx_hz = 51_570_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F58"
+rx_hz = 51_580_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F59"
+rx_hz = 51_590_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F60"
+rx_hz = 51_600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F61"
+rx_hz = 51_610_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F62"
+rx_hz = 51_620_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F63"
+rx_hz = 51_630_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F64"
+rx_hz = 51_640_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F65"
+rx_hz = 51_650_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F66"
+rx_hz = 51_660_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F67"
+rx_hz = 51_670_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F68"
+rx_hz = 51_680_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F69"
+rx_hz = 51_690_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F70"
+rx_hz = 51_700_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F71"
+rx_hz = 51_710_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F72"
+rx_hz = 51_720_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F73"
+rx_hz = 51_730_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F74"
+rx_hz = 51_740_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F75"
+rx_hz = 51_750_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F76"
+rx_hz = 51_760_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F77"
+rx_hz = 51_770_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F78"
+rx_hz = 51_780_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F79"
+rx_hz = 51_790_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F80"
+rx_hz = 51_800_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF81"
+rx_hz = 51_810_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF82"
+rx_hz = 51_820_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF83"
+rx_hz = 51_830_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF84"
+rx_hz = 51_840_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF85"
+rx_hz = 51_850_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF86"
+rx_hz = 51_860_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF87"
+rx_hz = 51_870_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF88"
+rx_hz = 51_880_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF89"
+rx_hz = 51_890_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF90"
+rx_hz = 51_900_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF91"
+rx_hz = 51_910_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF92"
+rx_hz = 51_920_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF93"
+rx_hz = 51_930_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF94"
+rx_hz = 51_940_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF95"
+rx_hz = 51_950_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF96"
+rx_hz = 51_960_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF97"
+rx_hz = 51_970_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF98"
+rx_hz = 51_980_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m RF99"
+rx_hz = 51_990_000
+mode = "fm"
+scan = true

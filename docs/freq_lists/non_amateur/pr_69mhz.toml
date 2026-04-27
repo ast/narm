@@ -1,0 +1,52 @@
+# PR-bandet 69 MHz (rhb-full v2.2.1, table 18, p. 22–23).
+# Private radio (PR), 25 W ERP max, 10 % duty, 25 kHz channel.
+# K1 is mobile-only in V. Götaland and Halland.
+# K8 is the common calling channel.
+
+[[channels]]
+name = "PR69 K1 (mob V.Götaland/Halland)"
+rx_hz = 69_012_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR69 K2"
+rx_hz = 69_037_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR69 K3"
+rx_hz = 69_062_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR69 K4"
+rx_hz = 69_087_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR69 K5"
+rx_hz = 69_112_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR69 K6"
+rx_hz = 69_137_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR69 K7"
+rx_hz = 69_162_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR69 K8 (anrop)"
+rx_hz = 69_187_500
+mode = "fm"
+scan = true

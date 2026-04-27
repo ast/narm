@@ -1,0 +1,112 @@
+# JOTA HF frequencies (rhb-full v2.2.1, table 42, p. 45).
+# Real mode is CW or SSB; recorded as FM so the file parses. The PDF's
+# 6 m row lists 10160 (CW) and 50160 (SSB) — the 10.160 MHz entry is
+# carried over verbatim from the source.
+
+[[channels]]
+name = "80m JOTA CW"
+rx_hz = 3_570_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "80m JOTA SSB (ej R2)"
+rx_hz = 3_940_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "80m JOTA SSB"
+rx_hz = 3_690_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "40m JOTA CW"
+rx_hz = 7_030_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "40m JOTA SSB"
+rx_hz = 7_190_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "40m JOTA SSB"
+rx_hz = 7_090_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "20m JOTA CW"
+rx_hz = 14_060_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "20m JOTA SSB"
+rx_hz = 14_290_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "17m JOTA CW"
+rx_hz = 18_080_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "17m JOTA SSB"
+rx_hz = 18_140_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "15m JOTA CW"
+rx_hz = 21_140_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "15m JOTA SSB"
+rx_hz = 21_360_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "12m JOTA CW"
+rx_hz = 24_910_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "12m JOTA SSB"
+rx_hz = 24_960_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "10m JOTA CW"
+rx_hz = 28_180_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "10m JOTA SSB"
+rx_hz = 28_390_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m JOTA CW (10.16 per source)"
+rx_hz = 10_160_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m JOTA SSB"
+rx_hz = 50_160_000
+mode = "fm"
+scan = true

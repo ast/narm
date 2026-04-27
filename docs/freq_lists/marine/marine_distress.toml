@@ -1,0 +1,76 @@
+# Marine distress and DSC frequencies (rhb-full v2.2.1, table on p. 46).
+# Voice distress (USB / J3E) and DSC (digital selective calling).
+# Mode recorded as FM for compatibility — the actual modes are SSB/DSC.
+# Channel name suffix: " V" = voice distress, " DSC" = DSC.
+
+[[channels]]
+name = "MF Distress V"
+rx_hz = 2_182_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MF Distress DSC"
+rx_hz = 2_187_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF4 Distress V"
+rx_hz = 4_125_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF4 Distress DSC"
+rx_hz = 4_207_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF6 Distress V"
+rx_hz = 6_215_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF6 Distress DSC"
+rx_hz = 6_312_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF8 Distress V"
+rx_hz = 8_291_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF8 Distress DSC"
+rx_hz = 8_414_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF12 Distress V"
+rx_hz = 12_290_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF12 Distress DSC"
+rx_hz = 12_577_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF16 Distress V"
+rx_hz = 16_429_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "HF16 Distress DSC"
+rx_hz = 16_804_500
+mode = "fm"
+scan = true

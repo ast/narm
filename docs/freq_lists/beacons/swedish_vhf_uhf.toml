@@ -1,0 +1,245 @@
+# Swedish VHF/UHF beacons (rhb-full v2.2.1, table 5.6.1, p. 33).
+# Mode in source: CW (or PI4/CW for SK4MPI). Recorded as FM so the
+# file parses — flip to CW manually for proper demod. Beacons are
+# RX-only; setting shift_hz makes no sense.
+# Channel name = callsign + location prefix.
+
+[[channels]]
+name = "SK0CT/B Stockholm 6cm"
+rx_hz = 5_760_903_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK0EN/B Väddö 23cm"
+rx_hz = 10_368_847_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK0EN/B Väddö (1.3 GHz)"
+rx_hz = 1_296_835_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK0CT/B Stockholm 3cm"
+rx_hz = 10_368_840_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK1UHF Klintehamn 70cm"
+rx_hz = 432_405_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK1VHF Klintehamn 2m"
+rx_hz = 144_447_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK1UHG Klintehamn 23cm"
+rx_hz = 1_296_950_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK1SHH Klintehamn 3cm"
+rx_hz = 10_368_850_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK2VHF Vindeln/Buberget 2m"
+rx_hz = 144_457_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK2CP/B Kiruna/Esrange 6m"
+rx_hz = 50_052_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK2SHF Vännäs/Granl.b. 23cm"
+rx_hz = 1_296_985_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK2SHF Vännäs/Granl.b. 13cm"
+rx_hz = 2_320_985_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK2DR/B Råneå 23cm"
+rx_hz = 1_296_937_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK2DR/B Råneå 3cm"
+rx_hz = 10_368_820_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK3UHH Nordingrå/Rävsön 13cm"
+rx_hz = 2_320_900_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK3UHF Nordingrå/Rävsön 70cm"
+rx_hz = 432_455_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK3UHG Nordingrå/Rävsön 23cm"
+rx_hz = 1_296_855_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK3SIX Östersund 6m"
+rx_hz = 50_468_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK3VHF Östersund 2m"
+rx_hz = 144_421_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SM3KDR Krokom/Aspås 10m"
+rx_hz = 28_286_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK4BX/B Garphyttan/Annaboda 3cm"
+rx_hz = 10_368_960_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK4MPI Borlänge 2m (PI4/CW)"
+rx_hz = 144_412_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK4BX/B Garphyttan/Storst. 70cm"
+rx_hz = 432_460_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK4BX/B Garphyttan/Annab. 23cm"
+rx_hz = 1_296_960_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK6YH/B Göteborg 3cm"
+rx_hz = 10_368_808_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK6MHI Hönö 23cm"
+rx_hz = 1_296_800_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK6MHI Göteborg 6cm"
+rx_hz = 5_760_800_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK6UHF Varberg/Veddige 70cm"
+rx_hz = 432_412_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK6SHG Tjörn Island 1.5cm"
+rx_hz = 24_048_883_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK6MHI Göteborg 1.5cm"
+rx_hz = 24_048_800_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK6UHI Tjörn Island 23cm"
+rx_hz = 1_296_805_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK6VHF Tjörn Island 2m"
+rx_hz = 144_406_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK6WW/B Karlsborg/Vaberget 3cm"
+rx_hz = 10_368_835_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK6EI/B Skövde 6m"
+rx_hz = 50_460_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SM7DTE/B Gärsnäs 6cm"
+rx_hz = 5_760_841_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SM7DTE/B Gärsnäs 3cm"
+rx_hz = 10_368_841_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SM7DTE/B Gärsnäs 1.5cm"
+rx_hz = 24_048_883_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK7GH/B Värnamo 10m"
+rx_hz = 28_298_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK7VHF Sjöbo 2m"
+rx_hz = 144_461_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "SK7GH/B Värnamo 23cm"
+rx_hz = 1_296_825_000
+mode = "fm"
+scan = true

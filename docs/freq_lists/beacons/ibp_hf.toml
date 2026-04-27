@@ -1,0 +1,38 @@
+# IBP — International Beacon Project (rhb-full v2.2.1, table 46, p. 47).
+# 18 beacon stations transmit on each of these 5 HF frequencies in
+# 10-second slots, cycling through the global lineup every 3 minutes.
+# Real mode is CW; recorded as FM so the file parses.
+# Beacon order at 00:00 on each freq:
+#   4U1UN UN, VE8AT CA, W6WX US, KH6RS HI, ZL6B NZ, VK6RBP AU,
+#   JA2IGY JP, RR9O RU, VR2B HK, 4S7B LK, ZS6DN ZA, 5Z4B KE,
+#   4X6TU IL, OH2B FI, CS3B Madeira, LU4AA AR, OA4B PE, YV5B VE.
+
+[[channels]]
+name = "IBP 14.100"
+rx_hz = 14_100_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "IBP 18.110"
+rx_hz = 18_110_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "IBP 21.150"
+rx_hz = 21_150_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "IBP 24.930"
+rx_hz = 24_930_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "IBP 28.200"
+rx_hz = 28_200_000
+mode = "fm"
+scan = true

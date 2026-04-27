@@ -1,0 +1,535 @@
+# Amateur 70 cm FM channels (rhb-full v2.2.1, table 5.3.4, p. 31–32).
+# IARU R1 numbering. U272–U320 simplex; RU368–RU400 are repeater
+# output frequencies (use shift_hz = -2 MHz to TX). Annotations from
+# the PDF "Anm" column appended to channel names. The RU* numbers also
+# carry the legacy RU0–RU15(X) names.
+
+# Simplex U272–U320
+
+[[channels]]
+name = "70cm U272 SSTV"
+rx_hz = 433_400_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U273"
+rx_hz = 433_412_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U274"
+rx_hz = 433_425_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U275"
+rx_hz = 433_437_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U276 Digital"
+rx_hz = 433_450_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U277"
+rx_hz = 433_462_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U278"
+rx_hz = 433_475_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U279"
+rx_hz = 433_487_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U280 Anrop"
+rx_hz = 433_500_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U281"
+rx_hz = 433_512_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U282"
+rx_hz = 433_525_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U283"
+rx_hz = 433_537_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U284"
+rx_hz = 433_550_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U285"
+rx_hz = 433_562_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U286"
+rx_hz = 433_575_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U287"
+rx_hz = 433_587_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U288 RTTY"
+rx_hz = 433_600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U289"
+rx_hz = 433_612_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U290"
+rx_hz = 433_625_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U291"
+rx_hz = 433_637_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U292"
+rx_hz = 433_650_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U293"
+rx_hz = 433_662_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U294"
+rx_hz = 433_675_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U295"
+rx_hz = 433_687_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U296 FAX"
+rx_hz = 433_700_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U297"
+rx_hz = 433_712_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U298"
+rx_hz = 433_725_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U299"
+rx_hz = 433_737_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U300"
+rx_hz = 433_750_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U301"
+rx_hz = 433_762_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U302"
+rx_hz = 433_775_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U303"
+rx_hz = 433_787_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U304 APRS"
+rx_hz = 433_800_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U305"
+rx_hz = 433_812_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U306"
+rx_hz = 433_825_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U307"
+rx_hz = 433_837_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U308"
+rx_hz = 433_850_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U309"
+rx_hz = 433_862_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U310"
+rx_hz = 433_875_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U311"
+rx_hz = 433_887_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U312"
+rx_hz = 433_900_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U313"
+rx_hz = 433_912_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U314"
+rx_hz = 433_925_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U315"
+rx_hz = 433_937_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U316"
+rx_hz = 433_950_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U317"
+rx_hz = 433_962_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U318"
+rx_hz = 433_975_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U319"
+rx_hz = 433_987_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U320"
+rx_hz = 434_000_000
+mode = "fm"
+scan = true
+
+# Repeater output frequencies (RU368–RU400 / RU0–RU15X).
+# Add shift_hz = -2_000_000 to TX into the repeater input.
+
+[[channels]]
+name = "70cm RU368 RU0"
+rx_hz = 434_600_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU369 RU0X"
+rx_hz = 434_612_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU370 RU1"
+rx_hz = 434_625_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU371 RU1X"
+rx_hz = 434_637_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU372 RU2"
+rx_hz = 434_650_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU373 RU2X"
+rx_hz = 434_662_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU374 RU3"
+rx_hz = 434_675_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU375 RU3X"
+rx_hz = 434_687_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU376 RU4"
+rx_hz = 434_700_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU377 RU4X"
+rx_hz = 434_712_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU378 RU5"
+rx_hz = 434_725_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU379 RU5X"
+rx_hz = 434_737_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU380 RU6"
+rx_hz = 434_750_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU381 RU6X"
+rx_hz = 434_762_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU382 RU7"
+rx_hz = 434_775_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU383 RU7X"
+rx_hz = 434_787_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU384 RU8"
+rx_hz = 434_800_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU385 RU8X"
+rx_hz = 434_812_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU386 RU9"
+rx_hz = 434_825_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU387 RU9X"
+rx_hz = 434_837_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU388 RU10"
+rx_hz = 434_850_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU389 RU10X"
+rx_hz = 434_862_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU390 RU11"
+rx_hz = 434_875_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU391 RU11X"
+rx_hz = 434_887_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU392 RU12"
+rx_hz = 434_900_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU393 RU12X"
+rx_hz = 434_912_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU394 RU13"
+rx_hz = 434_925_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU395 RU13X"
+rx_hz = 434_937_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU396 RU14"
+rx_hz = 434_950_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU397 RU14X"
+rx_hz = 434_962_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU398 RU15"
+rx_hz = 434_975_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU399 RU15X"
+rx_hz = 434_987_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm RU400"
+rx_hz = 435_000_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true

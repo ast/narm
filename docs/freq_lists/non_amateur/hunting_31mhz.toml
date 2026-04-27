@@ -1,0 +1,237 @@
+# Jaktfrekvenser 31 MHz (rhb-full v2.2.1, table 17, p. 21–22).
+# Hunting/general landmobile band, 5 W max, 10 % duty cycle.
+# Channels marked with * were added in October 2012.
+
+[[channels]]
+name = "Jakt 1"
+rx_hz = 30_930_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 25*"
+rx_hz = 30_940_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 26*"
+rx_hz = 30_950_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 27*"
+rx_hz = 30_960_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 28*"
+rx_hz = 30_970_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 29*"
+rx_hz = 31_030_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 2"
+rx_hz = 31_040_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 3 (was Kanal 1/D)"
+rx_hz = 31_050_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 4 (was Kanal 2/A)"
+rx_hz = 31_060_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 5"
+rx_hz = 31_070_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 6"
+rx_hz = 31_080_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 7"
+rx_hz = 31_090_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 8"
+rx_hz = 31_100_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 9"
+rx_hz = 31_110_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 10"
+rx_hz = 31_120_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 30*"
+rx_hz = 31_130_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 11"
+rx_hz = 31_140_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 12"
+rx_hz = 31_150_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 13 (was Kanal 3/B)"
+rx_hz = 31_160_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 31*"
+rx_hz = 31_170_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 14"
+rx_hz = 31_180_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 15"
+rx_hz = 31_190_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 16"
+rx_hz = 31_200_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 17"
+rx_hz = 31_210_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 18"
+rx_hz = 31_220_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 32*"
+rx_hz = 31_230_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 33*"
+rx_hz = 31_240_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 19 (was Kanal 4/E)"
+rx_hz = 31_250_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 20 (was Kanal 5/C)"
+rx_hz = 31_260_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 21"
+rx_hz = 31_270_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 34*"
+rx_hz = 31_280_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 35*"
+rx_hz = 31_290_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 36*"
+rx_hz = 31_300_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 37*"
+rx_hz = 31_310_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 22 (was Kanal 6/F)"
+rx_hz = 31_320_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 23"
+rx_hz = 31_330_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 38*"
+rx_hz = 31_340_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 39*"
+rx_hz = 31_350_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt 40*"
+rx_hz = 31_360_000
+mode = "fm"
+scan = true

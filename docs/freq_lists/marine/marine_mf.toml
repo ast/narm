@@ -1,0 +1,64 @@
+# Marine MF (rhb-full v2.2.1, table 7.3.1, p. 45).
+# Swedish MF coast stations. Mode is SSB (J3E); recorded as FM so the
+# file parses — change to SSB by hand if your radio supports it. Each
+# channel split into ship + shore. MF2 omitted (no frequencies listed).
+
+[[channels]]
+name = "MF1 Gotland Ship"
+rx_hz = 2_099_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MF1 Gotland Shore"
+rx_hz = 1_687_400
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MF3 Gislövshammar Ship"
+rx_hz = 2_060_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MF3 Gislövshammar Shore"
+rx_hz = 1_797_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MF4 Härnösand Ship"
+rx_hz = 2_216_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MF4 Härnösand Shore"
+rx_hz = 2_733_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MF5 Bjuröklubb Ship"
+rx_hz = 2_123_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MF5 Bjuröklubb Shore"
+rx_hz = 1_779_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MF6 Grimeton Ship"
+rx_hz = 2_135_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MF6 Grimeton Shore"
+rx_hz = 1_710_000
+mode = "fm"
+scan = true

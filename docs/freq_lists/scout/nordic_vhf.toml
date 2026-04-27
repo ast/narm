@@ -1,0 +1,23 @@
+# Nordic scout VHF frequencies (rhb-full v2.2.1, table 5.5, p. 32).
+# JOTA (Jamboree On The Air) is the third weekend of October.
+# FM channel doubles as 2m simplex V34. SSB and CW recorded as FM
+# for parser compatibility — flip to SSB/CW manually if your radio
+# supports them.
+
+[[channels]]
+name = "Scout VHF FM V34"
+rx_hz = 145_425_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Scout VHF SSB"
+rx_hz = 144_240_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Scout VHF CW"
+rx_hz = 144_050_000
+mode = "fm"
+scan = true
