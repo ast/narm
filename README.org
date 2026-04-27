@@ -102,6 +102,13 @@ cargo test
   (=--band 2,70=, =--band 2 --band 70=, =--band 2,70 --band 23=).
   Examples: =narm repeaters near JO67AT --radius 30 --mode fm=;
   =narm repeaters near 57.7 11.97 --band 2,70 --tsv=.
+- =repeaters search <query>= :: Full-text search over =call=,
+  =city=, =district=, =network= via FTS5. =<query>= is FTS5
+  syntax: bare terms (=Göteborg=), prefix (=SK6*=), column
+  filter (=call:SA6*=), boolean (=Göteborg AND call:SK6*=).
+  Same =--band=, =--mode=, =--limit=, =--tsv= flags as =near=.
+  Examples: =narm repeaters search Angered=; =narm repeaters
+  search "call:SK6*" --band 2 --mode fm=.
 - =completions <shell>= :: Emit shell completions
   (=bash=, =zsh=, =fish=, =elvish=, =powershell=) to stdout.
 

@@ -82,6 +82,8 @@ pub enum RepeatersCommand {
     Import(ImportRepeatersArgs),
     /// List repeaters within a radius of a location.
     Near(NearArgs),
+    /// Full-text search over call, city, district, network (FTS5).
+    Search(SearchArgs),
 }
 
 #[derive(Args, Debug)]
@@ -104,6 +106,24 @@ pub struct NearArgs {
     pub band: Vec<String>,
     /// Filter by mode (case-insensitive: fm, dmr, c4fm, dstar).
     /// Comma-separated and/or repeated.
+    #[arg(long, value_delimiter = ',')]
+    pub mode: Vec<String>,
+    /// Maximum number of results (default: no limit).
+    #[arg(long)]
+    pub limit: Option<usize>,
+    /// Emit tab-separated output instead of an aligned table.
+    #[arg(long)]
+    pub tsv: bool,
+}
+
+#[derive(Args, Debug)]
+pub struct SearchArgs {
+    /// FTS5 query (e.g. `Göteborg`, `call:SK6*`, `Göteborg AND call:SK*`).
+    pub query: String,
+    /// Filter by band (comma-separated and/or repeated).
+    #[arg(long, value_delimiter = ',')]
+    pub band: Vec<String>,
+    /// Filter by mode (comma-separated and/or repeated, case-insensitive).
     #[arg(long, value_delimiter = ',')]
     pub mode: Vec<String>,
     /// Maximum number of results (default: no limit).

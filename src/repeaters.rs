@@ -366,22 +366,59 @@ pub fn find_near(
     Ok(hits)
 }
 
-/// Full-text search over `call`, `city`, `district`, `network`. Helper kept
-/// here so future subcommands (`repeaters search "<query>"`) can call it.
-pub fn fts_search(conn: &Connection, query: &str, limit: usize) -> Result<Vec<Repeater>> {
-    let mut stmt = conn.prepare(
+#[derive(Debug, Clone, Default)]
+pub struct SearchFilter {
+    /// Empty means "any band". Match against the `band` column verbatim.
+    pub bands: Vec<String>,
+    /// Empty means "any mode". Compared case-insensitively.
+    pub modes: Vec<String>,
+    pub limit: Option<usize>,
+}
+
+/// Full-text search over `call`, `city`, `district`, `network`. `query` is
+/// FTS5 syntax — supports column filters (`call:SA*`), prefix matching,
+/// AND/OR/NEAR. Results sorted by FTS `rank` (best match first).
+pub fn fts_search(conn: &Connection, query: &str, filter: &SearchFilter) -> Result<Vec<Repeater>> {
+    let mut sql = String::from(
         r#"
         SELECT r.id, r.updated, r.type, r.band, r.mode, r.network, r.network_id, r.district,
                r.call, r.city, r.channel, r.output, r.tx_shift, r.access, r.status,
                r.lat, r.lng, r.locator, r.masl, r.magl, r.watt_pep, r.dir, r.ant, r.backup
           FROM repeaters r
           JOIN repeaters_fts f ON f.rowid = r.id
-         WHERE repeaters_fts MATCH ?1
-         ORDER BY rank
-         LIMIT ?2
+         WHERE repeaters_fts MATCH ?
         "#,
+    );
+
+    let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![Box::new(query.to_string())];
+
+    if !filter.bands.is_empty() {
+        sql.push_str(" AND r.band IN (");
+        sql.push_str(&vec!["?"; filter.bands.len()].join(","));
+        sql.push(')');
+        for b in &filter.bands {
+            params.push(Box::new(b.clone()));
+        }
+    }
+    if !filter.modes.is_empty() {
+        sql.push_str(" AND LOWER(r.mode) IN (");
+        sql.push_str(&vec!["?"; filter.modes.len()].join(","));
+        sql.push(')');
+        for m in &filter.modes {
+            params.push(Box::new(m.to_lowercase()));
+        }
+    }
+
+    sql.push_str(" ORDER BY rank");
+    if let Some(n) = filter.limit {
+        sql.push_str(&format!(" LIMIT {n}"));
+    }
+
+    let mut stmt = conn.prepare(&sql)?;
+    let rows = stmt.query_map(
+        rusqlite::params_from_iter(params.iter().map(|p| &**p as &dyn rusqlite::ToSql)),
+        row_to_repeater,
     )?;
-    let rows = stmt.query_map(params![query, limit as i64], row_to_repeater)?;
     rows.collect::<Result<_, _>>()
         .map_err(|e| anyhow!("fts query failed: {e}"))
 }
@@ -540,8 +577,33 @@ mod tests {
         assert_eq!(two_bands.len(), 2);
 
         // FTS hit on city.
-        let fts_hits = fts_search(&conn, "Angered", 10).unwrap();
+        let fts_hits = fts_search(&conn, "Angered", &SearchFilter::default()).unwrap();
         assert_eq!(fts_hits.len(), 1);
         assert_eq!(fts_hits[0].call, "SA6AR/R");
+
+        // FTS + band filter narrows to the 70 cm Angered repeater.
+        let fts_70 = fts_search(
+            &conn,
+            "Angered",
+            &SearchFilter {
+                bands: vec!["70".into()],
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert_eq!(fts_70.len(), 1);
+        assert_eq!(fts_70[0].band.as_deref(), Some("70"));
+
+        // FTS + band filter that excludes the only hit returns nothing.
+        let fts_2 = fts_search(
+            &conn,
+            "Angered",
+            &SearchFilter {
+                bands: vec!["2".into()],
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        assert!(fts_2.is_empty());
     }
 }
