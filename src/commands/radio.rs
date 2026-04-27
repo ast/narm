@@ -2,11 +2,21 @@ use std::io::{self, Write};
 use std::path::PathBuf;
 
 use anyhow::{Context, Result, bail};
-use clap::{Args, Subcommand};
+use clap::{Args, Subcommand, ValueEnum};
 
 use narm::Radio;
 use narm::channel::Config;
 use narm::uvk5;
+
+#[derive(ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]
+#[clap(rename_all = "kebab-case")]
+pub enum ReadFormat {
+    /// Decode channel records into narm's TOML schema.
+    Toml,
+    /// Write the unmodified EEPROM bytes (calibration, settings,
+    /// channel-attributes block, etc.) — suitable for full backup.
+    Raw,
+}
 
 #[derive(Args, Debug)]
 pub struct RadioArgs {
@@ -30,6 +40,10 @@ pub struct ReadArgs {
     /// release; other radios will reject with an error.
     #[arg(long, value_enum)]
     pub radio: Radio,
+    /// Output format. `toml` decodes channels; `raw` writes the
+    /// unmodified 8 KiB EEPROM image (full backup).
+    #[arg(long, value_enum, default_value_t = ReadFormat::Toml)]
+    pub format: ReadFormat,
     /// Output file (defaults to stdout).
     #[arg(long, short)]
     pub out: Option<PathBuf>,
@@ -56,23 +70,29 @@ fn run_read(args: &ReadArgs) -> Result<()> {
     let eeprom = uvk5::read_eeprom(&mut *port).context("reading eeprom from radio")?;
     eprintln!("read {} bytes from EEPROM", eeprom.len());
 
-    let report = uvk5::decode_channels(&eeprom).context("decoding channels")?;
-    for w in &report.warnings {
-        eprintln!("warning: {w}");
-    }
-    eprintln!("decoded {} channels", report.channels.len());
-
-    let cfg = Config {
-        channels: report.channels,
+    let bytes: Vec<u8> = match args.format {
+        ReadFormat::Raw => eeprom,
+        ReadFormat::Toml => {
+            let report = uvk5::decode_channels(&eeprom).context("decoding channels")?;
+            for w in &report.warnings {
+                eprintln!("warning: {w}");
+            }
+            eprintln!("decoded {} channels", report.channels.len());
+            let cfg = Config {
+                channels: report.channels,
+            };
+            toml::to_string(&cfg)
+                .context("serialising channels to TOML")?
+                .into_bytes()
+        }
     };
-    let toml = toml::to_string(&cfg).context("serialising channels to TOML")?;
 
     match &args.out {
-        Some(path) => std::fs::write(path, &toml)
-            .with_context(|| format!("writing TOML to {}", path.display()))?,
+        Some(path) => std::fs::write(path, &bytes)
+            .with_context(|| format!("writing output to {}", path.display()))?,
         None => io::stdout()
-            .write_all(toml.as_bytes())
-            .context("writing TOML to stdout")?,
+            .write_all(&bytes)
+            .context("writing output to stdout")?,
     }
     Ok(())
 }

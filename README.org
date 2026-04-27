@@ -123,14 +123,21 @@ cargo test
   =--band=, =--mode=, =--limit=, =--tsv= flags as =near=.
   Examples: =narm rep s Angered=; =narm rep s SK6* --band 70=;
   =narm rep s --raw "call:SK6*"=.
-- =radio read --port <port> --radio <radio> [--out <file>]= ::
-  Download channel data from a connected radio over its USB-
-  serial cable, decode into the narm channel TOML schema, and
-  emit it (stdout by default). Currently only
-  =--radio quansheng-uv-k5= is implemented (UV-K5 / UV-K5(8),
-  using CHIRP's wire protocol). AM channels are skipped with a
-  warning since narm has no AM mode yet. Example: =narm radio
-  read --port /dev/ttyUSB0 --radio quansheng-uv-k5 > my-uvk5.toml=.
+- =radio read --port <port> --radio <radio> [--format
+  toml|raw] [--out <file>]= :: Download from a connected radio
+  over its USB-serial cable. Two output formats:
+  - =--format toml= (default) decodes channel records into
+    narm's TOML schema. AM channels are skipped (narm has no
+    AM mode yet); the rest round-trip through =narm validate=.
+  - =--format raw= writes the unmodified 8 KiB EEPROM image
+    (calibration, settings, channel-attributes block,
+    everything) — suitable for full backup and bit-exact
+    diffing between dumps.
+  Currently only =--radio quansheng-uv-k5= is implemented
+  (UV-K5 / UV-K5(8), using CHIRP's wire protocol). Examples:
+  =narm radio read --port /dev/ttyUSB0 --radio quansheng-uv-k5
+  > my-uvk5.toml=; =narm radio read --port /dev/ttyUSB0
+  --radio quansheng-uv-k5 --format raw --out backup.bin=.
 - =completions <shell>= :: Emit shell completions
   (=bash=, =zsh=, =fish=, =elvish=, =powershell=) to stdout.
 
