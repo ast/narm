@@ -1,0 +1,524 @@
+# SM6WJM — interesting frequencies for JO67AQ (Mölndal area, 57.6875 N
+# 12.0417 E). Hand-curated from docs/freq_lists/* and the SSA repeater
+# database (`narm rep n JO67AQ --radius 100`). Repeaters are within
+# 100 km of QTH; simplex calling channels and common scanner targets
+# included as well.
+
+#################################
+# Ham — 2 m simplex
+#################################
+
+[[channels]]
+name = "2m V19 INET GW"
+rx_hz = 145_237_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V30 S15 DV Anrop"
+rx_hz = 145_375_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V32 S16"
+rx_hz = 145_400_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V34 S17 Scout/JOTA"
+rx_hz = 145_425_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "2m V40 S20 FM Anrop"
+rx_hz = 145_500_000
+mode = "fm"
+scan = true
+
+#################################
+# Ham — 70 cm simplex
+#################################
+
+[[channels]]
+name = "70cm U276 Digital"
+rx_hz = 433_450_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U280 Anrop"
+rx_hz = 433_500_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "70cm U304 APRS"
+rx_hz = 433_800_000
+mode = "fm"
+scan = true
+
+#################################
+# Ham — 6 m simplex
+#################################
+
+[[channels]]
+name = "6m F50"
+rx_hz = 51_500_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "6m F51 Anrop"
+rx_hz = 51_510_000
+mode = "fm"
+scan = true
+
+#################################
+# Local 2 m FM repeaters (≤100 km of JO67AQ, sorted by distance)
+# All -600 kHz shift.
+#################################
+
+[[channels]]
+name = "RV52 SK6RFQ Guldheden 4km"
+rx_hz = 145_650_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RV56 SM6VBT/R Mölndal 4km"
+rx_hz = 145_700_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RV49 SK6RPE Kungälv 19km"
+rx_hz = 145_612_500
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RV58 SK6RJW Kungsbacka 22km"
+rx_hz = 145_725_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RV60 SK6RKI Öckerö 24km"
+rx_hz = 145_750_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RV48 SK6BA/R Skene 39km"
+rx_hz = 145_600_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RV50 SK6RIC Alingsås 40km"
+rx_hz = 145_625_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RV56 SK6DK/R Veddige 47km"
+rx_hz = 145_700_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RV62 SK6LK/R Borås 58km"
+rx_hz = 145_775_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RV48 SK6IF/R Bokenäs 73km"
+rx_hz = 145_600_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RV63 SG6WAL Vedum 76km"
+rx_hz = 145_787_500
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RV50 SK6JX/R Falkenberg 91km"
+rx_hz = 145_625_000
+shift_hz = -600_000
+mode = "fm"
+scan = true
+
+#################################
+# Local 70 cm FM repeaters (≤50 km of JO67AQ).
+# All -2 MHz shift.
+#################################
+
+[[channels]]
+name = "RU372 SK6RFQ Guldheden 4km"
+rx_hz = 434_650_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RU398 SK6RDG Guldheden 4km"
+rx_hz = 434_975_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RU376 SM6VBT/R Mölndal 4km"
+rx_hz = 434_700_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RU394 SA6AR/R Angered 14km"
+rx_hz = 434_925_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RU392 SK6RPE Kungälv 19km"
+rx_hz = 434_900_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RU378 SK6RJW Kungsbacka 22km"
+rx_hz = 434_725_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RU382 SK6RP Lerum 27km"
+rx_hz = 434_775_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RU380 SK6DQ/R Älvängen 30km"
+rx_hz = 434_750_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RU379 SA6BXG/R Romelanda 33km"
+rx_hz = 434_737_500
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RU396 SK6BA/R Skene 39km"
+rx_hz = 434_950_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RU370 SK6RIC Alingsås 40km"
+rx_hz = 434_625_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "RU376 SK6DK/R Veddige 47km"
+rx_hz = 434_700_000
+shift_hz = -2_000_000
+mode = "fm"
+scan = true
+
+#################################
+# Local DMR repeaters
+# Defaults: color_code=1, slot=2 (local), talkgroup=9. Adjust the
+# talkgroup and slot to your network's plan (BrandMeister/IPSC2).
+#################################
+
+[[channels]]
+name = "RU383 SK6AG Guldheden DMR"
+rx_hz = 434_787_500
+shift_hz = -2_000_000
+mode = "dmr"
+color_code = 1
+slot = 2
+talkgroup = 9
+scan = true
+
+[[channels]]
+name = "RV47 SK6RKI Kortedala DMR"
+rx_hz = 145_587_500
+shift_hz = -600_000
+mode = "dmr"
+color_code = 1
+slot = 2
+talkgroup = 9
+scan = true
+
+[[channels]]
+name = "RU363 SK6DG Alingsås DMR"
+rx_hz = 434_537_500
+shift_hz = -2_000_000
+mode = "dmr"
+color_code = 1
+slot = 2
+talkgroup = 9
+scan = true
+
+#################################
+# Local D-Star repeaters
+# SK6GB-D is at JO67AQ — module B = 70cm, module C = 2m.
+#################################
+
+[[channels]]
+name = "SK6GB-D Mölndal 70cm DV"
+rx_hz = 433_725_000
+mode = "dstar"
+urcall = "CQCQCQ"
+rpt1 = "SK6GB  B"
+rpt2 = "SK6GB  G"
+scan = true
+
+[[channels]]
+name = "SK6GB-D Mölndal 2m DV"
+rx_hz = 144_825_000
+mode = "dstar"
+urcall = "CQCQCQ"
+rpt1 = "SK6GB  C"
+rpt2 = "SK6GB  G"
+scan = true
+
+[[channels]]
+name = "RU361 SK6SA-B Guldheden DV"
+rx_hz = 434_512_500
+shift_hz = -2_000_000
+mode = "dstar"
+urcall = "CQCQCQ"
+rpt1 = "SK6SA  B"
+rpt2 = "SK6SA  G"
+scan = true
+
+#################################
+# PMR446 (open band, 500 mW, narrowband FM)
+#################################
+
+[[channels]]
+name = "PMR446 K1"
+rx_hz = 446_006_250
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K2"
+rx_hz = 446_018_750
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K3"
+rx_hz = 446_031_250
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K4"
+rx_hz = 446_043_750
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K5"
+rx_hz = 446_056_250
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K6"
+rx_hz = 446_068_750
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K7"
+rx_hz = 446_081_250
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+[[channels]]
+name = "PMR446 K8"
+rx_hz = 446_093_750
+mode = "fm"
+bandwidth = "narrow"
+scan = true
+
+#################################
+# PR 69 MHz (4 m, license-free, common in rural Sweden)
+#################################
+
+[[channels]]
+name = "PR69 K1 (mob V.Götaland/Halland)"
+rx_hz = 69_012_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR69 K2"
+rx_hz = 69_037_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR69 K3"
+rx_hz = 69_062_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR69 K4"
+rx_hz = 69_087_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR69 K5"
+rx_hz = 69_112_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR69 K6"
+rx_hz = 69_137_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR69 K7"
+rx_hz = 69_162_500
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "PR69 K8 Anrop"
+rx_hz = 69_187_500
+mode = "fm"
+scan = true
+
+#################################
+# Hunting / agriculture / forestry 155 MHz
+#################################
+
+[[channels]]
+name = "Jakt K6 (R)"
+rx_hz = 155_400_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt K1 (R)"
+rx_hz = 155_425_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt K7 (R)"
+rx_hz = 155_450_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt K2 (R)"
+rx_hz = 155_475_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt K3 / Marin L1"
+rx_hz = 155_500_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt K4 / Marin L2"
+rx_hz = 155_525_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "Jakt K5 / PMR Friluft"
+rx_hz = 156_000_000
+mode = "fm"
+scan = true
+
+#################################
+# Marine VHF — essentials
+# Mölndal is inland but Göteborg coast is right next door.
+# Ch 16 is anrop/distress; 70 is DSC; 6 inter-ship safety.
+#################################
+
+[[channels]]
+name = "MarVHF 06 Ship"
+rx_hz = 156_300_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 09 Ship"
+rx_hz = 156_450_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 16 Anrop/Nöd"
+rx_hz = 156_800_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "MarVHF 70 DSC"
+rx_hz = 156_525_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "AIS1"
+rx_hz = 161_975_000
+mode = "fm"
+scan = true
+
+[[channels]]
+name = "AIS2"
+rx_hz = 162_025_000
+mode = "fm"
+scan = true
