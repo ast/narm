@@ -1,11 +1,9 @@
 use std::fs;
-use std::path::PathBuf;
 
 use narm::{Mode, ModeKind, NarmError, Power};
 
-fn sample_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/sample.toml")
-}
+mod common;
+use common::sample_path;
 
 #[test]
 fn loads_and_validates_sample() {

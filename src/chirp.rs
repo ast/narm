@@ -7,6 +7,8 @@
 //!
 //! Reference: <https://chirpmyradio.com/projects/chirp/wiki/CSV_Generic>
 
+use serde::Serialize;
+
 use crate::channel::{Bandwidth, Channel, Mode, Power};
 
 #[derive(thiserror::Error, Debug)]
@@ -28,46 +30,96 @@ pub struct ConvertReport {
 /// Per-radio drivers sometimes truncate further; that's their problem.
 const NAME_MAX: usize = 16;
 
-const HEADER: &[&str] = &[
-    "Location",
-    "Name",
-    "Frequency",
-    "Duplex",
-    "Offset",
-    "Tone",
-    "rToneFreq",
-    "cToneFreq",
-    "DtcsCode",
-    "DtcsPolarity",
-    "RxDtcsCode",
-    "CrossMode",
-    "Mode",
-    "TStep",
-    "Skip",
-    "Power",
-    "Comment",
-    "URCALL",
-    "RPT1CALL",
-    "RPT2CALL",
-    "DVCODE",
-];
+/// One row of CHIRP's generic-CSV format. Field order here is the column
+/// order in the emitted CSV; the `serde(rename)` attributes match
+/// CHIRP's exact header spelling (irregular casing on `rToneFreq`,
+/// `cToneFreq`, `URCALL`, `RPT1CALL`, `RPT2CALL`, `DVCODE`).
+///
+/// All-empty defaults reflect the values CHIRP fills in when a channel
+/// doesn't use that feature; preserved verbatim to keep CSV output
+/// byte-stable across this refactor.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "PascalCase")]
+struct ChirpRow {
+    location: u32,
+    name: String,
+    frequency: String,
+    duplex: String,
+    offset: String,
+    tone: String,
+    #[serde(rename = "rToneFreq")]
+    r_tone_freq: String,
+    #[serde(rename = "cToneFreq")]
+    c_tone_freq: String,
+    dtcs_code: String,
+    dtcs_polarity: String,
+    rx_dtcs_code: String,
+    cross_mode: String,
+    mode: String,
+    #[serde(rename = "TStep")]
+    t_step: String,
+    skip: String,
+    power: String,
+    comment: String,
+    #[serde(rename = "URCALL")]
+    urcall: String,
+    #[serde(rename = "RPT1CALL")]
+    rpt1call: String,
+    #[serde(rename = "RPT2CALL")]
+    rpt2call: String,
+    #[serde(rename = "DVCODE")]
+    dvcode: String,
+}
+
+impl ChirpRow {
+    /// Common defaults for every row (CHIRP fills these even when a
+    /// channel ignores the feature). Mode-specific arms override.
+    fn base(ch: &Channel, location: u32) -> Self {
+        let (duplex, offset_mhz) = duplex_offset(ch.shift_hz);
+        ChirpRow {
+            location,
+            name: truncate(&ch.name, NAME_MAX),
+            frequency: format!("{:.6}", ch.rx_hz as f64 / 1_000_000.0),
+            duplex: duplex.to_string(),
+            offset: format!("{offset_mhz:.6}"),
+            tone: String::new(),
+            r_tone_freq: "88.5".to_string(),
+            c_tone_freq: "88.5".to_string(),
+            dtcs_code: "023".to_string(),
+            dtcs_polarity: "NN".to_string(),
+            rx_dtcs_code: String::new(),
+            cross_mode: String::new(),
+            mode: String::new(),
+            t_step: "12.50".to_string(),
+            skip: (if ch.scan { "" } else { "S" }).to_string(),
+            power: power_str(ch.power).to_string(),
+            comment: String::new(),
+            urcall: String::new(),
+            rpt1call: String::new(),
+            rpt2call: String::new(),
+            dvcode: String::new(),
+        }
+    }
+}
 
 pub fn channels_to_csv(channels: &[Channel]) -> Result<ConvertReport, ChirpError> {
-    let mut wtr = csv::WriterBuilder::new()
-        .has_headers(false)
-        .from_writer(Vec::new());
-    wtr.write_record(HEADER)?;
+    // `has_headers(true)` makes csv::Writer emit header names from the
+    // first serialised struct's field renames. To keep header-on-empty
+    // behaviour, we always serialise — see below.
+    let mut wtr = csv::Writer::from_writer(Vec::new());
 
     let mut warnings = Vec::new();
     let mut location: u32 = 1;
+    let mut wrote_any = false;
     for ch in channels {
         match channel_to_row(ch, location) {
             Ok(row) => {
-                wtr.write_record(&row)?;
+                wtr.serialize(&row)?;
                 if ch.name.chars().count() > NAME_MAX {
                     warnings.push(format!("{}: name truncated to {NAME_MAX} chars", ch.name));
                 }
                 location += 1;
+                wrote_any = true;
             }
             Err(reason) => {
                 warnings.push(format!("skipping {}: {reason}", ch.name));
@@ -75,18 +127,45 @@ pub fn channels_to_csv(channels: &[Channel]) -> Result<ConvertReport, ChirpError
         }
     }
 
+    // csv::Writer with has_headers(true) only writes the header on the
+    // first serialise call. If every channel was skipped (or `channels`
+    // was empty), force a header-only output by serialising a default
+    // row, then dropping its bytes.
+    if !wrote_any {
+        wtr.serialize(ChirpRow::base(
+            &Channel {
+                name: String::new(),
+                rx_hz: 0,
+                shift_hz: 0,
+                power: Power::Low,
+                scan: true,
+                mode: Mode::Fm {
+                    bandwidth: Bandwidth::Wide,
+                    tone_tx_hz: None,
+                    tone_rx_hz: None,
+                    dcs_code: None,
+                },
+                source: None,
+            },
+            0,
+        ))?;
+        let bytes = wtr.into_inner().expect("csv writer into_inner");
+        // Keep only the header line.
+        let header_only = match bytes.iter().position(|&b| b == b'\n') {
+            Some(i) => bytes[..=i].to_vec(),
+            None => bytes,
+        };
+        let csv = String::from_utf8(header_only)?;
+        return Ok(ConvertReport { csv, warnings });
+    }
+
     let csv_bytes = wtr.into_inner().expect("csv writer into_inner");
     let csv = String::from_utf8(csv_bytes)?;
     Ok(ConvertReport { csv, warnings })
 }
 
-fn channel_to_row(ch: &Channel, location: u32) -> Result<Vec<String>, &'static str> {
-    let freq_mhz = ch.rx_hz as f64 / 1_000_000.0;
-    let (duplex, offset_mhz) = duplex_offset(ch.shift_hz);
-    let power = power_str(ch.power);
-    let skip = if ch.scan { "" } else { "S" };
-    let name = truncate(&ch.name, NAME_MAX);
-
+fn channel_to_row(ch: &Channel, location: u32) -> Result<ChirpRow, &'static str> {
+    let mut row = ChirpRow::base(ch, location);
     match &ch.mode {
         Mode::Fm {
             bandwidth,
@@ -94,58 +173,26 @@ fn channel_to_row(ch: &Channel, location: u32) -> Result<Vec<String>, &'static s
             tone_rx_hz,
             dcs_code,
         } => {
-            let mode = match bandwidth {
+            row.mode = match bandwidth {
                 Bandwidth::Wide => "FM",
                 Bandwidth::Narrow => "NFM",
-            };
+            }
+            .to_string();
             let tone = ToneCells::for_fm(*tone_tx_hz, *tone_rx_hz, *dcs_code);
-            Ok(vec![
-                location.to_string(),
-                name,
-                format!("{freq_mhz:.6}"),
-                duplex.to_string(),
-                format!("{offset_mhz:.6}"),
-                tone.tone.to_string(),
-                tone.rtone,
-                tone.ctone,
-                tone.dtcs,
-                tone.polarity.to_string(),
-                String::new(),
-                String::new(),
-                mode.to_string(),
-                "12.50".to_string(),
-                skip.to_string(),
-                power.to_string(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-                String::new(),
-            ])
+            row.tone = tone.tone.to_string();
+            row.r_tone_freq = tone.rtone;
+            row.c_tone_freq = tone.ctone;
+            row.dtcs_code = tone.dtcs;
+            row.dtcs_polarity = tone.polarity.to_string();
+            Ok(row)
         }
-        Mode::Dstar { urcall, rpt1, rpt2 } => Ok(vec![
-            location.to_string(),
-            name,
-            format!("{freq_mhz:.6}"),
-            duplex.to_string(),
-            format!("{offset_mhz:.6}"),
-            String::new(),
-            "88.5".to_string(),
-            "88.5".to_string(),
-            "023".to_string(),
-            "NN".to_string(),
-            String::new(),
-            String::new(),
-            "DV".to_string(),
-            "12.50".to_string(),
-            skip.to_string(),
-            power.to_string(),
-            String::new(),
-            urcall.clone(),
-            rpt1.clone(),
-            rpt2.clone(),
-            String::new(),
-        ]),
+        Mode::Dstar { urcall, rpt1, rpt2 } => {
+            row.mode = "DV".to_string();
+            row.urcall = urcall.clone();
+            row.rpt1call = rpt1.clone();
+            row.rpt2call = rpt2.clone();
+            Ok(row)
+        }
         Mode::Dmr { .. } => Err("DMR not supported by CHIRP CSV"),
         Mode::C4fm { .. } => Err("C4FM not supported by CHIRP CSV"),
         Mode::P25 { .. } => Err("P25 not supported by CHIRP CSV"),
@@ -268,7 +315,8 @@ mod tests {
         let r = rows(&report.csv);
         assert_eq!(r.len(), 1);
         assert_eq!(r[0][0], "Location");
-        assert_eq!(r[0].len(), HEADER.len());
+        // 21 columns in CHIRP's generic CSV format.
+        assert_eq!(r[0].len(), 21);
     }
 
     #[test]

@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use anyhow::{Context, Result, anyhow};
 use clap::{Args, Subcommand};
 
-use narm::repeaters::{self, NearFilter, NearMatch, Repeater, SearchFilter};
+use narm::repeaters::{self, NearMatch, Repeater, RepeaterFilter};
 
 #[derive(Args, Debug)]
 pub struct RepeatersArgs {
@@ -109,7 +109,7 @@ fn run_import(db_path: &Path, args: &ImportRepeatersArgs) -> Result<()> {
 fn run_near(db_path: &Path, args: &NearArgs) -> Result<()> {
     let (lat, lng) = parse_location(&args.location)?;
     let conn = repeaters::open_db(db_path)?;
-    let filter = NearFilter {
+    let filter = RepeaterFilter {
         bands: args.band.clone(),
         modes: args.mode.clone(),
         limit: args.limit,
@@ -127,7 +127,7 @@ fn run_near(db_path: &Path, args: &NearArgs) -> Result<()> {
 
 fn run_search(db_path: &Path, args: &SearchArgs) -> Result<()> {
     let conn = repeaters::open_db(db_path)?;
-    let filter = SearchFilter {
+    let filter = RepeaterFilter {
         bands: args.band.clone(),
         modes: args.mode.clone(),
         limit: args.limit,

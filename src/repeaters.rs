@@ -48,14 +48,19 @@ pub struct NearMatch {
     pub distance_km: f64,
 }
 
+/// Shared filter for [`find_near`] and [`fts_search`]. `limit` is
+/// applied differently between the two: see notes on each function.
 #[derive(Debug, Clone, Default)]
-pub struct NearFilter {
+pub struct RepeaterFilter {
     /// Empty means "any band". Match against the `band` column verbatim.
     pub bands: Vec<String>,
     /// Empty means "any mode". Compared case-insensitively.
     pub modes: Vec<String>,
     pub limit: Option<usize>,
 }
+
+/// Back-compat alias — both subcommands now share one filter type.
+pub type NearFilter = RepeaterFilter;
 
 /// Resolve the default DB path: `$XDG_DATA_HOME/narm/repeaters.db`.
 pub fn default_db_path() -> Result<PathBuf> {
@@ -293,15 +298,66 @@ pub fn count_rows(conn: &Connection) -> Result<i64> {
         .context("counting rows")
 }
 
+/// Append `band`/`mode` filter clauses (`AND <col> IN (?,?,...)`) to a
+/// running SQL string and parameter list. Empty `values` means no-op.
+fn append_in(
+    sql: &mut String,
+    params: &mut Vec<Box<dyn rusqlite::ToSql>>,
+    column: &str,
+    values: &[String],
+    lowercase: bool,
+) {
+    if values.is_empty() {
+        return;
+    }
+    if lowercase {
+        sql.push_str(" AND LOWER(");
+        sql.push_str(column);
+        sql.push_str(") IN (");
+    } else {
+        sql.push_str(" AND ");
+        sql.push_str(column);
+        sql.push_str(" IN (");
+    }
+    sql.push_str(&vec!["?"; values.len()].join(","));
+    sql.push(')');
+    for v in values {
+        params.push(if lowercase {
+            Box::new(v.to_lowercase())
+        } else {
+            Box::new(v.clone())
+        });
+    }
+}
+
+fn run_query(
+    conn: &Connection,
+    sql: &str,
+    params: Vec<Box<dyn rusqlite::ToSql>>,
+) -> rusqlite::Result<Vec<Repeater>> {
+    let mut stmt = conn.prepare(sql)?;
+    let rows = stmt.query_map(
+        rusqlite::params_from_iter(params.iter().map(|p| &**p as &dyn rusqlite::ToSql)),
+        row_to_repeater,
+    )?;
+    rows.collect()
+}
+
 /// Find repeaters within `radius_km` of (`lat`,`lng`), with optional band/mode
 /// filters and result cap. Sorted ascending by distance. Empty `bands`/`modes`
 /// vecs mean "no filter".
+///
+/// Note: `filter.limit` is applied **after** the haversine distance filter,
+/// not as a SQL `LIMIT`. The bbox prefilter in SQL is approximate; the exact
+/// distance test runs in Rust, so capping in SQL would truncate before we
+/// know which rows actually fall within the radius. `fts_search` differs —
+/// its filter is exact at the SQL layer, so it pushes `LIMIT` into SQL.
 pub fn find_near(
     conn: &Connection,
     lat: f64,
     lng: f64,
     radius_km: f64,
-    filter: &NearFilter,
+    filter: &RepeaterFilter,
 ) -> Result<Vec<NearMatch>> {
     let (lat_min, lat_max, lng_min, lng_max) = bbox(lat, lng, radius_km);
 
@@ -323,32 +379,13 @@ pub fn find_near(
         Box::new(lng_min),
         Box::new(lng_max),
     ];
+    append_in(&mut sql, &mut params, "band", &filter.bands, false);
+    append_in(&mut sql, &mut params, "mode", &filter.modes, true);
 
-    if !filter.bands.is_empty() {
-        sql.push_str(" AND band IN (");
-        sql.push_str(&vec!["?"; filter.bands.len()].join(","));
-        sql.push(')');
-        for b in &filter.bands {
-            params.push(Box::new(b.clone()));
-        }
-    }
-    if !filter.modes.is_empty() {
-        sql.push_str(" AND LOWER(mode) IN (");
-        sql.push_str(&vec!["?"; filter.modes.len()].join(","));
-        sql.push(')');
-        for m in &filter.modes {
-            params.push(Box::new(m.to_lowercase()));
-        }
-    }
+    let bbox_hits = run_query(conn, &sql, params)?;
 
-    let mut stmt = conn.prepare(&sql)?;
-    let rows = stmt.query_map(
-        rusqlite::params_from_iter(params.iter().map(|p| &**p as &dyn rusqlite::ToSql)),
-        row_to_repeater,
-    )?;
-
-    let mut hits: Vec<NearMatch> = rows
-        .filter_map(|r| r.ok())
+    let mut hits: Vec<NearMatch> = bbox_hits
+        .into_iter()
         .filter_map(|rep| {
             let (rlat, rlng) = (rep.lat?, rep.lng?);
             let d = haversine_km(lat, lng, rlat, rlng);
@@ -366,14 +403,8 @@ pub fn find_near(
     Ok(hits)
 }
 
-#[derive(Debug, Clone, Default)]
-pub struct SearchFilter {
-    /// Empty means "any band". Match against the `band` column verbatim.
-    pub bands: Vec<String>,
-    /// Empty means "any mode". Compared case-insensitively.
-    pub modes: Vec<String>,
-    pub limit: Option<usize>,
-}
+/// Back-compat alias — both subcommands now share one filter type.
+pub type SearchFilter = RepeaterFilter;
 
 /// Escape a free-text user query for FTS5: split on whitespace, wrap each
 /// term in FTS5 phrase quotes (doubling internal `"`), and join with
@@ -405,7 +436,15 @@ pub fn escape_fts_query(query: &str) -> String {
 /// FTS5 syntax — supports column filters (`call:SA*`), prefix matching,
 /// AND/OR/NEAR. Results sorted by FTS `rank` (best match first).
 /// For free-text user input, run it through [`escape_fts_query`] first.
-pub fn fts_search(conn: &Connection, query: &str, filter: &SearchFilter) -> Result<Vec<Repeater>> {
+///
+/// Unlike [`find_near`], `filter.limit` is pushed into the SQL `LIMIT`
+/// clause — every row produced by FTS5+IN-filters is a real hit, so
+/// truncating at the SQL layer is both correct and faster.
+pub fn fts_search(
+    conn: &Connection,
+    query: &str,
+    filter: &RepeaterFilter,
+) -> Result<Vec<Repeater>> {
     let mut sql = String::from(
         r#"
         SELECT r.id, r.updated, r.type, r.band, r.mode, r.network, r.network_id, r.district,
@@ -418,36 +457,15 @@ pub fn fts_search(conn: &Connection, query: &str, filter: &SearchFilter) -> Resu
     );
 
     let mut params: Vec<Box<dyn rusqlite::ToSql>> = vec![Box::new(query.to_string())];
-
-    if !filter.bands.is_empty() {
-        sql.push_str(" AND r.band IN (");
-        sql.push_str(&vec!["?"; filter.bands.len()].join(","));
-        sql.push(')');
-        for b in &filter.bands {
-            params.push(Box::new(b.clone()));
-        }
-    }
-    if !filter.modes.is_empty() {
-        sql.push_str(" AND LOWER(r.mode) IN (");
-        sql.push_str(&vec!["?"; filter.modes.len()].join(","));
-        sql.push(')');
-        for m in &filter.modes {
-            params.push(Box::new(m.to_lowercase()));
-        }
-    }
+    append_in(&mut sql, &mut params, "r.band", &filter.bands, false);
+    append_in(&mut sql, &mut params, "r.mode", &filter.modes, true);
 
     sql.push_str(" ORDER BY rank");
     if let Some(n) = filter.limit {
         sql.push_str(&format!(" LIMIT {n}"));
     }
 
-    let mut stmt = conn.prepare(&sql)?;
-    let rows = stmt.query_map(
-        rusqlite::params_from_iter(params.iter().map(|p| &**p as &dyn rusqlite::ToSql)),
-        row_to_repeater,
-    )?;
-    rows.collect::<Result<_, _>>()
-        .map_err(|e| anyhow!("fts query failed: {e}"))
+    run_query(conn, &sql, params).map_err(|e| anyhow!("fts query failed: {e}"))
 }
 
 fn row_to_repeater(r: &Row<'_>) -> rusqlite::Result<Repeater> {
@@ -564,13 +582,13 @@ mod tests {
 
         // Near search around Gothenburg (≈SA6AR) should hit SA6AR but not the
         // Skellefteå unit ~1100 km north.
-        let hits = find_near(&conn, 57.71, 11.97, 50.0, &NearFilter::default()).unwrap();
+        let hits = find_near(&conn, 57.71, 11.97, 50.0, &RepeaterFilter::default()).unwrap();
         assert_eq!(hits.len(), 1);
         assert_eq!(hits[0].repeater.call, "SA6AR/R");
         assert!(hits[0].distance_km < 25.0, "got {}", hits[0].distance_km);
 
         // Big radius pulls in both, ordered by distance.
-        let big = find_near(&conn, 57.71, 11.97, 5000.0, &NearFilter::default()).unwrap();
+        let big = find_near(&conn, 57.71, 11.97, 5000.0, &RepeaterFilter::default()).unwrap();
         assert_eq!(big.len(), 2);
         assert!(big[0].distance_km < big[1].distance_km);
 
@@ -580,7 +598,7 @@ mod tests {
             57.71,
             11.97,
             5000.0,
-            &NearFilter {
+            &RepeaterFilter {
                 bands: vec!["2".into()],
                 ..Default::default()
             },
@@ -595,7 +613,7 @@ mod tests {
             57.71,
             11.97,
             5000.0,
-            &NearFilter {
+            &RepeaterFilter {
                 bands: vec!["2".into(), "70".into()],
                 ..Default::default()
             },
@@ -604,7 +622,7 @@ mod tests {
         assert_eq!(two_bands.len(), 2);
 
         // FTS hit on city.
-        let fts_hits = fts_search(&conn, "Angered", &SearchFilter::default()).unwrap();
+        let fts_hits = fts_search(&conn, "Angered", &RepeaterFilter::default()).unwrap();
         assert_eq!(fts_hits.len(), 1);
         assert_eq!(fts_hits[0].call, "SA6AR/R");
 
@@ -612,7 +630,7 @@ mod tests {
         let fts_70 = fts_search(
             &conn,
             "Angered",
-            &SearchFilter {
+            &RepeaterFilter {
                 bands: vec!["70".into()],
                 ..Default::default()
             },
@@ -625,7 +643,7 @@ mod tests {
         let fts_2 = fts_search(
             &conn,
             "Angered",
-            &SearchFilter {
+            &RepeaterFilter {
                 bands: vec!["2".into()],
                 ..Default::default()
             },
@@ -637,7 +655,7 @@ mod tests {
         // escape helper. "D-Star" would otherwise be parsed as `D NOT
         // Star` and fail with a column-name error.
         let escaped = escape_fts_query("D-Star");
-        let dstar = fts_search(&conn, &escaped, &SearchFilter::default()).unwrap();
+        let dstar = fts_search(&conn, &escaped, &RepeaterFilter::default()).unwrap();
         assert!(
             dstar.is_empty(),
             "no D-Star rows in fixture, but query parses"

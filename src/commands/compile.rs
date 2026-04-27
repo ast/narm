@@ -64,10 +64,7 @@ pub fn run(args: &CompileArgs) -> Result<()> {
         CompileFormat::ChirpCsv => narm::chirp::channels_to_csv(&filtered)?,
     };
 
-    for w in &filter_warnings {
-        eprintln!("warning: {w}");
-    }
-    for w in &report.warnings {
+    for w in filter_warnings.iter().chain(report.warnings.iter()) {
         eprintln!("warning: {w}");
     }
 

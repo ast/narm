@@ -1,10 +1,7 @@
-use std::path::PathBuf;
-
 use narm::chirp;
 
-fn sample_path() -> PathBuf {
-    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("samples/sample.toml")
-}
+mod common;
+use common::sample_path;
 
 fn rows(csv: &str) -> Vec<Vec<String>> {
     let mut rdr = csv::ReaderBuilder::new()
