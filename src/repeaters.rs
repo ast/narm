@@ -375,9 +375,36 @@ pub struct SearchFilter {
     pub limit: Option<usize>,
 }
 
+/// Escape a free-text user query for FTS5: split on whitespace, wrap each
+/// term in FTS5 phrase quotes (doubling internal `"`), and join with
+/// spaces (FTS5 implicit AND). A trailing `*` on a term is preserved as
+/// the FTS5 phrase-prefix form (`"prefix"*`), so `SK6*` still does what
+/// you'd expect. All other FTS5 metacharacters (`-`, `:`, `+`, parens)
+/// are treated literally.
+///
+/// Power users who want raw FTS5 syntax (column filters like
+/// `call:SK6*`, boolean `A AND B`, etc.) should bypass this and pass
+/// their string through unchanged.
+pub fn escape_fts_query(query: &str) -> String {
+    query
+        .split_whitespace()
+        .map(|term| {
+            if let Some(prefix) = term.strip_suffix('*')
+                && !prefix.is_empty()
+            {
+                format!("\"{}\"*", prefix.replace('"', "\"\""))
+            } else {
+                format!("\"{}\"", term.replace('"', "\"\""))
+            }
+        })
+        .collect::<Vec<_>>()
+        .join(" ")
+}
+
 /// Full-text search over `call`, `city`, `district`, `network`. `query` is
 /// FTS5 syntax — supports column filters (`call:SA*`), prefix matching,
 /// AND/OR/NEAR. Results sorted by FTS `rank` (best match first).
+/// For free-text user input, run it through [`escape_fts_query`] first.
 pub fn fts_search(conn: &Connection, query: &str, filter: &SearchFilter) -> Result<Vec<Repeater>> {
     let mut sql = String::from(
         r#"
@@ -605,5 +632,57 @@ mod tests {
         )
         .unwrap();
         assert!(fts_2.is_empty());
+
+        // Free-text input with FTS5 metacharacters round-trips through the
+        // escape helper. "D-Star" would otherwise be parsed as `D NOT
+        // Star` and fail with a column-name error.
+        let escaped = escape_fts_query("D-Star");
+        let dstar = fts_search(&conn, &escaped, &SearchFilter::default()).unwrap();
+        assert!(
+            dstar.is_empty(),
+            "no D-Star rows in fixture, but query parses"
+        );
+    }
+
+    #[test]
+    fn escape_fts_query_basic() {
+        assert_eq!(escape_fts_query(""), "");
+        assert_eq!(escape_fts_query("Angered"), "\"Angered\"");
+    }
+
+    #[test]
+    fn escape_fts_query_metacharacters() {
+        // Hyphen, colon, plus would otherwise be FTS5 operators.
+        assert_eq!(escape_fts_query("D-Star"), "\"D-Star\"");
+        assert_eq!(escape_fts_query("foo+bar"), "\"foo+bar\"");
+    }
+
+    #[test]
+    fn escape_fts_query_trailing_wildcard() {
+        // Bare prefix → FTS5 phrase-prefix form, the wildcard escapes
+        // the closing quote.
+        assert_eq!(escape_fts_query("SK6*"), "\"SK6\"*");
+        assert_eq!(escape_fts_query("D-Star*"), "\"D-Star\"*");
+        // `call:SK6*` ends with `*` so it becomes a phrase-prefix on the
+        // literal text "call:SK6" — column filters still need --raw.
+        assert_eq!(escape_fts_query("call:SK6*"), "\"call:SK6\"*");
+        // Bare `*` has no prefix; escape literally so FTS5 sees a phrase.
+        assert_eq!(escape_fts_query("*"), "\"*\"");
+    }
+
+    #[test]
+    fn escape_fts_query_multi_term_implicit_and() {
+        // Whitespace splits into separate phrase-quoted terms; FTS5
+        // joins adjacent terms with implicit AND.
+        assert_eq!(escape_fts_query("Angered SK6"), "\"Angered\" \"SK6\"");
+        assert_eq!(
+            escape_fts_query("D-Star  Mölndal"),
+            "\"D-Star\" \"Mölndal\"",
+        );
+    }
+
+    #[test]
+    fn escape_fts_query_doubles_internal_quotes() {
+        assert_eq!(escape_fts_query("foo\"bar"), "\"foo\"\"bar\"");
     }
 }

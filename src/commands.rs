@@ -127,7 +127,9 @@ pub struct NearArgs {
 
 #[derive(Args, Debug)]
 pub struct SearchArgs {
-    /// FTS5 query (e.g. `Göteborg`, `call:SK6*`, `Göteborg AND call:SK*`).
+    /// Free-text query (terms ANDed together, FTS5 metacharacters like
+    /// `-`, `:`, `*` are treated literally). Pass --raw to use FTS5
+    /// syntax directly (e.g. `call:SK6*`, `A AND B`, `-noise`).
     pub query: String,
     /// Filter by band (comma-separated and/or repeated).
     #[arg(long, value_delimiter = ',')]
@@ -141,4 +143,7 @@ pub struct SearchArgs {
     /// Emit tab-separated output instead of an aligned table.
     #[arg(long)]
     pub tsv: bool,
+    /// Pass the query verbatim to FTS5 (no escaping).
+    #[arg(long)]
+    pub raw: bool,
 }

@@ -58,7 +58,12 @@ fn run_search(db_path: &Path, args: &SearchArgs) -> Result<()> {
         modes: args.mode.clone(),
         limit: args.limit,
     };
-    let hits = repeaters::fts_search(&conn, &args.query, &filter)?;
+    let query = if args.raw {
+        args.query.clone()
+    } else {
+        repeaters::escape_fts_query(&args.query)
+    };
+    let hits = repeaters::fts_search(&conn, &query, &filter)?;
 
     if hits.is_empty() {
         println!("no repeaters matched {:?}", args.query);
