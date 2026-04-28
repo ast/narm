@@ -10,7 +10,9 @@ unsupported channels and modes per target.
 
 Supported radio targets:
 
-- Wouxun KG-Q336
+- Wouxun KG-Q336 — see
+  [[file:software/README-wouxun-kg-q336.org][software/README-wouxun-kg-q336.org]]
+  for CPS install notes (Wine).
 - Quansheng UV-K5
 - TYT MD-380
 - AnyTone AT-D878UV

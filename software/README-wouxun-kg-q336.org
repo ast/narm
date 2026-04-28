@@ -1,0 +1,213 @@
+#+TITLE: Wouxun KG-Q336 programming software
+#+OPTIONS: toc:nil
+
+* What is this
+
+=kg-q332setupv21.0.120230831-y90900.rar= is the Windows
+programming software (CPS) for the Wouxun KG-Q336. The
+archive ships under the =KG-Q332= name because Wouxun reuses
+the same CPS across the Q332/Q336 family.
+
+| Field      | Value                                                              |
+|------------+--------------------------------------------------------------------|
+| Archive    | =kg-q332setupv21.0.120230831-y90900.rar=                           |
+| Size       | 701 578 bytes                                                      |
+| SHA-256    | =3bae86554f9f3df6a1cb180d2f7cb64ea8b8bc212c98bad3044e0a53a4a2a193= |
+| Inner exe  | =KG-Q332 setup V2[1].0.1(20230831).exe= (778 929 bytes)            |
+| Build date | 2023-08-31                                                         |
+
+Verify the archive hash before doing anything else:
+
+#+begin_src sh
+sha256sum kg-q332setupv21.0.120230831-y90900.rar
+#+end_src
+
+* Virus scan
+
+This is an unsigned installer from a Chinese radio vendor
+fetched off the open web. Scan it before unpacking and
+before running it under Wine.
+
+** VirusTotal (recommended)
+
+The file is well under the 32 MiB free upload limit, so the
+quickest sanity check is to upload it to VirusTotal and let
+~70 engines look at it:
+
+  https://www.virustotal.com/gui/home/upload
+
+Upload both the =.rar= and, after extraction, the inner
+=.exe=. Vendor installers like this often light up a couple
+of low-reputation engines (PUA / "Generic.Heuristic"); what
+matters is the consensus across the major engines.
+
+** ClamAV (offline)
+
+Install once:
+
+#+begin_src sh
+sudo apt install clamav
+sudo freshclam
+#+end_src
+
+Scan the archive (ClamAV reads inside RAR/ZIP without
+extracting):
+
+#+begin_src sh
+clamscan --archive-verbose \
+         kg-q332setupv21.0.120230831-y90900.rar
+#+end_src
+
+After extraction (see below), also scan the unpacked tree:
+
+#+begin_src sh
+clamscan -r ./extracted/
+#+end_src
+
+* Extract the RAR
+
+Install =unrar= (it lives in the =multiverse= repo on
+Ubuntu / =non-free= on Debian):
+
+#+begin_src sh
+sudo apt install unrar
+#+end_src
+
+Then extract into a subdirectory:
+
+#+begin_src sh
+mkdir -p extracted
+unrar x kg-q332setupv21.0.120230831-y90900.rar extracted/
+#+end_src
+
+You should end up with =extracted/KG-Q332 setup
+V2[1].0.1(20230831).exe=.
+
+* Install under Wine
+
+=wine= is already installed on this machine. The CPS is a
+32-bit Win32 installer, so use a dedicated 32-bit prefix —
+this keeps it isolated from any other Wine state and avoids
+the 64-bit prefix gotchas that hit older InstallShield-style
+installers.
+
+** Create a clean 32-bit prefix
+
+#+begin_src sh
+export WINEPREFIX="$HOME/.wine-kgq336"
+export WINEARCH=win32
+wineboot -i
+#+end_src
+
+The CPS is a .NET 4.x WinForms app, so install the real
+.NET Framework into the prefix — Wine Mono will fail with
+=CLRRuntimeInfo_GetRuntimeHost Wine Mono is not installed=
+or similar:
+
+#+begin_src sh
+# requires winetricks: sudo apt install winetricks
+winetricks -q dotnet48 corefonts cjkfonts
+#+end_src
+
+The =dotnet48= step downloads the .NET 4.8 web installer
+and runs it inside the prefix; it takes a few minutes and
+spawns several =wine= subprocesses — let it finish before
+running the CPS installer.
+
+=cjkfonts= is required: the CPS menus and toolbar
+tooltips are in Chinese, and without SimSun / MS Gothic
+they render as rows of empty rectangles (=□□□□=). If
+the winetricks download fails, system fonts work as a
+fallback:
+
+#+begin_src sh
+sudo apt install fonts-noto-cjk fonts-wqy-microhei \
+                 fonts-wqy-zenhei
+#+end_src
+
+** Switch the UI to English
+
+The CPS defaults to Simplified Chinese but ships with
+English and Traditional Chinese translations in
+=lang.csv= (column 1 = EN, column 2 = CHS, column 3 =
+TC). Once CJK fonts are installed and the menus render,
+open the *Language* menu in the top menu bar (labelled
+=语言=) and pick *EN*. The choice is persisted across
+restarts. Most of the app — tabs, data grid, dialogs —
+is already English; this step relocalises the menu bar
+and toolbar.
+
+** Run the installer
+
+#+begin_src sh
+cd extracted
+wine "KG-Q332 setup V2[1].0.1(20230831).exe"
+#+end_src
+
+Click through the Chinese/English wizard. Default install
+path under Wine is:
+
+  =$WINEPREFIX/drive_c/Program Files/KG-Q332=
+
+** Launch the CPS later
+
+The CPS reads =lang.csv= from its *current working
+directory*, not from its install directory. Launch with
+=wine /path/to/KG-Q332.exe= from any other folder and the
+language menu silently breaks (most of the UI falls back
+to Chinese / hardcoded resources). The fix is to =cd=
+into the install directory first:
+
+#+begin_src sh
+export WINEPREFIX="$HOME/.wine-kgq336"
+cd "$WINEPREFIX/drive_c/Program Files/KG-Q332"
+wine KG-Q332.exe
+#+end_src
+
+For convenience, drop a wrapper on =$PATH= so you can
+launch the CPS from anywhere without remembering this:
+
+#+begin_src sh
+mkdir -p ~/.local/bin
+cat > ~/.local/bin/kg-q336 <<'EOF'
+#!/bin/sh
+export WINEPREFIX="$HOME/.wine-kgq336"
+cd "$WINEPREFIX/drive_c/Program Files/KG-Q332" || exit 1
+exec wine KG-Q332.exe "$@"
+EOF
+chmod +x ~/.local/bin/kg-q336
+#+end_src
+
+Then just run =kg-q336=.
+
+** Talking to the radio
+
+The KG-Q336 uses a USB-C programming cable that enumerates
+as a USB-serial device on Linux (typically =/dev/ttyACM0=
+or =/dev/ttyUSB0=). Map it into the Wine prefix as a COM
+port before opening the CPS, otherwise the dropdown will be
+empty:
+
+#+begin_src sh
+ls /dev/ttyACM* /dev/ttyUSB* 2>/dev/null
+ln -sf /dev/ttyACM0 "$WINEPREFIX/dosdevices/com3"
+#+end_src
+
+Your user must be in the =dialout= group to access the
+serial device without sudo:
+
+#+begin_src sh
+sudo usermod -aG dialout "$USER"
+# log out / back in for the group to take effect
+#+end_src
+
+In the CPS, pick =COM3= (or whichever number you symlinked)
+before reading or writing the codeplug.
+
+* Uninstall / reset
+
+To wipe the prefix and start over:
+
+#+begin_src sh
+rm -rf "$HOME/.wine-kgq336"
+#+end_src

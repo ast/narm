@@ -1,9 +1,6 @@
 # Build output
 /target
 
-# Local working directory (not for distribution)
-/software
-
 # Emacs
 .#*
 \#*\#
@@ -29,3 +26,6 @@ Desktop.ini
 # Local secrets
 .env
 .env.local
+
+# software
+lang.csv
