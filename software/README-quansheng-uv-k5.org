@@ -13,6 +13,7 @@ CPS itself.
 | Field      | Value                                                              |
 |------------+--------------------------------------------------------------------|
 | Archive    | =UV-K5 V3 CPS+Upgrade Tool+Firmware 2025.12.04.zip=                |
+| Source     | [[https://qsfj.com/support/downloads/3268][qsfj.com/support/downloads/3268]] (Quansheng official)              |
 | Size       | 4 995 554 bytes                                                    |
 | SHA-256    | =1d022d834d08549d93cb41b898c19a4c5226510060b10303703f35a9dbdb2d6b= |
 | Build date | 2025-12-04 (label) / files dated 2025-11-06                        |
@@ -120,7 +121,7 @@ something like:
 
 #+begin_src sh
 export WINEPREFIX="$HOME/.wine-uvk5"
-cd "$WINEPREFIX/drive_c/Program Files/QSPortableStationCPS"
+cd "$WINEPREFIX/drive_c/Program Files/QS"
 wine QSPortableStationCPS.exe
 #+end_src
 
