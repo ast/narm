@@ -119,6 +119,10 @@ struct WriteReply {
     _pad2: [u8; 2],
 }
 
+impl WriteReply {
+    const OPCODE: u8 = 0x1E;
+}
+
 /// Outer frame header (4 bytes): `AB CD [body_len] 00`.
 #[repr(C)]
 #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Debug)]
@@ -128,17 +132,43 @@ struct FrameHeader {
     pad: u8,
 }
 
+impl FrameHeader {
+    const MAGIC: [u8; 2] = [0xAB, 0xCD];
+
+    /// Reject anything that doesn't match the expected magic + zero
+    /// padding byte. Returns the raw 4 wire bytes inside `BadHeader`
+    /// for diagnostics on mismatch.
+    fn validate(&self) -> Result<(), UvK5Error> {
+        if self.magic != Self::MAGIC || self.pad != 0 {
+            return Err(UvK5Error::BadHeader(self.as_bytes().try_into().unwrap()));
+        }
+        Ok(())
+    }
+}
+
 /// Outer frame footer (4 bytes): `[crc_xor:2] DC BA`. The CRC is XOR'd
 /// with the cyclic key like the body; we don't verify it (radio
 /// doesn't either), so it's just bytes here.
 #[repr(C)]
 #[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Debug)]
 struct FrameFooter {
-    _crc_xor: [u8; 2],
+    crc_xor: [u8; 2],
     magic: [u8; 2],
 }
 
-const WRITE_REPLY_OPCODE: u8 = 0x1E;
+impl FrameFooter {
+    const MAGIC: [u8; 2] = [0xDC, 0xBA];
+
+    /// Reject anything that doesn't match the expected trailer magic.
+    /// Returns the raw 4 wire bytes inside `BadFooter` for diagnostics
+    /// on mismatch.
+    fn validate(&self) -> Result<(), UvK5Error> {
+        if self.magic != Self::MAGIC {
+            return Err(UvK5Error::BadFooter(self.as_bytes().try_into().unwrap()));
+        }
+        Ok(())
+    }
+}
 
 /// On-wire layout of a single channel record (16 bytes at EEPROM
 /// offset `0x0000 + slot * 16`). Mirrors CHIRP's `MEM_FORMAT` struct
@@ -223,9 +253,6 @@ impl ChannelRecord {
 }
 
 const BAUD: u32 = 38400;
-const HEADER_MAGIC: [u8; 2] = [0xAB, 0xCD];
-const FOOTER_MAGIC: [u8; 2] = [0xDC, 0xBA];
-
 /// Cyclic XOR key used by the radio for protocol obfuscation.
 /// Same bytes as CHIRP's `xorarr` table (uvk5.py); CHIRP writes them
 /// as decimal, we keep hex here for byte-twiddle readability.
@@ -311,18 +338,31 @@ pub fn crc16_xmodem(data: &[u8]) -> u16 {
 }
 
 fn build_frame(payload: &[u8]) -> Vec<u8> {
+    // XOR the payload + CRC together so each byte is keyed against its
+    // cyclic position in the body, then split off the trailing CRC
+    // bytes into the footer struct.
     let crc = crc16_xmodem(payload);
-    let mut body = payload.to_vec();
-    body.push((crc & 0xFF) as u8);
-    body.push((crc >> 8) as u8);
+    let mut body = Vec::with_capacity(payload.len() + 2);
+    body.extend_from_slice(payload);
+    body.extend_from_slice(&crc.to_le_bytes());
     xor_inplace(&mut body);
+    let crc_xor: [u8; 2] = body[payload.len()..].try_into().unwrap();
+    body.truncate(payload.len());
 
-    let mut frame = Vec::with_capacity(4 + body.len() + 2);
-    frame.extend_from_slice(&HEADER_MAGIC);
-    frame.push(payload.len() as u8);
-    frame.push(0);
+    let header = FrameHeader {
+        magic: FrameHeader::MAGIC,
+        body_len: payload.len() as u8,
+        pad: 0,
+    };
+    let footer = FrameFooter {
+        crc_xor,
+        magic: FrameFooter::MAGIC,
+    };
+
+    let mut frame = Vec::with_capacity(4 + body.len() + 4);
+    frame.extend_from_slice(header.as_bytes());
     frame.extend_from_slice(&body);
-    frame.extend_from_slice(&FOOTER_MAGIC);
+    frame.extend_from_slice(footer.as_bytes());
     frame
 }
 
@@ -357,14 +397,10 @@ fn send<P: Write + ?Sized>(port: &mut P, payload: &[u8]) -> Result<(), UvK5Error
 
 fn recv<P: Read + ?Sized>(port: &mut P) -> Result<Vec<u8>, UvK5Error> {
     let header = FrameHeader::read_from_io(&mut *port)?;
-    if header.magic != HEADER_MAGIC || header.pad != 0 {
-        return Err(UvK5Error::BadHeader(header.as_bytes().try_into().unwrap()));
-    }
+    header.validate()?;
     let mut body = read_exact(port, header.body_len as usize)?;
     let footer = FrameFooter::read_from_io(&mut *port)?;
-    if footer.magic != FOOTER_MAGIC {
-        return Err(UvK5Error::BadFooter(footer.as_bytes().try_into().unwrap()));
-    }
+    footer.validate()?;
     xor_inplace(&mut body);
     Ok(body)
 }
@@ -425,7 +461,7 @@ fn write_mem<P: Read + Write + ?Sized>(
     // bytes the radio echoes back. Use `ref_from_prefix` so a longer
     // reply still parses cleanly.
     let parsed = match WriteReply::ref_from_prefix(&reply) {
-        Ok((r, _trailer)) if r.opcode == WRITE_REPLY_OPCODE => r,
+        Ok((r, _trailer)) if r.opcode == WriteReply::OPCODE => r,
         _ => {
             let head_len = reply.len().min(8);
             return Err(UvK5Error::BadWriteReply {
@@ -459,7 +495,10 @@ pub fn write_eeprom<P: Read + Write + ?Sized>(
     port: &mut P,
     image: &[u8],
 ) -> Result<usize, UvK5Error> {
-    if image.len() != WRITABLE_SIZE && image.len() != EEPROM_SIZE {
+    // Two valid input sizes: WRITABLE_SIZE = channels + settings only;
+    // EEPROM_SIZE = full dump (calibration tail is silently dropped
+    // below).
+    if !matches!(image.len(), WRITABLE_SIZE | EEPROM_SIZE) {
         return Err(UvK5Error::BadImageSize { got: image.len() });
     }
     let writable = &image[..WRITABLE_SIZE];
@@ -660,9 +699,9 @@ mod tests {
         let frame = build_frame(&payload);
         // header (4) + xor'd(payload+crc) (8+2) + footer (2) = 16
         assert_eq!(frame.len(), 4 + payload.len() + 2 + 2);
-        assert_eq!(&frame[..2], &HEADER_MAGIC);
+        assert_eq!(&frame[..2], &FrameHeader::MAGIC);
         assert_eq!(&frame[2..4], &[payload.len() as u8, 0]);
-        assert_eq!(&frame[frame.len() - 2..], &FOOTER_MAGIC);
+        assert_eq!(&frame[frame.len() - 2..], &FrameFooter::MAGIC);
 
         // The xor'd body, when un-xor'd, must reproduce payload + CRC.
         let mut body = frame[4..frame.len() - 2].to_vec();
@@ -871,10 +910,10 @@ mod tests {
             build_write_payload(0x0040, &[0xAB; 64]),
         ] {
             let frame = build_frame(&payload);
-            assert_eq!(&frame[..2], &HEADER_MAGIC);
+            assert_eq!(&frame[..2], &FrameHeader::MAGIC);
             assert_eq!(frame[2] as usize, payload.len());
             assert_eq!(frame[3], 0x00);
-            assert_eq!(&frame[frame.len() - 2..], &FOOTER_MAGIC);
+            assert_eq!(&frame[frame.len() - 2..], &FrameFooter::MAGIC);
             assert_eq!(frame.len(), payload.len() + 8);
         }
     }
@@ -1238,9 +1277,12 @@ mod tests {
         send(&mut port, &HELLO).unwrap();
         // Frame layout: header (4) + xor(payload+crc) (8+2) + footer (2)
         assert_eq!(port.outgoing.len(), 4 + HELLO.len() + 2 + 2);
-        assert_eq!(&port.outgoing[..2], &HEADER_MAGIC);
+        assert_eq!(&port.outgoing[..2], &FrameHeader::MAGIC);
         assert_eq!(port.outgoing[2] as usize, HELLO.len());
-        assert_eq!(&port.outgoing[port.outgoing.len() - 2..], &FOOTER_MAGIC);
+        assert_eq!(
+            &port.outgoing[port.outgoing.len() - 2..],
+            &FrameFooter::MAGIC
+        );
     }
 
     #[test]
@@ -1265,7 +1307,7 @@ mod tests {
         // Valid header + body, but footer's last two bytes are wrong.
         let body = vec![0u8; 2];
         let mut bytes = Vec::new();
-        bytes.extend_from_slice(&HEADER_MAGIC);
+        bytes.extend_from_slice(&FrameHeader::MAGIC);
         bytes.push(body.len() as u8);
         bytes.push(0);
         bytes.extend_from_slice(&body);
@@ -1295,11 +1337,14 @@ mod tests {
 
     #[test]
     fn write_mem_succeeds_when_radio_echoes_correct_address() {
-        let mut port = MockPort::new(write_reply_frame(WRITE_REPLY_OPCODE, 0x0080));
+        let mut port = MockPort::new(write_reply_frame(WriteReply::OPCODE, 0x0080));
         write_mem(&mut port, 0x0080, &[0xAA; 4]).unwrap();
         // Outgoing should be a properly framed write command.
-        assert_eq!(&port.outgoing[..2], &HEADER_MAGIC);
-        assert_eq!(&port.outgoing[port.outgoing.len() - 2..], &FOOTER_MAGIC);
+        assert_eq!(&port.outgoing[..2], &FrameHeader::MAGIC);
+        assert_eq!(
+            &port.outgoing[port.outgoing.len() - 2..],
+            &FrameFooter::MAGIC
+        );
     }
 
     #[test]
@@ -1314,7 +1359,7 @@ mod tests {
     #[test]
     fn write_mem_rejects_address_mismatch() {
         // Opcode is fine but the radio echoed the wrong address.
-        let mut port = MockPort::new(write_reply_frame(WRITE_REPLY_OPCODE, 0x0100));
+        let mut port = MockPort::new(write_reply_frame(WriteReply::OPCODE, 0x0100));
         match write_mem(&mut port, 0x0080, &[0; 4]) {
             Err(UvK5Error::BadWriteAddress { expected, got }) => {
                 assert_eq!(expected, 0x0080);

@@ -128,7 +128,10 @@ fn run_write(args: WriteArgs) -> Result<()> {
 
     let image = std::fs::read(&args.from)
         .with_context(|| format!("reading image {}", args.from.display()))?;
-    if image.len() != uvk5::WRITABLE_SIZE && image.len() != uvk5::EEPROM_SIZE {
+    // Accept the same two image sizes as write_eeprom: WRITABLE_SIZE
+    // (channels + settings) or full EEPROM_SIZE (calibration tail
+    // dropped silently inside write_eeprom).
+    if !matches!(image.len(), uvk5::WRITABLE_SIZE | uvk5::EEPROM_SIZE) {
         bail!(
             "image must be {} or {} bytes (got {})",
             uvk5::WRITABLE_SIZE,
