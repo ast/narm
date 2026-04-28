@@ -1,8 +1,9 @@
-use std::io::{self, Write};
+use std::io::Write;
 use std::path::PathBuf;
 
 use anyhow::{Context, Result, bail};
 use clap::{Args, Subcommand, ValueEnum};
+use clap_stdin::FileOrStdout;
 
 use narm::Radio;
 use narm::channel::Config;
@@ -49,9 +50,9 @@ pub struct ReadArgs {
     /// unmodified 8 KiB EEPROM image (full backup).
     #[arg(long, value_enum, default_value_t = ReadFormat::Toml)]
     pub format: ReadFormat,
-    /// Output file (defaults to stdout).
-    #[arg(long, short)]
-    pub out: Option<PathBuf>,
+    /// Output file, or `-` for stdout (default).
+    #[arg(long, short, default_value = "-")]
+    pub out: FileOrStdout,
 }
 
 #[derive(Args, Debug)]
@@ -71,14 +72,14 @@ pub struct WriteArgs {
     pub from: PathBuf,
 }
 
-pub fn run(args: &RadioArgs) -> Result<()> {
-    match &args.command {
+pub fn run(args: RadioArgs) -> Result<()> {
+    match args.command {
         RadioCommand::Read(a) => run_read(a),
         RadioCommand::Write(a) => run_write(a),
     }
 }
 
-fn run_read(args: &ReadArgs) -> Result<()> {
+fn run_read(args: ReadArgs) -> Result<()> {
     if args.radio != Radio::QuanshengUvK5 {
         bail!(
             "radio read is only implemented for quansheng-uv-k5 (got {})",
@@ -110,17 +111,15 @@ fn run_read(args: &ReadArgs) -> Result<()> {
         }
     };
 
-    match &args.out {
-        Some(path) => std::fs::write(path, &bytes)
-            .with_context(|| format!("writing output to {}", path.display()))?,
-        None => io::stdout()
-            .write_all(&bytes)
-            .context("writing output to stdout")?,
-    }
+    args.out
+        .into_writer()
+        .context("opening output")?
+        .write_all(&bytes)
+        .context("writing output")?;
     Ok(())
 }
 
-fn run_write(args: &WriteArgs) -> Result<()> {
+fn run_write(args: WriteArgs) -> Result<()> {
     if args.radio != Radio::QuanshengUvK5 {
         bail!(
             "radio write is only implemented for quansheng-uv-k5 (got {})",

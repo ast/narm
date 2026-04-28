@@ -109,6 +109,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "clap-stdin"
+version = "0.8.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3c597a504c7d12819c50d2e1f78719afb6e01d4e14cbc94eb4c5f6a850494d1c"
+dependencies = [
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "clap_builder"
 version = "4.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -168,6 +177,21 @@ name = "core-foundation-sys"
 version = "0.8.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "773648b94d0e5d620f64f280777445740e61fe701025087ec8b57f45c791888b"
+
+[[package]]
+name = "crc"
+version = "3.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5eb8a2a1cd12ab0d987a5d5e825195d372001a4094a0376319d5a0ad71c1ba0d"
+dependencies = [
+ "crc-catalog",
+]
+
+[[package]]
+name = "crc-catalog"
+version = "2.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "217698eaf96b4a3f0bc4f3662aaa55bdf913cd54d7204591faa790070c6d0853"
 
 [[package]]
 name = "csv"
@@ -451,7 +475,9 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "clap",
+ "clap-stdin",
  "clap_complete",
+ "crc",
  "csv",
  "dirs",
  "dotenvy",

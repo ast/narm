@@ -6,7 +6,9 @@ edition = "2024"
 [dependencies]
 anyhow = "1"
 clap = { version = "4", features = ["derive", "env"] }
+clap-stdin = "0.8"
 clap_complete = "4"
+crc = "3"
 csv = "1"
 dirs = "5"
 dotenvy = "0.15"

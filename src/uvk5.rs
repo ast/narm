@@ -52,16 +52,17 @@ struct ReadCommand {
     magic: [u8; 4], // 0x6A 0x39 0x57 0x64
 }
 
-const READ_OP: [u8; 4] = [0x1B, 0x05, 0x08, 0x00];
 const PROTO_MAGIC: [u8; 4] = [0x6A, 0x39, 0x57, 0x64];
 
 impl ReadCommand {
+    const OP: [u8; 4] = [0x1B, 0x05, 0x08, 0x00];
+
     /// Build a read-block command for the given EEPROM `offset` and
     /// chunk `len`. Pure constructor — pair with `as_bytes()` to get
     /// the wire bytes.
     fn new(offset: u16, len: u8) -> Self {
         Self {
-            op: READ_OP,
+            op: Self::OP,
             offset: U16::new(offset),
             data_len: len,
             pad: 0,
@@ -87,12 +88,14 @@ struct WriteHeader {
 }
 
 impl WriteHeader {
+    const OP: [u8; 2] = [0x1D, 0x05];
+
     /// Build a write-block header for the given EEPROM `offset` and
     /// `data_len`. Caller appends the variable-length data after
     /// `as_bytes()`.
     fn new(offset: u16, data_len: u8) -> Self {
         Self {
-            op: WRITE_OP,
+            op: Self::OP,
             payload_len: data_len + 8,
             pad1: 0,
             offset: U16::new(offset),
@@ -102,8 +105,6 @@ impl WriteHeader {
         }
     }
 }
-
-const WRITE_OP: [u8; 2] = [0x1D, 0x05];
 
 /// Reply to a write-block command: the radio echoes the request's
 /// address back at bytes 4..6. We only care about `opcode` (must be
@@ -287,18 +288,7 @@ pub fn xor(data: &[u8]) -> Vec<u8> {
 
 /// CRC16/XMODEM: poly 0x1021, init 0x0000, no reflection, no XOR-out.
 pub fn crc16_xmodem(data: &[u8]) -> u16 {
-    let mut crc: u16 = 0;
-    for &b in data {
-        crc ^= (b as u16) << 8;
-        for _ in 0..8 {
-            crc = if crc & 0x8000 != 0 {
-                (crc << 1) ^ 0x1021
-            } else {
-                crc << 1
-            };
-        }
-    }
-    crc
+    crc::Crc::<u16>::new(&crc::CRC_16_XMODEM).checksum(data)
 }
 
 fn build_frame(payload: &[u8]) -> Vec<u8> {
