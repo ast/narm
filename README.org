@@ -13,7 +13,9 @@ Supported radio targets:
 - Wouxun KG-Q336 — see
   [[file:software/README-wouxun-kg-q336.org][software/README-wouxun-kg-q336.org]]
   for CPS install notes (Wine).
-- Quansheng UV-K5
+- Quansheng UV-K5 — see
+  [[file:software/README-quansheng-uv-k5.org][software/README-quansheng-uv-k5.org]]
+  for CPS install notes (Wine).
 - TYT MD-380
 - AnyTone AT-D878UV
 - Yaesu FT-50R
