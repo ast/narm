@@ -1,1 +1,31 @@
+# Build output
 /target
+
+# Local working directory (not for distribution)
+/software
+
+# Emacs
+.#*
+\#*\#
+*~
+.dir-locals-2.el
+
+# Vim
+*.swp
+*.swo
+.*.sw?
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Editors / IDEs
+.idea/
+.vscode/
+
+# Local secrets
+.env
+.env.local
