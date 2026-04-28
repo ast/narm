@@ -1,0 +1,217 @@
+#+TITLE: Quansheng UV-K5 V3 — programming software & firmware
+#+OPTIONS: toc:nil
+
+* What is this
+
+=UV-K5 V3 CPS+Upgrade Tool+Firmware 2025.12.04.zip= is the
+official Quansheng release bundle for the UV-K5 (V3 hardware
+revision). Despite the name, the bundle contains only the
+*CPS* installers and *firmware images* — no separate
+"Upgrade Tool" exe. The firmware flasher is built into the
+CPS itself.
+
+| Field      | Value                                                              |
+|------------+--------------------------------------------------------------------|
+| Archive    | =UV-K5 V3 CPS+Upgrade Tool+Firmware 2025.12.04.zip=                |
+| Size       | 4 995 554 bytes                                                    |
+| SHA-256    | =1d022d834d08549d93cb41b898c19a4c5226510060b10303703f35a9dbdb2d6b= |
+| Build date | 2025-12-04 (label) / files dated 2025-11-06                        |
+
+Inner files (after unzipping):
+
+| File                                       | SHA-256  | Notes                  |
+|--------------------------------------------+----------+------------------------|
+| =K5K1-V3-QQSPortableStationCPS_Setup_EN.rar=    | =6966…2503c= | English CPS installer  |
+| =K5K1-V3-QSPortableStationCPS_Setup.rar=        | =69b4…6ffb=  | Chinese CPS installer  |
+| =K5ENG-071_v7.00.11_publish.bin=                | =6801…fe49=  | English firmware       |
+| =K5CHI-071 V.7.01.09.bin=                       | =deb0…b137=  | Chinese firmware       |
+
+Verify the outer zip first:
+
+#+begin_src sh
+sha256sum "UV-K5 V3 CPS+Upgrade Tool+Firmware 2025.12.04.zip"
+#+end_src
+
+* Virus scan
+
+Unsigned vendor binaries from the open web — scan before
+unpacking and before running the CPS installer under Wine.
+
+** VirusTotal (recommended)
+
+The outer zip is ~5 MiB, well under VirusTotal's 32 MiB
+free upload limit. Upload at:
+
+  https://www.virustotal.com/gui/home/upload
+
+Upload the inner =.exe= installer too once extracted (the
+EN one if you intend to run it). Some engines flag
+Quansheng's installer as PUA / "Generic.Heuristic" — what
+matters is the consensus across the major engines.
+
+** ClamAV (offline)
+
+#+begin_src sh
+sudo apt install clamav
+sudo freshclam
+clamscan --archive-verbose \
+         "UV-K5 V3 CPS+Upgrade Tool+Firmware 2025.12.04.zip"
+clamscan -r ./extracted/
+#+end_src
+
+* Extract
+
+The outer container is a plain zip, the two CPS installers
+are nested RAR5. =unzip= ships with most distros; install
+=unrar= (Ubuntu =multiverse= / Debian =non-free=) for the
+inner archives:
+
+#+begin_src sh
+sudo apt install unrar
+mkdir -p extracted
+unzip "UV-K5 V3 CPS+Upgrade Tool+Firmware 2025.12.04.zip" \
+      -d extracted/
+cd "extracted/UV-K5 V3 CPS+Upgrade Tool+Firmware 2025.12.04"
+unrar x K5K1-V3-QQSPortableStationCPS_Setup_EN.rar
+#+end_src
+
+You'll end up with =QSPortableStationCPS_Setup_EN.exe=
+(2 672 111 bytes) ready to run under Wine.
+
+* Install the CPS under Wine
+
+The Quansheng CPS is a .NET WinForms app, just like the
+Wouxun one — same prerequisites (.NET 4.x, fonts, COM
+mapping). Use a *separate* Wine prefix from any other
+radio CPS so they don't interfere.
+
+** Create a clean 32-bit prefix
+
+#+begin_src sh
+export WINEPREFIX="$HOME/.wine-uvk5"
+export WINEARCH=win32
+wineboot -i
+#+end_src
+
+** Install .NET 4.8 and fonts
+
+#+begin_src sh
+# requires winetricks: sudo apt install winetricks
+winetricks -q dotnet48 corefonts
+#+end_src
+
+CJK fonts are *not* required if you stick with the
+=_EN= installer — the entire UI is English. Install
+=cjkfonts= only if you need to run the Chinese CPS.
+
+** Run the installer
+
+#+begin_src sh
+cd "extracted/UV-K5 V3 CPS+Upgrade Tool+Firmware 2025.12.04"
+wine QSPortableStationCPS_Setup_EN.exe
+#+end_src
+
+Click through the wizard. The default install path is
+something like:
+
+  =$WINEPREFIX/drive_c/Program Files/QSPortableStationCPS=
+
+** Launch the CPS later
+
+#+begin_src sh
+export WINEPREFIX="$HOME/.wine-uvk5"
+cd "$WINEPREFIX/drive_c/Program Files/QSPortableStationCPS"
+wine QSPortableStationCPS.exe
+#+end_src
+
+(Adjust the directory and exe name to whatever the
+installer actually drops — the leaf name occasionally
+changes between builds.)
+
+For convenience, a wrapper on =$PATH=:
+
+#+begin_src sh
+mkdir -p ~/.local/bin
+cat > ~/.local/bin/uvk5-cps <<'EOF'
+#!/bin/sh
+export WINEPREFIX="$HOME/.wine-uvk5"
+cd "$WINEPREFIX/drive_c/Program Files/QSPortableStationCPS" \
+    || exit 1
+exec wine QSPortableStationCPS.exe "$@"
+EOF
+chmod +x ~/.local/bin/uvk5-cps
+#+end_src
+
+** Talking to the radio
+
+The UV-K5 uses a 3.5 mm + 2.5 mm "Kenwood K1" programming
+cable that exposes a USB-serial device on Linux (typically
+=/dev/ttyUSB0= via a CP2102 / CH340). Map it into the Wine
+prefix as a COM port:
+
+#+begin_src sh
+ls /dev/ttyUSB* /dev/ttyACM* 2>/dev/null
+ln -sf /dev/ttyUSB0 "$WINEPREFIX/dosdevices/com3"
+#+end_src
+
+Add yourself to =dialout= (one-time) so you can open the
+serial device without sudo:
+
+#+begin_src sh
+sudo usermod -aG dialout "$USER"
+# log out / back in for the group to take effect
+#+end_src
+
+In the CPS, pick =COM3= (or whichever number you
+symlinked) before reading or writing the codeplug.
+
+* Firmware
+
+Two stock firmware images are included:
+
+| File                              | Version  | Language |
+|-----------------------------------+----------+----------|
+| =K5ENG-071_v7.00.11_publish.bin=  | 7.00.11  | English  |
+| =K5CHI-071 V.7.01.09.bin=         | 7.01.09  | Chinese  |
+
+Note the English image is one minor version *behind* the
+Chinese one — that's normal for Quansheng's release
+cadence.
+
+The CPS installs a built-in flasher; from the main window
+look for a "Firmware Upgrade" / "Update" menu item, point
+it at one of the =.bin= files, and follow the on-screen
+prompts. The radio must be put into bootloader mode first
+— power on while holding =PTT + side-key 1= until the
+LED flashes orange.
+
+* Linux-native alternatives (no Wine)
+
+=narm= itself supports UV-K5 codeplug read/write over the
+same cable, no Windows tooling required:
+
+#+begin_src sh
+# Decode codeplug into narm's TOML schema
+narm radio read --port /dev/ttyUSB0 --radio quansheng-uv-k5 \
+                > my-uvk5.toml
+
+# Full 8 KiB EEPROM backup (calibration + everything)
+narm radio read --port /dev/ttyUSB0 --radio quansheng-uv-k5 \
+                --format raw --out backup.bin
+
+# Restore a raw EEPROM image
+narm radio write --port /dev/ttyUSB0 --radio quansheng-uv-k5 \
+                 --from backup.bin
+#+end_src
+
+For firmware flashing without the Windows CPS, the
+community tool [[https://github.com/sq5bpf/k5prog][=k5prog=]] handles bootloader transfers and
+can flash both stock and custom firmware (Egzumer,
+custom community builds, etc.) from Linux directly.
+
+* Uninstall / reset
+
+#+begin_src sh
+rm -rf "$HOME/.wine-uvk5"
+rm -f ~/.local/bin/uvk5-cps
+#+end_src
