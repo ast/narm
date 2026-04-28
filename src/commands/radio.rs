@@ -90,7 +90,6 @@ fn run_read(args: ReadArgs) -> Result<()> {
     let mut port = uvk5::open_port(&args.port)
         .with_context(|| format!("opening serial port {}", args.port))?;
 
-    eprintln!("connecting to radio on {}…", args.port);
     let eeprom = uvk5::read_eeprom(&mut *port).context("reading eeprom from radio")?;
     eprintln!("read {} bytes from EEPROM", eeprom.len());
 

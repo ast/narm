@@ -119,6 +119,25 @@ struct WriteReply {
     _pad2: [u8; 2],
 }
 
+/// Outer frame header (4 bytes): `AB CD [body_len] 00`.
+#[repr(C)]
+#[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Debug)]
+struct FrameHeader {
+    magic: [u8; 2],
+    body_len: u8,
+    pad: u8,
+}
+
+/// Outer frame footer (4 bytes): `[crc_xor:2] DC BA`. The CRC is XOR'd
+/// with the cyclic key like the body; we don't verify it (radio
+/// doesn't either), so it's just bytes here.
+#[repr(C)]
+#[derive(FromBytes, IntoBytes, Immutable, KnownLayout, Debug)]
+struct FrameFooter {
+    _crc_xor: [u8; 2],
+    magic: [u8; 2],
+}
+
 const WRITE_REPLY_OPCODE: u8 = 0x1E;
 
 /// On-wire layout of a single channel record (16 bytes at EEPROM
@@ -316,6 +335,7 @@ fn build_frame(payload: &[u8]) -> Vec<u8> {
 // `MockPort` with split incoming/outgoing buffers.
 
 pub fn open_port(port: &str) -> Result<Box<dyn SerialPort>, UvK5Error> {
+    eprintln!("connecting to radio on {port}…");
     serialport::new(port, BAUD)
         .timeout(Duration::from_millis(2000))
         .open()
@@ -336,19 +356,14 @@ fn send<P: Write + ?Sized>(port: &mut P, payload: &[u8]) -> Result<(), UvK5Error
 }
 
 fn recv<P: Read + ?Sized>(port: &mut P) -> Result<Vec<u8>, UvK5Error> {
-    let header = read_exact(port, 4)?;
-    if header[0] != HEADER_MAGIC[0] || header[1] != HEADER_MAGIC[1] || header[3] != 0 {
-        return Err(UvK5Error::BadHeader([
-            header[0], header[1], header[2], header[3],
-        ]));
+    let header = FrameHeader::read_from_io(&mut *port)?;
+    if header.magic != HEADER_MAGIC || header.pad != 0 {
+        return Err(UvK5Error::BadHeader(header.as_bytes().try_into().unwrap()));
     }
-    let body_len = header[2] as usize;
-    let mut body = read_exact(port, body_len)?;
-    let footer = read_exact(port, 4)?;
-    if footer[2] != FOOTER_MAGIC[0] || footer[3] != FOOTER_MAGIC[1] {
-        return Err(UvK5Error::BadFooter([
-            footer[0], footer[1], footer[2], footer[3],
-        ]));
+    let mut body = read_exact(port, header.body_len as usize)?;
+    let footer = FrameFooter::read_from_io(&mut *port)?;
+    if footer.magic != FOOTER_MAGIC {
+        return Err(UvK5Error::BadFooter(footer.as_bytes().try_into().unwrap()));
     }
     xor_inplace(&mut body);
     Ok(body)
@@ -368,6 +383,7 @@ pub fn say_hello<P: Read + Write + ?Sized>(port: &mut P) -> Result<String, UvK5E
         .take_while(|&&b| (0x20..=0x7E).contains(&b))
         .map(|&b| b as char)
         .collect();
+    eprintln!("radio firmware: {fw}");
     Ok(fw)
 }
 
