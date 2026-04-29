@@ -38,23 +38,9 @@ sha256sum "UV-K5 V3 CPS+Upgrade Tool+Firmware 2025.12.04.zip"
 Unsigned vendor binaries from the open web — scan before
 unpacking and before running the CPS installer under Wine.
 
-** VirusTotal (recommended)
-
-The outer zip is ~5 MiB, well under VirusTotal's 32 MiB
-free upload limit. Upload at:
-
-  https://www.virustotal.com/gui/home/upload
-
-Upload the inner =.exe= installer too once extracted (the
-EN one if you intend to run it). Some engines flag
-Quansheng's installer as PUA / "Generic.Heuristic" — what
-matters is the consensus across the major engines.
-
-** ClamAV (offline)
-
 #+begin_src sh
-sudo apt install clamav
-sudo freshclam
+# sudo apt install clamav
+# sudo freshclam
 clamscan --archive-verbose \
          "UV-K5 V3 CPS+Upgrade Tool+Firmware 2025.12.04.zip"
 clamscan -r ./extracted/
@@ -68,7 +54,7 @@ are nested RAR5. =unzip= ships with most distros; install
 inner archives:
 
 #+begin_src sh
-sudo apt install unrar
+# sudo apt install unrar
 mkdir -p extracted
 unzip "UV-K5 V3 CPS+Upgrade Tool+Firmware 2025.12.04.zip" \
       -d extracted/
@@ -112,33 +98,44 @@ cd "extracted/UV-K5 V3 CPS+Upgrade Tool+Firmware 2025.12.04"
 wine QSPortableStationCPS_Setup_EN.exe
 #+end_src
 
-Click through the wizard. The default install path is
-something like:
+Click through the wizard. The installer drops the CPS into
+a versioned subdirectory under =QS/Portable Radio CPS=, e.g.:
 
-  =$WINEPREFIX/drive_c/Program Files/QSPortableStationCPS=
+  =$WINEPREFIX/drive_c/Program Files/QS/Portable Radio CPS/V1.0.61=
+
+The executable inside is =PSCPS.exe= (not the
+=QSPortableStationCPS.exe= name the installer is built
+from).
 
 ** Launch the CPS later
 
 #+begin_src sh
 export WINEPREFIX="$HOME/.wine-uvk5"
-cd "$WINEPREFIX/drive_c/Program Files/QS"
-wine QSPortableStationCPS.exe
+cd "$WINEPREFIX/drive_c/Program Files/QS/Portable Radio CPS/V1.0.61"
+wine PSCPS.exe
 #+end_src
 
-(Adjust the directory and exe name to whatever the
-installer actually drops — the leaf name occasionally
-changes between builds.)
+(Adjust the version directory to whatever the installer
+actually drops — the =V1.0.61= leaf changes between builds.)
 
-For convenience, a wrapper on =$PATH=:
+For convenience, a wrapper on =$PATH= that picks the
+newest installed version automatically. The =swaymsg=
+line registers a session-scoped =for_window= rule so the
+CPS opens floating, sized, and centered under sway; the
+=$SWAYSOCK= guard makes it a no-op under other desktops.
 
 #+begin_src sh
 mkdir -p ~/.local/bin
 cat > ~/.local/bin/uvk5-cps <<'EOF'
 #!/bin/sh
 export WINEPREFIX="$HOME/.wine-uvk5"
-cd "$WINEPREFIX/drive_c/Program Files/QSPortableStationCPS" \
-    || exit 1
-exec wine QSPortableStationCPS.exe "$@"
+base="$WINEPREFIX/drive_c/Program Files/QS/Portable Radio CPS"
+dir=$(ls -1d "$base"/V* 2>/dev/null | sort -V | tail -1)
+cd "$dir" || exit 1
+# Float + center the CPS window when running under sway
+[ -n "$SWAYSOCK" ] && command -v swaymsg >/dev/null && \
+    swaymsg 'for_window [class="(?i)pscps\.exe"] floating enable, resize set 1100 800, move position center' >/dev/null
+exec wine PSCPS.exe "$@"
 EOF
 chmod +x ~/.local/bin/uvk5-cps
 #+end_src
@@ -159,7 +156,7 @@ Add yourself to =dialout= (one-time) so you can open the
 serial device without sudo:
 
 #+begin_src sh
-sudo usermod -aG dialout "$USER"
+# sudo usermod -aG dialout "$USER"
 # log out / back in for the group to take effect
 #+end_src
 

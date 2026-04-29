@@ -1,3 +1,5 @@
-*.rar
-*.exe
-*.zip
+# Ignore everything in this directory...
+*
+# ...except this file and the READMEs.
+!.gitignore
+!README-*

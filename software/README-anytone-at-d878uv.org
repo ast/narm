@@ -1,0 +1,299 @@
+#+TITLE: AnyTone AT-D878UV — programming software (CPS)
+#+OPTIONS: toc:nil
+
+* What is this
+
+The AnyTone AT-D878UV is configured with the vendor's
+"D878UV CPS" — a Windows .NET WinForms application that
+talks to the radio over the supplied USB programming cable.
+
+A critical AnyTone-specific gotcha: *the CPS version is
+tied to the firmware version*. Loading a codeplug written
+by a CPS that's newer or older than the radio's firmware
+will either be rejected outright or silently corrupt
+settings. Always use the CPS shipped alongside the
+firmware running on the radio.
+
+First, identify which hardware revision you have — they
+take different downloads:
+
+- *V1*: AT-D878UV, AT-D878UV Plus (original 2018+ model)
+- *V2*: AT-878UVII, AT-878UVII Plus (2022+ revision)
+
+Menu → Device Info → "Model" disambiguates.
+
+| Field       | Value (V1 — AT-D878UV PLUS specifically)                                                                 |
+|-------------+----------------------------------------------------------------------------------------------------------|
+| Latest CPS  | ~D878UV V4.00 official release 250815.zip~ (V4.00, released 2025-08-15)                                  |
+| Direct link | [[https://support.bridgecomsystems.com/hubfs/Tech%20(AnyTone)/AT-D878UV/D878UV%20V4.00%20official%20release%20250815.zip][BridgeCom mirror]]                                                                                         |
+| Mirrors     | [[https://www.anytone.net/download][anytone.net/download]] · [[https://anytoneusa.com/Downloads/][anytoneusa.com/Downloads]] · [[https://www.connectsystems.com/amateur-software/DS878UV_software.html][connectsystems.com]]                                     |
+| Size        | 25 142 871 bytes (≈23.98 MiB)                                                                            |
+| SHA-256     | ~9c4ee76c3d76e40ba918b1e60216ff71379b61bd0f56a33d41ed8d0abd8a55c5~                                       |
+| ClamAV      | clean (engine 1.4.4, signatures 2026-04-29)                                                              |
+| Build date  | 2025-08-15 (V4.00 removes Satellite Functions; previous stable V3.08N from 2025-06-14)                   |
+| Plus only   | yes — bundle contains ~This release is for D878UV PLUS.pdf~. Non-Plus radios need a different release.   |
+| USB driver  | not needed under Wine (kernel handles the CDC ACM device); Windows users need the CH340 / GD32 driver    |
+
+The V4.00 zip unpacks into these top-level folders:
+
+| Folder                                | What's in it                                              |
+|---------------------------------------+-----------------------------------------------------------|
+| ~D878UV V4.00 CPS/~                   | ~D878UV_Setup_4.00.exe~ (3.7 MB) — the CPS installer      |
+| ~D878UV_V4.00 FW/~                    | ~.CDD~ / ~.CDI~ / ~.spi~ firmware bundle                  |
+| ~BT Firmware V10046/~                 | Bluetooth module firmware + update tool (Plus only)       |
+| ~D878UV_ICONV1.23/~                   | Boot screen icon pack                                     |
+| ~D878UVscreens/~                      | Optional boot images (BMP, 160×80)                        |
+| ~A READ FIRST - Update Instructions/~ | PDFs: change log, BT update guide, FW update steps        |
+| ~Programming Guides/~                 | English/French/German/Italian programming guides          |
+| ~JSON to CSV Conversion Program/~     | Roaming-list JSON↔CSV helper (Windows-only utility)       |
+
+For the V2 model, swap in the V2 page:
+[[https://support.bridgecomsystems.com/anytone-878-v2-model-cps-firmware-downloads][BridgeCom V2 downloads]]. The CPS for V2 is *not*
+interchangeable with V1 — the firmware binary layouts
+differ.
+
+The vendor publishes CPS + firmware as a paired bundle for
+each release. Pick the bundle that matches the radio's
+current firmware (Menu → Device Info → Firmware Ver). If
+you plan to flash new firmware too, grab the matching CPS
++ firmware pair as a unit.
+
+Download and verify (V1, V4.00):
+
+#+begin_src sh
+curl -LO 'https://support.bridgecomsystems.com/hubfs/Tech%20(AnyTone)/AT-D878UV/D878UV%20V4.00%20official%20release%20250815.zip'
+sha256sum 'D878UV V4.00 official release 250815.zip'
+#+end_src
+
+Cross-check the SHA-256 against a second mirror (anytone.net
+or anytoneusa.com) before running the installer — there is
+no published vendor hash to verify against directly.
+
+* Virus scan
+
+Unsigned vendor binary from the open web — scan before
+unpacking and before running the CPS installer under Wine.
+
+#+begin_src sh
+# sudo apt install clamav
+# sudo freshclam
+clamscan --archive-verbose 'D878UV V4.00 official release 250815.zip'
+clamscan -r ./extracted/
+#+end_src
+
+* Extract
+
+The official bundle is a plain zip containing the CPS
+installer plus a firmware =.spi= image and the firmware
+update tool. Some older bundles nest the CPS inside a
+second RAR — install =unrar= (Ubuntu =multiverse= / Debian
+=non-free=) if needed:
+
+#+begin_src sh
+# sudo apt install unzip
+mkdir -p extracted
+unzip 'D878UV V4.00 official release 250815.zip' -d extracted/
+# if an inner archive is a RAR:
+# sudo apt install unrar
+# unrar x extracted/*.rar extracted/
+#+end_src
+
+You'll end up with the CPS installer (typical name
+=AT-D878UV_Setup_<version>.exe= or similar) ready to run
+under Wine, alongside the firmware =.spi= and the firmware
+update tool.
+
+* Install the CPS under Wine
+
+The AnyTone CPS is a .NET WinForms app, just like the
+Wouxun and Quansheng ones — same prerequisites (.NET 4.x,
+fonts, COM mapping). Use a *separate* Wine prefix from any
+other radio CPS so they don't interfere.
+
+** Create a clean 32-bit prefix
+
+#+begin_src sh
+export WINEPREFIX="$HOME/.wine-d878uv"
+export WINEARCH=win32
+wineboot -i
+#+end_src
+
+** Install .NET 4.8 and fonts
+
+#+begin_src sh
+# requires winetricks: sudo apt install winetricks
+winetricks -q dotnet48 corefonts
+#+end_src
+
+If the CPS UI strings render as empty rectangles
+(=□□□□=), install CJK fonts as well — older AnyTone CPS
+builds embed Chinese strings even in the English UI:
+
+#+begin_src sh
+winetricks -q cjkfonts
+# or, as a fallback:
+# sudo apt install fonts-noto-cjk fonts-wqy-microhei \
+#                  fonts-wqy-zenhei
+#+end_src
+
+** Run the installer
+
+#+begin_src sh
+cd extracted
+wine D878UV_Setup.exe
+#+end_src
+
+Click through the wizard. The default install path under
+Wine is something like:
+
+  =$WINEPREFIX/drive_c/Program Files/D878UV CPS=
+
+(Adjust to whatever the installer actually drops — the
+leaf name varies between CPS releases, e.g. =D878UV=,
+=AnyTone D878UV CPS=, =CPS-D878UV-V<version>=.)
+
+** Launch the CPS later
+
+#+begin_src sh
+export WINEPREFIX="$HOME/.wine-d878uv"
+cd "$WINEPREFIX/drive_c/Program Files/D878UV CPS"
+wine D878UV.exe
+#+end_src
+
+For convenience, a wrapper on =$PATH=. The =swaymsg= line
+registers a session-scoped =for_window= rule so the CPS
+opens floating, sized, and centered under sway; the
+=$SWAYSOCK= guard makes it a no-op under other desktops.
+
+#+begin_src sh
+mkdir -p ~/.local/bin
+cat > ~/.local/bin/d878uv-cps <<'EOF'
+#!/bin/sh
+export WINEPREFIX="$HOME/.wine-d878uv"
+cd "$WINEPREFIX/drive_c/Program Files/D878UV CPS" || exit 1
+# Float + center the CPS window when running under sway
+[ -n "$SWAYSOCK" ] && command -v swaymsg >/dev/null && \
+    swaymsg 'for_window [class="(?i)d878uv\.exe"] floating enable, resize set 1100 800, move position center' >/dev/null
+exec wine D878UV.exe "$@"
+EOF
+chmod +x ~/.local/bin/d878uv-cps
+#+end_src
+
+If the install directory or exe name differs from the
+above, adjust the =cd= path and =wine …= line accordingly.
+Find the actual exe with:
+
+#+begin_src sh
+find "$WINEPREFIX/drive_c/Program Files" -iname '*d878*.exe'
+#+end_src
+
+** Talking to the radio
+
+The AT-D878UV ships with a custom USB programming cable
+that enumerates as a USB CDC serial device on Linux,
+typically =/dev/ttyACM0=. Map it into the Wine prefix as a
+COM port:
+
+#+begin_src sh
+ls /dev/ttyACM* /dev/ttyUSB* 2>/dev/null
+ln -sf /dev/ttyACM0 "$WINEPREFIX/dosdevices/com3"
+#+end_src
+
+Add yourself to =dialout= (one-time) so you can open the
+serial device without sudo:
+
+#+begin_src sh
+# sudo usermod -aG dialout "$USER"
+# log out / back in for the group to take effect
+#+end_src
+
+In the CPS, pick =COM3= (or whichever number you
+symlinked) before reading or writing the codeplug. The
+radio must be powered on and *not* in a menu when the CPS
+talks to it — leave it on the home screen.
+
+* Firmware
+
+AnyTone publishes firmware as paired CPS + firmware
+bundles. Flashing is *not* done from the main CPS —
+there's a separate "D878UV Firmware Update Tool"
+(=D878UV_FW_Update.exe= or similar) that ships in the
+firmware archive.
+
+Bootloader entry sequence (memorize this — there is no
+recovery path if the radio is half-flashed):
+
+1. Power off the radio.
+2. Hold =PTT + side-key 1= (the upper side key).
+3. While holding, power on. The LED blinks red — that's
+   bootloader mode.
+4. Connect the cable, run the firmware update tool under
+   Wine, point it at the =.spi= image, click Write.
+
+If the flash is interrupted, repeat the bootloader-entry
+sequence and retry — the bootloader itself lives in a
+protected sector and survives a failed app flash.
+
+* Linux-native alternatives (no Wine)
+
+[[https://github.com/OpenRTX/dmrconfig][=dmrconfig=]] (the
+OpenRTX fork — actively maintained) supports the
+AT-D878UV (and the closely related D868UV / D578UV) for
+codeplug read/write from Linux directly. Install:
+
+#+begin_src sh
+sudo apt install dmrconfig   # if packaged for your distro
+# or build from source: see the upstream README
+#+end_src
+
+** udev rule (one-time)
+
+The AnyTone radios enumerate as USB device =28e9:018a=,
+which ModemManager will probe by default — that probing
+holds the cable open for several seconds at boot and
+sometimes garbles =dmrconfig='s first transaction. The
+upstream =99-dmr.rules= file tells ModemManager to ignore
+the device and grants user-mode access:
+
+#+begin_src sh
+curl -L -o /tmp/99-dmr.rules \
+    https://raw.githubusercontent.com/OpenRTX/dmrconfig/master/99-dmr.rules
+sudo install -m 0644 /tmp/99-dmr.rules /etc/udev/rules.d/99-dmr.rules
+sudo udevadm control --reload-rules
+# unplug + replug the cable to apply
+#+end_src
+
+The relevant line for the D878UV (already in the file):
+
+#+begin_example
+ATTRS{idVendor}=="28e9", ATTRS{idProduct}=="018a", ENV{ID_MM_DEVICE_IGNORE}="1"
+#+end_example
+
+The same rules file also covers TYT MD-UV380 and the
+Baofeng RD-5R / DM-1801 family — installing it once
+covers any future radios in those lines too.
+
+** Typical workflow
+
+#+begin_src sh
+# Read the current codeplug from the radio
+dmrconfig -r /dev/ttyACM0 > my-d878uv.conf
+
+# Edit my-d878uv.conf in your editor of choice…
+
+# Write it back
+dmrconfig -w /dev/ttyACM0 my-d878uv.conf
+#+end_src
+
+=narm= itself does not currently support the AT-D878UV
+codeplug format — the binary layout is large (~1 MB) and
+firmware-version-dependent, so the AnyTone CPS or
+=dmrconfig= remain the practical paths. =narm compile=
+still emits a CPS-importable CSV for the channel list.
+
+* Uninstall / reset
+
+#+begin_src sh
+rm -rf "$HOME/.wine-d878uv"
+rm -f ~/.local/bin/d878uv-cps
+#+end_src

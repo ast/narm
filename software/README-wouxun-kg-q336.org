@@ -28,26 +28,9 @@ This is an unsigned installer from a Chinese radio vendor
 fetched off the open web. Scan it before unpacking and
 before running it under Wine.
 
-** VirusTotal (recommended)
-
-The file is well under the 32 MiB free upload limit, so the
-quickest sanity check is to upload it to VirusTotal and let
-~70 engines look at it:
-
-  https://www.virustotal.com/gui/home/upload
-
-Upload both the =.rar= and, after extraction, the inner
-=.exe=. Vendor installers like this often light up a couple
-of low-reputation engines (PUA / "Generic.Heuristic"); what
-matters is the consensus across the major engines.
-
-** ClamAV (offline)
-
-Install once:
-
 #+begin_src sh
-sudo apt install clamav
-sudo freshclam
+# sudo apt install clamav
+# sudo freshclam
 #+end_src
 
 Scan the archive (ClamAV reads inside RAR/ZIP without
@@ -70,7 +53,7 @@ Install =unrar= (it lives in the =multiverse= repo on
 Ubuntu / =non-free= on Debian):
 
 #+begin_src sh
-sudo apt install unrar
+# sudo apt install unrar
 #+end_src
 
 Then extract into a subdirectory:
@@ -121,8 +104,8 @@ the winetricks download fails, system fonts work as a
 fallback:
 
 #+begin_src sh
-sudo apt install fonts-noto-cjk fonts-wqy-microhei \
-                 fonts-wqy-zenhei
+# sudo apt install fonts-noto-cjk fonts-wqy-microhei \
+#                  fonts-wqy-zenhei
 #+end_src
 
 ** Switch the UI to English
@@ -165,7 +148,11 @@ wine KG-Q332.exe
 #+end_src
 
 For convenience, drop a wrapper on =$PATH= so you can
-launch the CPS from anywhere without remembering this:
+launch the CPS from anywhere without remembering this.
+The =swaymsg= line registers a session-scoped
+=for_window= rule so the CPS opens floating, sized, and
+centered under sway; the =$SWAYSOCK= guard makes it a
+no-op under other desktops.
 
 #+begin_src sh
 mkdir -p ~/.local/bin
@@ -173,6 +160,9 @@ cat > ~/.local/bin/kg-q336 <<'EOF'
 #!/bin/sh
 export WINEPREFIX="$HOME/.wine-kgq336"
 cd "$WINEPREFIX/drive_c/Program Files/KG-Q332" || exit 1
+# Float + center the CPS window when running under sway
+[ -n "$SWAYSOCK" ] && command -v swaymsg >/dev/null && \
+    swaymsg 'for_window [class="(?i)kg-q332\.exe"] floating enable, resize set 1100 800, move position center' >/dev/null
 exec wine KG-Q332.exe "$@"
 EOF
 chmod +x ~/.local/bin/kg-q336
@@ -197,7 +187,7 @@ Your user must be in the =dialout= group to access the
 serial device without sudo:
 
 #+begin_src sh
-sudo usermod -aG dialout "$USER"
+# sudo usermod -aG dialout "$USER"
 # log out / back in for the group to take effect
 #+end_src
 
