@@ -1,24 +1,47 @@
 //! Channel decoding for the KG-Q332/Q336.
 //!
 //! Reverse-engineered from `.kg` files saved by the vendor's
-//! CPS via byte-diffing single-field changes. v0.3 decodes:
-//! frequency (rx + tx), channel name, power, bandwidth,
-//! CTCSS TX, and scan-add flag. Still TBD: CTCSS RX, DCS,
-//! repeater-shift sign — gated on tier-2 sample files.
+//! CPS via byte-diffing single-field changes. v0.4 decodes:
+//! frequency (rx + tx, absolute split for repeaters), channel
+//! name, power, bandwidth, CTCSS TX, CTCSS RX, DCS (normal +
+//! inverted polarity), and the scan-add flag.
+//!
+//! ## Tone-field encoding (bytes 8..10 = RX, 10..12 = TX)
+//!
+//! Both the RX and TX tone slots share the same 16-bit layout:
+//!
+//! | high nibble | meaning              |
+//! |-------------|----------------------|
+//! | `0x0`       | no tone              |
+//! | `0x4`       | DCS normal polarity  |
+//! | `0x6`       | DCS inverted polarity|
+//! | `0x8`       | CTCSS                |
+//!
+//! Low 12 bits = value:
+//! - CTCSS: `freq × 10` deci-Hz (so 88.5 Hz → `0x375`, 100.0 Hz → `0x3E8`).
+//! - DCS: decimal of the octal display code (so `023` oct → 19 dec, `754` oct → 492 dec).
+//!
+//! narm's [`Mode::Fm`] only has one `dcs_code` slot, so if both
+//! TX and RX carry DCS we surface the TX value (matching the
+//! UV-K5 decoder's policy). DCS polarity is currently lost in
+//! the decode — a `dcs_polarity` field would need to be added
+//! to [`Mode::Fm`].
 //!
 //! ## On-disk record (16 bytes)
 //!
 //! ```text
-//!   bytes 0..4   rx_freq:    u32 LE × 10 Hz
-//!   bytes 4..8   tx_freq:    u32 LE × 10 Hz  (0 → simplex)
-//!   bytes 8..10  tone_other: u16 LE          (CTCSS RX or DCS — TBD)
-//!   bytes 10..12 tone_tx:    u16 LE          (low 15 bits = freq×10
-//!                                             dHz, bit 15 = enable)
-//!   byte 12      power:      u8              (0=low, 1=mid, 2=high, 3=ultrahigh)
-//!   byte 13      flags1:     u8              (bit 0 = wide, bit 5 = factory-preset)
-//!   byte 14      category:   u8              (1=simplex/69M, 2=86MHz,
-//!                                             3=SRBR-VHF, 4=SRBR-UHF, 5=PMR)
-//!   byte 15      flags2:     u8              (5 for band scanner, 0 otherwise)
+//!   bytes 0..4   rx_freq:     u32 LE × 10 Hz
+//!   bytes 4..8   tx_freq:     u32 LE × 10 Hz  (0 → simplex; absolute
+//!                                              for repeaters — sign of
+//!                                              shift comes from tx-rx)
+//!   bytes 8..10  tone_rx_raw: u16 LE          (see tone-field encoding)
+//!   bytes 10..12 tone_tx_raw: u16 LE          (same encoding as RX)
+//!   byte 12      power:       u8              (0=low, 1=mid, 2=high, 3=ultrahigh)
+//!   byte 13      flags1:      u8              (bit 0 = wide bandwidth,
+//!                                              bit 5 = scan add)
+//!   byte 14      category:    u8              (1=simplex/69M, 2=86MHz,
+//!                                              3=SRBR-VHF, 4=SRBR-UHF, 5=PMR)
+//!   byte 15      flags2:      u8              (5 for band scanner, 0 otherwise)
 //! ```
 //!
 //! ## Layout
@@ -52,11 +75,9 @@ use super::error::KgQ336Error;
 struct ChannelRecord {
     rx_freq: U32,
     tx_freq: U32,
-    /// CTCSS RX or DCS — layout unknown until tier-2 saves
-    /// land. All-zero in the tier-1 samples we have.
-    _tone_other: U16,
-    /// CTCSS TX: low 15 bits = tone × 10 (deci-Hz), bit 15 =
-    /// enable. `0` means no tone.
+    /// RX tone slot. Same layout as `tone_tx_raw`.
+    tone_rx_raw: U16,
+    /// TX tone slot. See module docstring for the encoding.
     tone_tx_raw: U16,
     /// 0=low, 1=mid, 2=high, 3=ultrahigh. The vendor's CPS
     /// exposes 4 levels; narm's [`Power`] only has 3, so
@@ -82,8 +103,15 @@ const MIN_PLAUSIBLE_HZ: u64 = 1_000_000;
 const MAX_PLAUSIBLE_HZ: u64 = 1_000_000_000;
 const MAX_SHIFT_HZ: i64 = 50_000_000;
 
-/// CTCSS-TX enable flag in the high bit of `tone_tx_raw`.
-const TONE_ENABLE_BIT: u16 = 0x8000;
+/// Mask isolating the high nibble of a tone slot — the mode
+/// selector. `0x8` = CTCSS, `0x4` = DCS-N, `0x6` = DCS-I,
+/// `0x0` = no tone (covered by the catch-all match arm).
+const TONE_MODE_MASK: u16 = 0xF000;
+const TONE_MODE_DCS_NORMAL: u16 = 0x4000;
+const TONE_MODE_DCS_INVERTED: u16 = 0x6000;
+const TONE_MODE_CTCSS: u16 = 0x8000;
+/// Mask isolating the 12-bit value (CTCSS dHz or DCS decimal).
+const TONE_VALUE_MASK: u16 = 0x0FFF;
 /// Plausible CTCSS-tone range (`Hz`). The EIA-RS-220 standard
 /// runs 67.0–254.1; anything outside means we're decoding
 /// random bytes from a non-channel region.
@@ -178,20 +206,12 @@ impl ChannelRecord {
         }
     }
 
-    fn ctcss_tx_hz(&self) -> Option<f32> {
-        let v = self.tone_tx_raw.get();
-        if v & TONE_ENABLE_BIT == 0 {
-            return None;
-        }
-        let dhz = (v & !TONE_ENABLE_BIT) as f32;
-        let hz = dhz / 10.0;
-        if (CTCSS_MIN_HZ..=CTCSS_MAX_HZ).contains(&hz) {
-            Some(hz)
-        } else {
-            // Out-of-range — we're probably looking at random
-            // bytes that happened to have the 0x8000 bit set.
-            None
-        }
+    fn tone_tx(&self) -> ToneSlot {
+        ToneSlot::decode(self.tone_tx_raw.get())
+    }
+
+    fn tone_rx(&self) -> ToneSlot {
+        ToneSlot::decode(self.tone_rx_raw.get())
     }
 
     fn bandwidth(&self) -> Bandwidth {
@@ -205,7 +225,71 @@ impl ChannelRecord {
     fn scan_add(&self) -> bool {
         self.flags1 & FLAGS1_SCAN_BIT != 0
     }
+}
 
+/// One tone slot (TX or RX), decoded from its raw `u16`.
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum ToneSlot {
+    None,
+    Ctcss(f32),
+    /// DCS code as the octal-digits-read-as-decimal value the
+    /// CPS / users see (e.g. 23 for octal `023`, 754 for
+    /// octal `754`). Polarity tracked alongside.
+    Dcs {
+        code: u16,
+        inverted: bool,
+    },
+}
+
+impl ToneSlot {
+    fn decode(raw: u16) -> Self {
+        let value = raw & TONE_VALUE_MASK;
+        match raw & TONE_MODE_MASK {
+            TONE_MODE_CTCSS => {
+                let hz = value as f32 / 10.0;
+                if (CTCSS_MIN_HZ..=CTCSS_MAX_HZ).contains(&hz) {
+                    Self::Ctcss(hz)
+                } else {
+                    // Out-of-range = random bytes with the
+                    // CTCSS flag bit set; not a real tone.
+                    Self::None
+                }
+            }
+            TONE_MODE_DCS_NORMAL => Self::Dcs {
+                code: decimal_to_octal_display(value),
+                inverted: false,
+            },
+            TONE_MODE_DCS_INVERTED => Self::Dcs {
+                code: decimal_to_octal_display(value),
+                inverted: true,
+            },
+            _ => Self::None,
+        }
+    }
+}
+
+/// Convert a stored decimal value back to its octal display
+/// representation. The radio stores DCS `023` (octal) as
+/// decimal `19`; the user-facing code is `23` — the octal
+/// digits read as a decimal number, the same convention the
+/// UV-K5 module uses for [`crate::channel::Mode::Fm::dcs_code`].
+fn decimal_to_octal_display(stored: u16) -> u16 {
+    let mut s = stored;
+    let mut digits = [0u16; 6];
+    let mut n = 0;
+    while s > 0 {
+        digits[n] = s % 8;
+        s /= 8;
+        n += 1;
+    }
+    let mut out = 0u16;
+    for i in (0..n).rev() {
+        out = out * 10 + digits[i];
+    }
+    out
+}
+
+impl ChannelRecord {
     fn power(&self) -> Power {
         // The radio has 4 power levels but narm's enum has 3,
         // so 2 (high) and 3 (ultrahigh) both map to High. If
@@ -283,6 +367,24 @@ pub fn decode_channels(raw: &[u8]) -> Result<DecodeReport, KgQ336Error> {
 }
 
 fn record_to_channel(rec: &ChannelRecord, name: String) -> Channel {
+    let tone_tx = rec.tone_tx();
+    let tone_rx = rec.tone_rx();
+    let tone_tx_hz = match tone_tx {
+        ToneSlot::Ctcss(hz) => Some(hz),
+        _ => None,
+    };
+    let tone_rx_hz = match tone_rx {
+        ToneSlot::Ctcss(hz) => Some(hz),
+        _ => None,
+    };
+    // narm has a single dcs_code field, so prefer TX over RX
+    // (matching the UV-K5 decoder's policy). Polarity is
+    // currently dropped — narm's Mode::Fm has no polarity slot.
+    let dcs_code = match (tone_tx, tone_rx) {
+        (ToneSlot::Dcs { code, .. }, _) => Some(code),
+        (_, ToneSlot::Dcs { code, .. }) => Some(code),
+        _ => None,
+    };
     Channel {
         name,
         rx_hz: rec.rx_hz(),
@@ -291,9 +393,9 @@ fn record_to_channel(rec: &ChannelRecord, name: String) -> Channel {
         scan: rec.scan_add(),
         mode: Mode::Fm {
             bandwidth: rec.bandwidth(),
-            tone_tx_hz: rec.ctcss_tx_hz(),
-            tone_rx_hz: None, // bytes 8..10 layout TBD (tier 2)
-            dcs_code: None,
+            tone_tx_hz,
+            tone_rx_hz,
+            dcs_code,
         },
         source: None,
     }
@@ -569,6 +671,209 @@ mod tests {
         // No name written → name slot at 0x4DD8 stays zeroed.
         let r = decode_channels(&buf).unwrap();
         assert!(r.channels.iter().any(|c| c.name == "PMR_02"));
+    }
+
+    #[test]
+    fn decodes_pmr1_ctcss_tx_100() {
+        // From `07_pmr1_ctcss_tx_100.kg`: bytes 10..12 =
+        // 0xE8 0x83 → tone_tx_raw = 0x83E8 → 1000 dHz = 100.0 Hz.
+        // Confirms CTCSS encoding is linear value × 10.
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x00, 0x00, 0xE8, 0x83, 0x00, 0x21,
+                0x05, 0x00,
+            ],
+            b"TESTNAME.AAA",
+        );
+        let r = decode_channels(&buf).unwrap();
+        let pmr = r
+            .channels
+            .iter()
+            .find(|c| c.name == "TESTNAME.AAA")
+            .unwrap();
+        match pmr.mode {
+            Mode::Fm { tone_tx_hz, .. } => assert_eq!(tone_tx_hz, Some(100.0)),
+            _ => panic!(),
+        }
+    }
+
+    #[test]
+    fn decodes_pmr1_ctcss_rx_88_5() {
+        // From `08_pmr1_ctcss_rx_885.kg`: bytes 8..10 =
+        // 0x75 0x83 → tone_rx_raw = 0x8375 → 88.5 Hz on RX.
+        // TX stays clear. Confirms RX-tone byte location.
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x75, 0x83, 0x00, 0x00, 0x00, 0x21,
+                0x05, 0x00,
+            ],
+            b"TESTNAME.AAA",
+        );
+        let r = decode_channels(&buf).unwrap();
+        let pmr = r
+            .channels
+            .iter()
+            .find(|c| c.name == "TESTNAME.AAA")
+            .unwrap();
+        match pmr.mode {
+            Mode::Fm {
+                tone_tx_hz,
+                tone_rx_hz,
+                ..
+            } => {
+                assert!(tone_tx_hz.is_none());
+                assert_eq!(tone_rx_hz, Some(88.5));
+            }
+            _ => panic!(),
+        }
+    }
+
+    #[test]
+    fn decodes_pmr1_dcs_tx_023n() {
+        // From `09_pmr1_dcs_tx_023n.kg`: bytes 10..12 = 0x13 0x40
+        //   → tone_tx_raw = 0x4013 (mode 0x4 = DCS-N, value 0x13 = 19).
+        // 19 in octal display = "023" → narm dcs_code 23.
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x00, 0x00, 0x13, 0x40, 0x00, 0x21,
+                0x05, 0x00,
+            ],
+            b"TESTNAME.AAA",
+        );
+        let r = decode_channels(&buf).unwrap();
+        let pmr = r
+            .channels
+            .iter()
+            .find(|c| c.name == "TESTNAME.AAA")
+            .unwrap();
+        match pmr.mode {
+            Mode::Fm {
+                dcs_code,
+                tone_tx_hz,
+                tone_rx_hz,
+                ..
+            } => {
+                assert_eq!(dcs_code, Some(23));
+                assert!(tone_tx_hz.is_none());
+                assert!(tone_rx_hz.is_none());
+            }
+            _ => panic!(),
+        }
+    }
+
+    #[test]
+    fn decodes_pmr1_dcs_tx_754n() {
+        // From `10_pmr1_dcs_tx_754n.kg`: bytes 10..12 = 0xEC 0x41
+        //   → tone_tx_raw = 0x41EC (mode 0x4 = DCS-N, value 0x1EC = 492).
+        // 492 in octal = "754" → dcs_code 754.
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x00, 0x00, 0xEC, 0x41, 0x00, 0x21,
+                0x05, 0x00,
+            ],
+            b"TESTNAME.AAA",
+        );
+        let r = decode_channels(&buf).unwrap();
+        let pmr = r
+            .channels
+            .iter()
+            .find(|c| c.name == "TESTNAME.AAA")
+            .unwrap();
+        match pmr.mode {
+            Mode::Fm { dcs_code, .. } => assert_eq!(dcs_code, Some(754)),
+            _ => panic!(),
+        }
+    }
+
+    #[test]
+    fn decodes_pmr1_dcs_tx_023i_polarity_currently_dropped() {
+        // From `11_pmr1_dcs_tx_023i.kg`: bytes 10..12 = 0x13 0x60
+        //   → tone_tx_raw = 0x6013 (mode 0x6 = DCS-I, value 19).
+        // We surface dcs_code = 23 just like 023N — narm's
+        // Mode::Fm has no polarity slot, so the inverted flag
+        // is currently lost. (See module docstring.)
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x00, 0x00, 0x13, 0x60, 0x00, 0x21,
+                0x05, 0x00,
+            ],
+            b"TESTNAME.AAA",
+        );
+        let r = decode_channels(&buf).unwrap();
+        let pmr = r
+            .channels
+            .iter()
+            .find(|c| c.name == "TESTNAME.AAA")
+            .unwrap();
+        match pmr.mode {
+            Mode::Fm { dcs_code, .. } => assert_eq!(dcs_code, Some(23)),
+            _ => panic!(),
+        }
+    }
+
+    #[test]
+    fn repeater_shift_minus_600khz() {
+        // From `12_2m_minus.kg`: RX 145.650, TX 145.050 → shift -600 kHz.
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x88, 0x3E, 0xDE, 0x00, // rx 145.650
+                0x28, 0x54, 0xDD, 0x00, // tx 145.050
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x21, 0x05, 0x00,
+            ],
+            b"TESTNAME.AAA",
+        );
+        let r = decode_channels(&buf).unwrap();
+        let ch = r
+            .channels
+            .iter()
+            .find(|c| c.name == "TESTNAME.AAA")
+            .unwrap();
+        assert_eq!(ch.rx_hz, 145_650_000);
+        assert_eq!(ch.shift_hz, -600_000);
+    }
+
+    #[test]
+    fn repeater_shift_plus_600khz() {
+        // From `13_2m_plus.kg`: RX 145.650, TX 146.250 → shift +600 kHz.
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x88, 0x3E, 0xDE, 0x00, // rx 145.650
+                0xE8, 0x28, 0xDF, 0x00, // tx 146.250
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x21, 0x05, 0x00,
+            ],
+            b"TESTNAME.AAA",
+        );
+        let r = decode_channels(&buf).unwrap();
+        let ch = r
+            .channels
+            .iter()
+            .find(|c| c.name == "TESTNAME.AAA")
+            .unwrap();
+        assert_eq!(ch.rx_hz, 145_650_000);
+        assert_eq!(ch.shift_hz, 600_000);
+    }
+
+    #[test]
+    fn decimal_to_octal_display_known_values() {
+        // Sanity checks for the helper.
+        assert_eq!(decimal_to_octal_display(0), 0);
+        assert_eq!(decimal_to_octal_display(19), 23); // 023 oct
+        assert_eq!(decimal_to_octal_display(492), 754); // 754 oct
+        assert_eq!(decimal_to_octal_display(8), 10); // 010 oct
     }
 
     #[test]
