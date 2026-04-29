@@ -7,7 +7,7 @@ use clap_stdin::FileOrStdout;
 
 use narm::Radio;
 use narm::channel::Config;
-use narm::uvk5;
+use narm::{kgq336, uvk5};
 
 #[derive(ValueEnum, Debug, Clone, Copy, PartialEq, Eq)]
 #[clap(rename_all = "kebab-case")]
@@ -38,16 +38,30 @@ pub enum RadioCommand {
 }
 
 #[derive(Args, Debug)]
-pub struct ReadArgs {
+#[group(required = true, multiple = false)]
+pub struct ReadSource {
     /// Serial port the radio is on (e.g. /dev/ttyUSB0, COM3).
+    /// Mutually exclusive with `--from-file`.
     #[arg(long)]
-    pub port: String,
-    /// Target radio. Only `quansheng-uv-k5` is supported in this
-    /// release; other radios will reject with an error.
+    pub port: Option<String>,
+    /// Decode a saved codeplug file instead of reading from
+    /// the radio. For `wouxun-kg-q336` this is a `.kg` file
+    /// from the vendor CPS.
+    #[arg(long)]
+    pub from_file: Option<PathBuf>,
+}
+
+#[derive(Args, Debug)]
+pub struct ReadArgs {
+    #[command(flatten)]
+    pub source: ReadSource,
+    /// Target radio. `quansheng-uv-k5` supports both serial
+    /// and file reads; `wouxun-kg-q336` currently supports
+    /// only `--from-file`.
     #[arg(long, value_enum)]
     pub radio: Radio,
     /// Output format. `toml` decodes channels; `raw` writes the
-    /// unmodified 8 KiB EEPROM image (full backup).
+    /// unmodified EEPROM/codeplug bytes.
     #[arg(long, value_enum, default_value_t = ReadFormat::Toml)]
     pub format: ReadFormat,
     /// Output file, or `-` for stdout (default).
@@ -80,34 +94,21 @@ pub fn run(args: RadioArgs) -> Result<()> {
 }
 
 fn run_read(args: ReadArgs) -> Result<()> {
-    if args.radio != Radio::QuanshengUvK5 {
-        bail!(
-            "radio read is only implemented for quansheng-uv-k5 (got {})",
-            args.radio.id()
-        );
-    }
-
-    let mut port = uvk5::open_port(&args.port)
-        .with_context(|| format!("opening serial port {}", args.port))?;
-
-    let eeprom = uvk5::read_eeprom(&mut *port).context("reading eeprom from radio")?;
-    eprintln!("read {} bytes from EEPROM", eeprom.len());
+    let image = match (
+        args.source.port.as_deref(),
+        args.source.from_file.as_deref(),
+    ) {
+        (Some(port), None) => read_from_port(args.radio, port)?,
+        (None, Some(path)) => read_from_file(args.radio, path)?,
+        // Clap's `required = true, multiple = false` group keeps
+        // these two unreachable, but spell them out for clarity.
+        (None, None) => bail!("either --port or --from-file is required"),
+        (Some(_), Some(_)) => bail!("--port and --from-file are mutually exclusive"),
+    };
 
     let bytes: Vec<u8> = match args.format {
-        ReadFormat::Raw => eeprom,
-        ReadFormat::Toml => {
-            let report = uvk5::decode_channels(&eeprom).context("decoding channels")?;
-            for w in &report.warnings {
-                eprintln!("warning: {w}");
-            }
-            eprintln!("decoded {} channels", report.channels.len());
-            let cfg = Config {
-                channels: report.channels,
-            };
-            toml::to_string(&cfg)
-                .context("serialising channels to TOML")?
-                .into_bytes()
-        }
+        ReadFormat::Raw => image,
+        ReadFormat::Toml => decode_to_toml(args.radio, &image)?,
     };
 
     args.out
@@ -116,6 +117,62 @@ fn run_read(args: ReadArgs) -> Result<()> {
         .write_all(&bytes)
         .context("writing output")?;
     Ok(())
+}
+
+fn read_from_port(radio: Radio, port: &str) -> Result<Vec<u8>> {
+    if radio != Radio::QuanshengUvK5 {
+        bail!(
+            "live serial read is only implemented for quansheng-uv-k5 (got {})",
+            radio.id()
+        );
+    }
+    let mut p = uvk5::open_port(port).with_context(|| format!("opening serial port {port}"))?;
+    let eeprom = uvk5::read_eeprom(&mut *p).context("reading eeprom from radio")?;
+    eprintln!("read {} bytes from EEPROM", eeprom.len());
+    Ok(eeprom)
+}
+
+fn read_from_file(radio: Radio, path: &std::path::Path) -> Result<Vec<u8>> {
+    let bytes = std::fs::read(path).with_context(|| format!("reading {}", path.display()))?;
+    match radio {
+        Radio::WouxunKgQ336 => {
+            let raw = kgq336::unmojibake(&bytes).context("de-mojibaking .kg file")?;
+            eprintln!("recovered {} bytes from {}", raw.len(), path.display());
+            Ok(raw)
+        }
+        Radio::QuanshengUvK5 => {
+            // For UV-K5, the file is a raw EEPROM dump (what
+            // `--format raw` produces).
+            eprintln!("loaded {} bytes from {}", bytes.len(), path.display());
+            Ok(bytes)
+        }
+        other => bail!(
+            "--from-file decoding is not implemented for {} yet",
+            other.id()
+        ),
+    }
+}
+
+fn decode_to_toml(radio: Radio, image: &[u8]) -> Result<Vec<u8>> {
+    let (channels, warnings) = match radio {
+        Radio::QuanshengUvK5 => {
+            let r = uvk5::decode_channels(image).context("decoding channels")?;
+            (r.channels, r.warnings)
+        }
+        Radio::WouxunKgQ336 => {
+            let r = kgq336::decode_channels(image).context("decoding channels")?;
+            (r.channels, r.warnings)
+        }
+        other => bail!("channel decoding is not implemented for {} yet", other.id()),
+    };
+    for w in &warnings {
+        eprintln!("warning: {w}");
+    }
+    eprintln!("decoded {} channels", channels.len());
+    let cfg = Config { channels };
+    Ok(toml::to_string(&cfg)
+        .context("serialising channels to TOML")?
+        .into_bytes())
 }
 
 fn run_write(args: WriteArgs) -> Result<()> {

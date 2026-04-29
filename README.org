@@ -127,21 +127,29 @@ cargo test
   =--band=, =--mode=, =--limit=, =--tsv= flags as =near=.
   Examples: =narm rep s Angered=; =narm rep s SK6* --band 70=;
   =narm rep s --raw "call:SK6*"=.
-- =radio read --port <port> --radio <radio> [--format
-  toml|raw] [--out <file>]= :: Download from a connected radio
-  over its USB-serial cable. Two output formats:
+- =radio read (--port <port> | --from-file <path>) --radio
+  <radio> [--format toml|raw] [--out <file>]= :: Read from a
+  connected radio over its USB-serial cable, or decode a
+  saved codeplug file. Exactly one of =--port= and
+  =--from-file= is required. Two output formats:
   - =--format toml= (default) decodes channel records into
-    narm's TOML schema. AM channels are skipped (narm has no
-    AM mode yet); the rest round-trip through =narm validate=.
-  - =--format raw= writes the unmodified 8 KiB EEPROM image
-    (calibration, settings, channel-attributes block,
-    everything) — suitable for full backup and bit-exact
-    diffing between dumps.
-  Currently only =--radio quansheng-uv-k5= is implemented
-  (UV-K5 / UV-K5(8), using CHIRP's wire protocol). Examples:
+    narm's TOML schema.
+  - =--format raw= writes the unmodified EEPROM/codeplug
+    bytes — suitable for full backup and bit-exact diffing
+    between dumps.
+  Implemented today:
+  - =--radio quansheng-uv-k5=: live serial (UV-K5 / UV-K5(8)
+    via CHIRP's wire protocol).
+  - =--radio wouxun-kg-q336 --from-file foo.kg=: decode a
+    =.kg= file saved by the Wouxun CPS. Live serial is not
+    yet wired up (Phase 2).
+  Examples:
   =narm radio read --port /dev/ttyUSB0 --radio quansheng-uv-k5
-  > my-uvk5.toml=; =narm radio read --port /dev/ttyUSB0
-  --radio quansheng-uv-k5 --format raw --out backup.bin=.
+  > my-uvk5.toml=;
+  =narm radio read --port /dev/ttyUSB0 --radio quansheng-uv-k5
+  --format raw --out backup.bin=;
+  =narm radio read --from-file ~/Downloads/codeplug.kg --radio
+  wouxun-kg-q336 > my-q336.toml=.
 - =radio write --port <port> --radio <radio> --from <file>= ::
   Upload a raw EEPROM image (from a previous =radio read
   --format raw=) back to the radio. Only the first 0x1d00

@@ -180,7 +180,7 @@ empty:
 
 #+begin_src sh
 ls /dev/ttyACM* /dev/ttyUSB* 2>/dev/null
-ln -sf /dev/ttyACM0 "$WINEPREFIX/dosdevices/com3"
+ln -sf /dev/ttyUSB0 "$WINEPREFIX/dosdevices/com3"
 #+end_src
 
 Your user must be in the =dialout= group to access the
@@ -193,6 +193,68 @@ serial device without sudo:
 
 In the CPS, pick =COM3= (or whichever number you symlinked)
 before reading or writing the codeplug.
+
+* Linux-native alternatives (no Wine)
+
+[[https://chirpmyradio.com/projects/chirp][CHIRP]] is the obvious candidate for an analog Wouxun
+radio, but as of 2026-04 it does *not* officially support
+the KG-Q336. An in-progress test driver is tracked in
+[[https://chirpmyradio.com/issues/10880][CHIRP issue #10880]]:
+
+- Channels only — no menu settings, zones, scan lists, or
+  AM/FM-broadcast presets.
+- Not merged into a CHIRP release; only available as a
+  patch attached to the issue thread.
+- Memory map differs significantly from other Wouxun
+  models (KG-935G, KG-UV9D, etc.), so existing drivers
+  don't transfer.
+- Development is gated on the lead author getting access
+  to a physical Q336/Q332 to reverse-engineer the layout.
+
+[[https://chirpmyradio.com/issues/11765][Issue #11765]] tracks the related "recognized but not
+selectable" bug for users running daily-build CHIRP.
+
+For now, the Wine + Wouxun CPS path above is the only way
+to write a full codeplug to the radio from Linux.
+=dmrconfig= does *not* apply — the KG-Q336 is analog-only
+(FM TX; AM / WFM-broadcast RX), and =dmrconfig= targets
+DMR radios.
+
+** Decoding =.kg= files with =narm=
+
+=narm= can read codeplug =.kg= files saved by the CPS and
+emit narm's TOML channel schema. Useful for diffing
+codeplugs, archiving in version control, or feeding the
+output back through =narm compile= for another radio. Live
+serial reads aren't wired up yet (Phase 2 of the kgq336
+module).
+
+#+begin_src sh
+# Decode a saved .kg into TOML on stdout
+narm radio read --from-file ~/Downloads/my-codeplug.kg \
+                --radio wouxun-kg-q336
+
+# Save as TOML for editing / version control
+narm radio read --from-file ~/Downloads/my-codeplug.kg \
+                --radio wouxun-kg-q336 \
+                --out  my-codeplug.toml
+
+# Raw recovered bytes (the de-mojibake'd image, 50000 bytes
+# for a typical Q336 codeplug — equivalent to what the wire
+# protocol would yield in Phase 2)
+narm radio read --from-file ~/Downloads/my-codeplug.kg \
+                --radio wouxun-kg-q336 \
+                --format raw \
+                --out  codeplug.bin
+#+end_src
+
+What's decoded today (v0.2): channel name, RX/TX frequency,
+power level, bandwidth, CTCSS TX tone. What's still TBD:
+CTCSS RX, DCS, scan-list flag, repeater-shift sign — those
+are gated on tier-2 byte-diff samples. Categories with
+known per-slot name layouts are PMR (16 ch), 69M Kanal
+(18 ch), SRBR (8 ch), and Jakt (7 ch); other channels get
+synthetic names like =Q336_<offset_hex>=.
 
 * Uninstall / reset
 

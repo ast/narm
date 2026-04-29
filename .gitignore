@@ -1,6 +1,9 @@
 # Build output
 /target
 
+# Temp folder used for reverse engineering
+/tmp
+
 # Emacs
 .#*
 \#*\#

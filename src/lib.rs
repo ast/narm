@@ -1,6 +1,7 @@
 pub mod channel;
 pub mod chirp;
 pub mod grid;
+pub mod kgq336;
 pub mod radio;
 pub mod repeaters;
 pub mod uvk5;
