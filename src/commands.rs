@@ -3,6 +3,7 @@ use clap::{Parser, Subcommand};
 pub mod compile;
 pub mod completions;
 pub mod grid;
+pub mod kgq336;
 pub mod list_radios;
 pub mod radio;
 pub mod repeaters;
@@ -11,6 +12,7 @@ pub mod validate;
 use compile::CompileArgs;
 use completions::CompletionsArgs;
 use grid::GridArgs;
+use kgq336::Kgq336Args;
 use radio::RadioArgs;
 use repeaters::RepeatersArgs;
 use validate::ValidateArgs;
@@ -42,6 +44,9 @@ pub enum Command {
     /// Talk to a connected radio over serial (read EEPROM, …).
     #[command(visible_alias = "rad")]
     Radio(RadioArgs),
+    /// Inspect / debug Wouxun KG-Q332 / KG-Q336 codeplugs.
+    #[command(visible_alias = "kg")]
+    Kgq336(Kgq336Args),
     /// Generate shell completion scripts.
     #[command(visible_alias = "comp")]
     Completions(CompletionsArgs),
