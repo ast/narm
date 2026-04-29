@@ -161,6 +161,25 @@ fn decode_to_toml(radio: Radio, image: &[u8]) -> Result<Vec<u8>> {
         }
         Radio::WouxunKgQ336 => {
             let r = kgq336::decode_channels(image).context("decoding channels")?;
+            if let Some(msg) = &r.startup_message {
+                eprintln!("startup message: {msg}");
+            }
+            if !r.vfo_state.is_empty() {
+                eprintln!(
+                    "VFO state: {} entries; first = {} Hz",
+                    r.vfo_state.len(),
+                    r.vfo_state[0].rx_hz
+                );
+            }
+            if !r.fm_broadcast.is_empty() {
+                let unique: std::collections::BTreeSet<u64> =
+                    r.fm_broadcast.iter().copied().collect();
+                eprintln!(
+                    "FM broadcast presets: {} entries, {} unique frequencies",
+                    r.fm_broadcast.len(),
+                    unique.len()
+                );
+            }
             (r.channels, r.warnings)
         }
         other => bail!("channel decoding is not implemented for {} yet", other.id()),

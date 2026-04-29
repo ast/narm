@@ -1,14 +1,63 @@
 //! Channel decoding for the KG-Q332/Q336.
 //!
-//! Reverse-engineered from `.kg` files saved by the vendor's
-//! CPS via byte-diffing single-field changes. v0.4 decodes:
-//! frequency (rx + tx, absolute split for repeaters), channel
-//! name, power, bandwidth, CTCSS TX, CTCSS RX, DCS (normal +
-//! inverted polarity), and the scan-add flag.
+//! See `docs/kgq336-codeplug.md` in the repo root for the full
+//! codeplug reference (CPS UI mappings, region map, byte
+//! layouts, refined plan).
 //!
-//! ## Tone-field encoding (bytes 8..10 = RX, 10..12 = TX)
+//! ## Layout (recovered 50 000-byte image)
 //!
-//! Both the RX and TX tone slots share the same 16-bit layout:
+//! - **Startup message** at `0x0084..0x0098` (20 bytes ASCII).
+//! - **VFO state** at `0x00B0..0x0140` (8 × 16 bytes — A/B
+//!   VFO across six bands, see [`VfoEntry`]).
+//! - **Channel data array** at `0x0140..0x3FB0` (999 × 16 B,
+//!   indexed by 1-based channel number).
+//! - **Channel name array** at `0x3FBC..0x6EA0` (999 × 12 B,
+//!   parallel to the data array).
+//! - **FM broadcast memories** at `0x73E0..0x7408` (20 × `u16`
+//!   LE × 100 kHz).
+//!
+//! Earlier versions of this module modelled channels as
+//! independent "categories" (Riks, Jakt, SRBR, PMR, 69M) each
+//! with its own data and name base offsets. The CPS Scan Group
+//! tab revealed that's wrong: there is one flat 999-channel
+//! array, and the "categories" are just user-defined channel-
+//! number ranges.
+//!
+//! ## On-disk channel record (16 bytes)
+//!
+//! ```text
+//!   bytes 0..4   rx_freq:        u32 LE × 10 Hz
+//!   bytes 4..8   tx_freq:        u32 LE × 10 Hz (0 → simplex;
+//!                                                 absolute for repeaters
+//!                                                 — shift sign comes from tx-rx)
+//!   bytes 8..10  tone_rx_raw:    u16 LE — see "Tone slot encoding"
+//!   bytes 10..12 tone_tx_raw:    u16 LE — same encoding as RX
+//!   byte 12      power_am_scramble: u8 — bits 0..1 = power
+//!                                         (0=low, 1=mid, 2=high, 3=ultrahigh);
+//!                                         bits 2..3 = AM mode
+//!                                         (0=OFF, 1=AM Rx, 2=AM Rx&Tx, 3=unused);
+//!                                         bits 4..7 = scramble level
+//!                                         (0=off, 1..8 = group)
+//!   byte 13      flags1:         u8    — bit 0 = wide bandwidth,
+//!                                         bits 1..2 = mute mode
+//!                                         (0=QT, 1=QT+DTMF, 2=QT*DTMF, 3=unused),
+//!                                         bit 3 = compand,
+//!                                         bit 5 = scan add;
+//!                                         bits 4/6/7 unknown
+//!   byte 14      call_group:     u8    — 1-based index into the
+//!                                         Call Settings table
+//!                                         (DTMF / 5-tone targets)
+//!   byte 15      ???:            u8    — unknown (almost always 0
+//!                                         on real channels; 0x05
+//!                                         on the eight VFO entries.
+//!                                         Likely packs Mute Mode +
+//!                                         AM — TBD)
+//! ```
+//!
+//! ## Tone slot encoding
+//!
+//! Both `tone_rx_raw` and `tone_tx_raw` use the same 16-bit
+//! layout:
 //!
 //! | high nibble | meaning              |
 //! |-------------|----------------------|
@@ -18,50 +67,14 @@
 //! | `0x8`       | CTCSS                |
 //!
 //! Low 12 bits = value:
-//! - CTCSS: `freq × 10` deci-Hz (so 88.5 Hz → `0x375`, 100.0 Hz → `0x3E8`).
-//! - DCS: decimal of the octal display code (so `023` oct → 19 dec, `754` oct → 492 dec).
+//! - CTCSS: `freq × 10` deci-Hz (88.5 Hz → `0x375`, 100.0 Hz → `0x3E8`).
+//! - DCS: decimal of the octal display code (`023` oct → 19 dec,
+//!   `754` oct → 492 dec).
 //!
-//! narm's [`Mode::Fm`] only has one `dcs_code` slot, so if both
-//! TX and RX carry DCS we surface the TX value (matching the
-//! UV-K5 decoder's policy). DCS polarity is currently lost in
-//! the decode — a `dcs_polarity` field would need to be added
-//! to [`Mode::Fm`].
-//!
-//! ## On-disk record (16 bytes)
-//!
-//! ```text
-//!   bytes 0..4   rx_freq:     u32 LE × 10 Hz
-//!   bytes 4..8   tx_freq:     u32 LE × 10 Hz  (0 → simplex; absolute
-//!                                              for repeaters — sign of
-//!                                              shift comes from tx-rx)
-//!   bytes 8..10  tone_rx_raw: u16 LE          (see tone-field encoding)
-//!   bytes 10..12 tone_tx_raw: u16 LE          (same encoding as RX)
-//!   byte 12      power:       u8              (0=low, 1=mid, 2=high, 3=ultrahigh)
-//!   byte 13      flags1:      u8              (bit 0 = wide bandwidth,
-//!                                              bit 5 = scan add)
-//!   byte 14      category:    u8              (1=simplex/69M, 2=86MHz,
-//!                                              3=SRBR-VHF, 4=SRBR-UHF, 5=PMR)
-//!   byte 15      flags2:      u8              (5 for band scanner, 0 otherwise)
-//! ```
-//!
-//! ## Layout
-//!
-//! Channels are grouped by category. Each category has a
-//! contiguous 16-byte data block plus a contiguous 12-byte
-//! name block at a different offset. Categories observed in
-//! the FB-Radio sample:
-//!
-//! | name  | data offset | name offset | count |
-//! |-------|-------------|-------------|-------|
-//! | scanner | 0x00b0    | (no names)  | 8     |
-//! | simplex | 0x0140    | (no names)  | 1     |
-//! | Jakt    | 0x0780    | 0x446c      | 7     |
-//! | SRBR    | 0x0dc0    | 0x491c      | 8     |
-//! | PMR     | 0x1400    | 0x4dcc      | 16    |
-//! | 69M     | 0x2080    | 0x572c      | 18    |
-//!
-//! Categories without a name block synthesise names from the
-//! prefix + slot index.
+//! narm's [`Mode::Fm`] has one `dcs_code` slot, so if both TX
+//! and RX carry DCS we surface the TX value (matches the UV-K5
+//! decoder's policy). DCS polarity is currently lost in decode
+//! — a `dcs_polarity` field on [`Mode::Fm`] would round-trip it.
 
 use zerocopy::byteorder::little_endian::{U16, U32};
 use zerocopy::{FromBytes, Immutable, KnownLayout};
@@ -79,29 +92,57 @@ struct ChannelRecord {
     tone_rx_raw: U16,
     /// TX tone slot. See module docstring for the encoding.
     tone_tx_raw: U16,
-    /// 0=low, 1=mid, 2=high, 3=ultrahigh. The vendor's CPS
-    /// exposes 4 levels; narm's [`Power`] only has 3, so
-    /// ultrahigh maps to `High` (lossy — see `decode_power`).
-    power_idx: u8,
+    /// Packed: bits 0..1 = power index (0=low, 1=mid, 2=high,
+    /// 3=ultrahigh); bits 2..3 = AM mode (0=OFF, 1=AM Rx,
+    /// 2=AM Rx&Tx, 3=unused); bits 4..7 = scramble level
+    /// (0=off, 1..8 = scramble group).
+    power_am_scramble: u8,
     /// Bit 0 = wide bandwidth (clear = narrow).
-    /// Bit 5 = "scan add" — channel is in the scan list
-    /// (the CPS toggle between Scramble and Compand).
+    /// Bits 1..2 = mute mode (0=QT, 1=QT+DTMF, 2=QT*DTMF;
+    /// 3 unused).
+    /// Bit 3 = compand (1 = on).
+    /// Bit 5 = scan add (1 = in scan list).
+    /// Bits 4, 6, 7: unknown.
     flags1: u8,
-    /// Category / zone index (PMR=5, 69M=1, SRBR-UHF=4, …).
-    /// We don't surface this directly; it's a hint for the
-    /// per-category layout we already encode in [`CATEGORIES`].
-    _category: u8,
-    /// 5 for band-scanner entries (0x00b0–0x0120), 0 elsewhere.
-    /// Treated as an opaque flag for now.
-    _flags2: u8,
+    /// Call Group — 1-based index into the radio's Call
+    /// Settings table (DTMF / 5-tone targets, see image 7 in
+    /// `docs/kgq336-codeplug.md`). Confirmed from the Channel
+    /// Information tab: CH-001 has Call Group 1, SRBR Kan 01
+    /// has 4, PMR Kan 01 has 5.
+    call_group: u8,
+    /// Unknown — `0x05` for the eight VFO-state entries at
+    /// 0x00B0..0x0140, `0x00` for normal channels. Not used
+    /// by [`decode_channels`] (VFO entries get decoded
+    /// separately).
+    _byte15: u8,
 }
 
 const RECORD_SIZE: usize = 16;
 const NAME_SIZE: usize = 12;
 
+/// Channel data + name arrays — flat, parallel, 1-based
+/// channel numbering. CH-N's data lives at
+/// `CHANNEL_DATA_BASE + (N-1) * RECORD_SIZE` and its name at
+/// `CHANNEL_NAME_BASE + (N-1) * NAME_SIZE`.
+const CHANNEL_DATA_BASE: usize = 0x0140;
+const CHANNEL_NAME_BASE: usize = 0x3FBC;
+const CHANNEL_COUNT: usize = 999;
+
+/// VFO state — 8 × 16 B at `0x00B0`. Slots 0..5 are A-VFO
+/// across six bands; slots 6..7 are B-VFO across two bands.
+/// See [`VfoEntry`].
+const VFO_BASE: usize = 0x00B0;
+const VFO_COUNT: usize = 8;
+
+/// FM broadcast presets — 20 × `u16` LE at `0x73E0`. Each
+/// value is the frequency in 100 kHz units (so 760 = 76.0 MHz).
+const FM_BROADCAST_BASE: usize = 0x73E0;
+const FM_BROADCAST_COUNT: usize = 20;
+/// FM-broadcast frequency unit: 100 kHz.
+const FM_BROADCAST_UNIT_HZ: u64 = 100_000;
+
 const MIN_PLAUSIBLE_HZ: u64 = 1_000_000;
 const MAX_PLAUSIBLE_HZ: u64 = 1_000_000_000;
-const MAX_SHIFT_HZ: i64 = 50_000_000;
 
 /// Mask isolating the high nibble of a tone slot — the mode
 /// selector. `0x8` = CTCSS, `0x4` = DCS-N, `0x6` = DCS-I,
@@ -120,59 +161,15 @@ const CTCSS_MAX_HZ: f32 = 260.0;
 
 /// Bit 0 of `flags1`: wide bandwidth (clear = narrow).
 const FLAGS1_WIDE_BIT: u8 = 0x01;
+/// Bit 3 of `flags1`: compand (1 = on).
+const FLAGS1_COMPAND_BIT: u8 = 0x08;
 /// Bit 5 of `flags1`: scan-add (clear = excluded from scan).
 const FLAGS1_SCAN_BIT: u8 = 0x20;
 
-/// Per-category layout: a contiguous block of channel records
-/// plus an optional contiguous block of 12-byte ASCII names.
-struct Category {
-    /// Prefix used to synthesise names when `name_offset` is
-    /// `None`, or when a slot's name area is blank. e.g.
-    /// "PMR" → `PMR_03` for slot index 2.
-    prefix: &'static str,
-    data_offset: usize,
-    name_offset: Option<usize>,
-    count: usize,
-}
-
-const CATEGORIES: &[Category] = &[
-    Category {
-        prefix: "BAND",
-        data_offset: 0x00B0,
-        name_offset: None,
-        count: 8,
-    },
-    Category {
-        prefix: "SIMPLEX",
-        data_offset: 0x0140,
-        name_offset: None,
-        count: 1,
-    },
-    Category {
-        prefix: "Jakt",
-        data_offset: 0x0780,
-        name_offset: Some(0x446C),
-        count: 7,
-    },
-    Category {
-        prefix: "SRBR",
-        data_offset: 0x0DC0,
-        name_offset: Some(0x491C),
-        count: 8,
-    },
-    Category {
-        prefix: "PMR",
-        data_offset: 0x1400,
-        name_offset: Some(0x4DCC),
-        count: 16,
-    },
-    Category {
-        prefix: "69M",
-        data_offset: 0x2080,
-        name_offset: Some(0x572C),
-        count: 18,
-    },
-];
+/// Editable startup / boot screen string. 20 bytes ASCII at
+/// offset 0x84, NUL-padded.
+const STARTUP_MESSAGE_OFFSET: usize = 0x0084;
+const STARTUP_MESSAGE_LEN: usize = 20;
 
 impl ChannelRecord {
     fn rx_hz(&self) -> u64 {
@@ -188,13 +185,13 @@ impl ChannelRecord {
             return false;
         }
         let tx = self.tx_hz();
-        if tx == 0 {
-            return true;
-        }
-        if !(MIN_PLAUSIBLE_HZ..=MAX_PLAUSIBLE_HZ).contains(&tx) {
-            return false;
-        }
-        (tx as i64 - rx as i64).abs() <= MAX_SHIFT_HZ
+        // tx == 0 is the radio's "simplex" sentinel — accept it.
+        // Otherwise tx must also land in a plausible band.
+        // Repeater shift can be very large for split bands
+        // (cross-band repeat etc.), so we no longer cap |tx-rx|;
+        // walking the flat 999-slot array means we don't pick up
+        // random bytes outside the channel region.
+        tx == 0 || (MIN_PLAUSIBLE_HZ..=MAX_PLAUSIBLE_HZ).contains(&tx)
     }
 
     /// Signed shift (`tx - rx`); 0 for simplex (`tx_freq == 0`).
@@ -224,6 +221,16 @@ impl ChannelRecord {
 
     fn scan_add(&self) -> bool {
         self.flags1 & FLAGS1_SCAN_BIT != 0
+    }
+
+    fn compand(&self) -> bool {
+        self.flags1 & FLAGS1_COMPAND_BIT != 0
+    }
+
+    /// Call-group index, 1-based. `1` is the default in most
+    /// FB-Radio channels; SRBR uses 4, PMR uses 5.
+    fn call_group(&self) -> u8 {
+        self.call_group
     }
 }
 
@@ -291,79 +298,179 @@ fn decimal_to_octal_display(stored: u16) -> u16 {
 
 impl ChannelRecord {
     fn power(&self) -> Power {
+        // Power index lives in bits 0..1 only (4 values).
+        // Bits 2..3 are the AM-mode field; bits 4..7 are
+        // scramble. Bits beyond 0..1 must be masked out or
+        // we'd map "AM Rx" / "AM Rx&Tx" to bogus power levels.
         // The radio has 4 power levels but narm's enum has 3,
-        // so 2 (high) and 3 (ultrahigh) both map to High. If
-        // we ever care about ultrahigh, we'd add a 4th
-        // variant or a wattage field.
-        match self.power_idx {
+        // so ultrahigh (3) maps to High (lossy).
+        match self.power_am_scramble & 0b0000_0011 {
             0 => Power::Low,
             1 => Power::Mid,
             _ => Power::High,
         }
+    }
+
+    /// Scramble level 0..8. 0 = off, 1..8 = scramble group.
+    /// Currently decoded but not surfaced in the [`Channel`]
+    /// output — narm's `Mode::Fm` has no scramble field.
+    fn scramble_level(&self) -> u8 {
+        (self.power_am_scramble >> 4) & 0x0F
+    }
+
+    /// AM mode: `0` = OFF (FM), `1` = AM Rx, `2` = AM Rx&Tx,
+    /// `3` = unused / reserved.
+    fn am_mode(&self) -> u8 {
+        (self.power_am_scramble >> 2) & 0b0000_0011
+    }
+
+    /// Mute Mode: `0` = QT (default), `1` = QT+DTMF,
+    /// `2` = QT*DTMF, `3` = unused / reserved.
+    fn mute_mode(&self) -> u8 {
+        (self.flags1 >> 1) & 0b0000_0011
     }
 }
 
 pub struct DecodeReport {
     pub channels: Vec<Channel>,
     pub warnings: Vec<String>,
+    /// Radio-level boot/startup message at offset 0x84 (20
+    /// bytes ASCII NUL-padded). `None` means the slot is
+    /// blank; otherwise the trimmed string. Surfaced in the
+    /// report but not in the per-channel TOML.
+    pub startup_message: Option<String>,
+    /// VFO state — 8 entries (A-VFO across 6 bands + B-VFO
+    /// across 2 bands). Order matches the CPS VFO Settings
+    /// table (image 3 in `docs/kgq336-codeplug.md`).
+    pub vfo_state: Vec<VfoEntry>,
+    /// FM broadcast preset frequencies in Hz, 20 slots. The
+    /// CPS default is 76.0 MHz for every slot.
+    pub fm_broadcast: Vec<u64>,
+}
+
+/// One VFO state entry. Reuses the channel record's `rx_freq`
+/// + `tx_freq` layout but most of the per-channel flag fields
+///   either don't apply to VFOs or haven't been RE'd yet.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct VfoEntry {
+    pub rx_hz: u64,
+    /// 0 for simplex / receive-only VFOs.
+    pub tx_hz: u64,
 }
 
 pub fn decode_channels(raw: &[u8]) -> Result<DecodeReport, KgQ336Error> {
-    if raw.len() < RECORD_SIZE {
+    let min = CHANNEL_DATA_BASE + CHANNEL_COUNT * RECORD_SIZE;
+    if raw.len() < min {
         return Err(KgQ336Error::ShortImage {
             got: raw.len(),
-            min: RECORD_SIZE,
+            min,
         });
     }
 
     let mut channels = Vec::new();
     let mut warnings = Vec::new();
-    // Track which 16-byte slots we've already emitted from a
-    // categorised block, so the fallback walk below doesn't
-    // double-count.
-    let mut covered = Vec::<bool>::new();
-    covered.resize(raw.len() / RECORD_SIZE + 1, false);
 
-    for cat in CATEGORIES {
-        for slot in 0..cat.count {
-            let off = cat.data_offset + slot * RECORD_SIZE;
-            if off + RECORD_SIZE > raw.len() {
-                break;
-            }
-            let rec = ChannelRecord::ref_from_bytes(&raw[off..off + RECORD_SIZE])
-                .expect("RECORD_SIZE matches ChannelRecord size_of");
-            covered[off / RECORD_SIZE] = true;
-            if !rec.is_plausible() {
-                continue;
-            }
-            let name = decode_name(raw, cat, slot);
-            channels.push(record_to_channel(rec, name));
+    // Walk the flat 1..=999 channel array. Each slot is 16
+    // bytes of data plus a parallel 12-byte name slot. Empty
+    // slots fail `is_plausible` and are skipped.
+    for ch_no in 1..=CHANNEL_COUNT {
+        let data_off = CHANNEL_DATA_BASE + (ch_no - 1) * RECORD_SIZE;
+        let rec = ChannelRecord::ref_from_bytes(&raw[data_off..data_off + RECORD_SIZE])
+            .expect("RECORD_SIZE matches ChannelRecord size_of");
+        if !rec.is_plausible() {
+            continue;
         }
+        let name = decode_channel_name(raw, ch_no);
+        note_unrepresented_fields(rec, &name, &mut warnings);
+        channels.push(record_to_channel(rec, name));
     }
 
-    // Fallback: walk every remaining 16-byte slot for any
-    // plausible channels we missed. These get synthetic
-    // `Q336_<offset_hex>` names since they aren't in a known
-    // category. If any show up in real codeplugs, they're
-    // worth investigating to extend [`CATEGORIES`].
-    let mut off = 0;
-    while off + RECORD_SIZE <= raw.len() {
-        if !covered[off / RECORD_SIZE] {
-            let rec = ChannelRecord::ref_from_bytes(&raw[off..off + RECORD_SIZE])
-                .expect("RECORD_SIZE matches ChannelRecord size_of");
-            if rec.is_plausible() {
-                let name = format!("Q336_{:04x}", off);
-                warnings.push(format!(
-                    "uncategorised channel at 0x{:04x} — extend CATEGORIES if recurring",
-                    off
-                ));
-                channels.push(record_to_channel(rec, name));
-            }
-        }
-        off += RECORD_SIZE;
-    }
+    let startup_message = decode_startup_message(raw);
+    let vfo_state = decode_vfo_state(raw);
+    let fm_broadcast = decode_fm_broadcast(raw);
 
-    Ok(DecodeReport { channels, warnings })
+    Ok(DecodeReport {
+        channels,
+        warnings,
+        startup_message,
+        vfo_state,
+        fm_broadcast,
+    })
+}
+
+/// Push a warning for any field that's set on the record but
+/// dropped in the [`Channel`] output. Currently:
+/// - non-zero scramble level (narm has no scramble field)
+/// - compand on (narm has no compand field)
+/// - DCS inverted polarity (narm has no polarity field)
+/// - non-default call group (narm has no call-group field)
+fn note_unrepresented_fields(rec: &ChannelRecord, name: &str, warnings: &mut Vec<String>) {
+    let lvl = rec.scramble_level();
+    if lvl != 0 {
+        warnings.push(format!(
+            "channel '{name}' has scramble level {lvl} (not represented in TOML)"
+        ));
+    }
+    if rec.compand() {
+        warnings.push(format!(
+            "channel '{name}' has compand on (not represented in TOML)"
+        ));
+    }
+    if matches!(rec.tone_tx(), ToneSlot::Dcs { inverted: true, .. })
+        || matches!(rec.tone_rx(), ToneSlot::Dcs { inverted: true, .. })
+    {
+        warnings.push(format!(
+            "channel '{name}' uses DCS inverted polarity (polarity dropped in TOML)"
+        ));
+    }
+    let cg = rec.call_group();
+    if cg != 1 {
+        warnings.push(format!(
+            "channel '{name}' uses Call Group {cg} (not represented in TOML)"
+        ));
+    }
+    match rec.mute_mode() {
+        0 => {} // QT — default
+        1 => warnings.push(format!(
+            "channel '{name}' uses Mute Mode QT+DTMF (not represented in TOML)"
+        )),
+        2 => warnings.push(format!(
+            "channel '{name}' uses Mute Mode QT*DTMF (not represented in TOML)"
+        )),
+        n => warnings.push(format!(
+            "channel '{name}' has unknown Mute Mode bits 0b{n:02b}"
+        )),
+    }
+    // Mode::Am is emitted for both AM Rx (1) and AM Rx&Tx
+    // (2). The Rx&Tx variant is the radio's intent to also
+    // transmit AM; warn about that since narm's Mode::Am
+    // doesn't distinguish.
+    if rec.am_mode() == 2 {
+        warnings.push(format!(
+            "channel '{name}' uses AM Rx&Tx; emitted as Mode::Am (TX-side AM dropped)"
+        ));
+    }
+    if rec.am_mode() == 3 {
+        warnings.push(format!("channel '{name}' has unknown AM-mode bits 0b11"));
+    }
+}
+
+fn decode_startup_message(raw: &[u8]) -> Option<String> {
+    let end = STARTUP_MESSAGE_OFFSET + STARTUP_MESSAGE_LEN;
+    if raw.len() < end {
+        return None;
+    }
+    let s: String = raw[STARTUP_MESSAGE_OFFSET..end]
+        .iter()
+        .take_while(|&&b| b != 0 && b != 0xFF)
+        .map(|&b| b as char)
+        .collect();
+    let trimmed = s.trim();
+    if trimmed.is_empty() {
+        None
+    } else {
+        Some(trimmed.to_string())
+    }
 }
 
 fn record_to_channel(rec: &ChannelRecord, name: String) -> Channel {
@@ -385,58 +492,101 @@ fn record_to_channel(rec: &ChannelRecord, name: String) -> Channel {
         (_, ToneSlot::Dcs { code, .. }) => Some(code),
         _ => None,
     };
+    let bandwidth = rec.bandwidth();
+    // AM mode 0 = FM (default); 1 = AM Rx; 2 = AM Rx&Tx.
+    // narm's Mode::Am has the same fields as Mode::Fm; the
+    // "Rx-only vs Rx&Tx" distinction is dropped here and
+    // warned about in `note_unrepresented_fields`.
+    let mode = if rec.am_mode() == 0 {
+        Mode::Fm {
+            bandwidth,
+            tone_tx_hz,
+            tone_rx_hz,
+            dcs_code,
+        }
+    } else {
+        Mode::Am {
+            bandwidth,
+            tone_tx_hz,
+            tone_rx_hz,
+            dcs_code,
+        }
+    };
     Channel {
         name,
         rx_hz: rec.rx_hz(),
         shift_hz: rec.shift_hz(),
         power: rec.power(),
         scan: rec.scan_add(),
-        mode: Mode::Fm {
-            bandwidth: rec.bandwidth(),
-            tone_tx_hz,
-            tone_rx_hz,
-            dcs_code,
-        },
+        mode,
         source: None,
     }
 }
 
-/// Read a 12-byte ASCII name slot. NUL- and 0xFF-terminated;
-/// trailing spaces trimmed. If the slot is empty (or the
-/// category has no name block), synthesise from the
-/// category prefix + 1-based slot index.
-fn decode_name(raw: &[u8], cat: &Category, slot: usize) -> String {
-    if let Some(base) = cat.name_offset {
-        let off = base + slot * NAME_SIZE;
-        if off + NAME_SIZE <= raw.len() {
-            let bytes = &raw[off..off + NAME_SIZE];
-            let s: String = bytes
-                .iter()
-                .take_while(|&&b| b != 0 && b != 0xFF)
-                .map(|&b| b as char)
-                .collect();
-            let trimmed = s.trim();
-            if !trimmed.is_empty() {
-                return trimmed.to_string();
-            }
+/// Look up CH-`ch_no`'s 12-byte ASCII name slot. NUL- and
+/// 0xFF-terminated; trailing spaces trimmed. If the slot is
+/// blank, synthesise `CH_NNN` (3-digit zero-padded) — matches
+/// the radio's UI numbering.
+fn decode_channel_name(raw: &[u8], ch_no: usize) -> String {
+    let off = CHANNEL_NAME_BASE + (ch_no - 1) * NAME_SIZE;
+    if off + NAME_SIZE <= raw.len() {
+        let bytes = &raw[off..off + NAME_SIZE];
+        let s: String = bytes
+            .iter()
+            .take_while(|&&b| b != 0 && b != 0xFF)
+            .map(|&b| b as char)
+            .collect();
+        let trimmed = s.trim();
+        if !trimmed.is_empty() {
+            return trimmed.to_string();
         }
     }
-    format!("{}_{:02}", cat.prefix, slot + 1)
+    format!("CH_{:03}", ch_no)
+}
+
+fn decode_vfo_state(raw: &[u8]) -> Vec<VfoEntry> {
+    let mut out = Vec::with_capacity(VFO_COUNT);
+    for slot in 0..VFO_COUNT {
+        let off = VFO_BASE + slot * RECORD_SIZE;
+        if off + RECORD_SIZE > raw.len() {
+            break;
+        }
+        let rec = ChannelRecord::ref_from_bytes(&raw[off..off + RECORD_SIZE])
+            .expect("RECORD_SIZE matches ChannelRecord size_of");
+        out.push(VfoEntry {
+            rx_hz: rec.rx_hz(),
+            tx_hz: rec.tx_hz(),
+        });
+    }
+    out
+}
+
+fn decode_fm_broadcast(raw: &[u8]) -> Vec<u64> {
+    let end = FM_BROADCAST_BASE + FM_BROADCAST_COUNT * 2;
+    if raw.len() < end {
+        return Vec::new();
+    }
+    raw[FM_BROADCAST_BASE..end]
+        .chunks_exact(2)
+        .map(|c| u16::from_le_bytes([c[0], c[1]]) as u64 * FM_BROADCAST_UNIT_HZ)
+        .collect()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    const MIN_RAW: usize = 0x6000;
+    /// Minimum image size for the new flat-array decoder:
+    /// covers channel data (0x140..0x3FB0), name area
+    /// (0x3FBC..0x6EA0), and FM broadcast (0x73E0..0x7408).
+    const MIN_RAW: usize = 0x7500;
 
     #[test]
-    fn rejects_image_shorter_than_one_record() {
+    fn rejects_image_shorter_than_channel_block() {
+        // The decoder requires at least the full 999-channel
+        // data block (0x140 + 999*16 = 0x3FB0 bytes).
         let r = decode_channels(&[0u8; 8]);
-        assert!(matches!(
-            r,
-            Err(KgQ336Error::ShortImage { got: 8, min: 16 })
-        ));
+        assert!(matches!(r, Err(KgQ336Error::ShortImage { got: 8, .. })));
     }
 
     #[test]
@@ -659,18 +809,22 @@ mod tests {
     }
 
     #[test]
-    fn empty_name_slot_synthesises_from_prefix() {
-        // PMR slot 1's data is populated, but its name is all
-        // zeros — fall back to the synthetic "PMR_02".
+    fn empty_name_slot_synthesises_ch_number() {
+        // CH-302's data is populated, but its name slot is all
+        // zeros — fall back to the synthetic "CH_302".
+        // CH-302 data lives at 0x140 + 301*16 = 0x1410; its
+        // name slot at 0x3FBC + 301*12 = 0x4DD8 stays zeroed.
         let mut buf = vec![0u8; MIN_RAW];
-        // Slot index 1 (i.e. PMR Kan 02), data at 0x1410.
         buf[0x1410..0x1420].copy_from_slice(&[
             0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20,
             0x05, 0x00,
         ]);
-        // No name written → name slot at 0x4DD8 stays zeroed.
         let r = decode_channels(&buf).unwrap();
-        assert!(r.channels.iter().any(|c| c.name == "PMR_02"));
+        assert!(
+            r.channels.iter().any(|c| c.name == "CH_302"),
+            "expected CH_302, got {:?}",
+            r.channels.iter().map(|c| &c.name).collect::<Vec<_>>()
+        );
     }
 
     #[test]
@@ -868,6 +1022,378 @@ mod tests {
     }
 
     #[test]
+    fn decodes_pmr1_power_middle() {
+        // From `14_pmr1_pwr_mid.kg`: byte 12 low nibble = 0x1
+        // (the file also has freq carried over from 13, but
+        // we only assert power here).
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x88, 0x3E, 0xDE, 0x00, 0xE8, 0x28, 0xDF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x21,
+                0x05, 0x00,
+            ],
+            b"TESTNAME.AAA",
+        );
+        let r = decode_channels(&buf).unwrap();
+        let pmr = r
+            .channels
+            .iter()
+            .find(|c| c.name == "TESTNAME.AAA")
+            .unwrap();
+        assert_eq!(pmr.power, Power::Mid);
+    }
+
+    #[test]
+    fn decodes_pmr1_power_high_normal() {
+        // From `15_pmr1_pwr_high.kg`: byte 12 low nibble = 0x2.
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x88, 0x3E, 0xDE, 0x00, 0xE8, 0x28, 0xDF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x21,
+                0x05, 0x00,
+            ],
+            b"TESTNAME.AAA",
+        );
+        let r = decode_channels(&buf).unwrap();
+        let pmr = r
+            .channels
+            .iter()
+            .find(|c| c.name == "TESTNAME.AAA")
+            .unwrap();
+        assert_eq!(pmr.power, Power::High);
+    }
+
+    #[test]
+    fn power_low_nibble_is_independent_of_scramble_high_nibble() {
+        // Captured from `16_pmr1_scramble_1.kg`: byte 12 = 0x10
+        // (scramble level 1 in high nibble, power = low in
+        // low nibble). Power decode must mask off the high
+        // nibble or it'd come back as `High`.
+        let rec = ChannelRecord {
+            rx_freq: U32::new(14_565_000),
+            tx_freq: U32::new(14_625_000),
+            tone_rx_raw: U16::new(0),
+            tone_tx_raw: U16::new(0),
+            power_am_scramble: 0x10,
+            flags1: 0x21,
+            call_group: 0x05,
+            _byte15: 0x00,
+        };
+        assert_eq!(rec.power(), Power::Low);
+        assert_eq!(rec.scramble_level(), 1);
+    }
+
+    #[test]
+    fn scramble_level_8_extracted_from_high_nibble() {
+        // From `16b_pmr1_scramble_8.kg`: byte 12 = 0x80.
+        let rec = ChannelRecord {
+            rx_freq: U32::new(14_565_000),
+            tx_freq: U32::new(14_625_000),
+            tone_rx_raw: U16::new(0),
+            tone_tx_raw: U16::new(0),
+            power_am_scramble: 0x80,
+            flags1: 0x21,
+            call_group: 0x05,
+            _byte15: 0x00,
+        };
+        assert_eq!(rec.scramble_level(), 8);
+        assert_eq!(rec.power(), Power::Low);
+    }
+
+    #[test]
+    fn decodes_pmr1_compand_on() {
+        // From `17_pmr1_compand_on.kg`: byte 13 = 0x29.
+        // Diff vs the 145.65/146.25 baseline (which was 0x21):
+        // bit 3 (0x08) set → compand on.
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x88, 0x3E, 0xDE, 0x00, 0xE8, 0x28, 0xDF, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x29,
+                0x05, 0x00,
+            ],
+            b"TESTNAME.AAA",
+        );
+        let r = decode_channels(&buf).unwrap();
+        assert!(
+            r.warnings
+                .iter()
+                .any(|w| w.contains("TESTNAME.AAA") && w.contains("compand")),
+            "expected compand warning, got {:?}",
+            r.warnings
+        );
+    }
+
+    #[test]
+    fn startup_message_decoded_from_offset_0x84() {
+        // From `18_owner.kg`: 20 bytes at 0x84 changed from
+        // "www.fbradio.se\0\0\0\0\0\0" to "abcd1234567890abcd01".
+        let mut buf = vec![0u8; MIN_RAW];
+        buf[0x0084..0x0098].copy_from_slice(b"abcd1234567890abcd01");
+        let r = decode_channels(&buf).unwrap();
+        assert_eq!(r.startup_message.as_deref(), Some("abcd1234567890abcd01"));
+    }
+
+    #[test]
+    fn startup_message_handles_nul_padded_short_string() {
+        let mut buf = vec![0u8; MIN_RAW];
+        buf[0x0084..0x008e].copy_from_slice(b"hello\0\0\0\0\0");
+        let r = decode_channels(&buf).unwrap();
+        assert_eq!(r.startup_message.as_deref(), Some("hello"));
+    }
+
+    #[test]
+    fn startup_message_blank_returns_none() {
+        let buf = vec![0u8; MIN_RAW];
+        let r = decode_channels(&buf).unwrap();
+        assert_eq!(r.startup_message, None);
+    }
+
+    #[test]
+    fn decodes_riks1_at_sparse_slot_0() {
+        // Riks category data + name slot 0. Captured from
+        // the FB-Radio baseline: 85.9375 MHz simplex.
+        let mut buf = vec![0u8; MIN_RAW];
+        buf[0x04A0..0x04B0].copy_from_slice(&[
+            0x56, 0x21, 0x83, 0x00, 0x56, 0x21, 0x83, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x21,
+            0x02, 0x00,
+        ]);
+        buf[0x4244..0x4250].copy_from_slice(b"Riks 1\x00\x00\x00\x00\x00\x00");
+        let r = decode_channels(&buf).unwrap();
+        let ch = r.channels.iter().find(|c| c.name == "Riks 1").unwrap();
+        assert_eq!(ch.rx_hz, 85_937_500);
+    }
+
+    #[test]
+    fn decodes_riks2_at_sparse_slot_35() {
+        // Riks 2 is at slot 35: data at 0x04A0+35*16=0x06D0,
+        // name at 0x4244+35*12=0x43E8.
+        let mut buf = vec![0u8; MIN_RAW];
+        buf[0x06D0..0x06E0].copy_from_slice(&[
+            0x1A, 0x2B, 0x83, 0x00, 0x1A, 0x2B, 0x83, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x21,
+            0x02, 0x00,
+        ]);
+        buf[0x43E8..0x43F4].copy_from_slice(b"Riks 2\x00\x00\x00\x00\x00\x00");
+        let r = decode_channels(&buf).unwrap();
+        let ch = r.channels.iter().find(|c| c.name == "Riks 2").unwrap();
+        assert_eq!(ch.rx_hz, 85_962_500);
+    }
+
+    #[test]
+    fn riks_rename_writes_to_offset_0x4244() {
+        // From `20_riks1_name.kg`: bytes 0x4244..0x424f changed
+        // from "Riks 1\0\0\0\0\0\0" to "RIKS_TEST\0\0\0".
+        let mut buf = vec![0u8; MIN_RAW];
+        // Populate Riks 1 data so the name lookup actually
+        // runs (otherwise is_plausible rejects the slot).
+        buf[0x04A0..0x04B0].copy_from_slice(&[
+            0x56, 0x21, 0x83, 0x00, 0x56, 0x21, 0x83, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x21,
+            0x02, 0x00,
+        ]);
+        buf[0x4244..0x4250].copy_from_slice(b"RIKS_TEST\x00\x00\x00");
+        let r = decode_channels(&buf).unwrap();
+        assert!(r.channels.iter().any(|c| c.name == "RIKS_TEST"));
+    }
+
+    #[test]
+    fn decodes_pmr1_dcs_rx_023n() {
+        // From `21_pmr1_dcs_rx_023n.kg`: bytes 8..10 = 0x13 0x40
+        //   → tone_rx_raw = 0x4013 (DCS-N, value 19 = 023 oct).
+        // Confirms RX uses the same tone encoding as TX.
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x13, 0x40, 0x00, 0x00, 0x00, 0x20,
+                0x05, 0x00,
+            ],
+            b"PMR Kan 01",
+        );
+        let r = decode_channels(&buf).unwrap();
+        let pmr = r.channels.iter().find(|c| c.name == "PMR Kan 01").unwrap();
+        match pmr.mode {
+            Mode::Fm {
+                dcs_code,
+                tone_tx_hz,
+                tone_rx_hz,
+                ..
+            } => {
+                assert_eq!(dcs_code, Some(23));
+                assert!(tone_tx_hz.is_none());
+                assert!(tone_rx_hz.is_none());
+            }
+            _ => panic!(),
+        }
+    }
+
+    #[test]
+    fn decodes_pmr1_mute_mode_qt_plus_dtmf() {
+        // From `22_pmr1_mute_qt_plus_dtmf.kg`: byte 13 went
+        // 0x20 → 0x22. The +0x02 is bit 1 = mute_mode bit 0.
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x22,
+                0x05, 0x00,
+            ],
+            b"PMR Kan 01",
+        );
+        let r = decode_channels(&buf).unwrap();
+        assert!(
+            r.warnings
+                .iter()
+                .any(|w| w.contains("PMR Kan 01") && w.contains("QT+DTMF")),
+            "expected QT+DTMF warning, got {:?}",
+            r.warnings
+        );
+    }
+
+    #[test]
+    fn decodes_pmr1_mute_mode_qt_star_dtmf() {
+        // From `23_pmr1_mute_qt_star_dtmf.kg`: byte 13 = 0x24
+        // (bit 2 = mute_mode bit 1).
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x24,
+                0x05, 0x00,
+            ],
+            b"PMR Kan 01",
+        );
+        let r = decode_channels(&buf).unwrap();
+        assert!(
+            r.warnings
+                .iter()
+                .any(|w| w.contains("PMR Kan 01") && w.contains("QT*DTMF")),
+            "expected QT*DTMF warning, got {:?}",
+            r.warnings
+        );
+    }
+
+    #[test]
+    fn decodes_pmr1_am_rx_emits_am_mode() {
+        // From `24_pmr1_am_rx.kg`: byte 12 = 0x04 (bit 2
+        // = am_mode bit 0). AM Rx → Mode::Am, no Rx&Tx
+        // warning.
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x04, 0x20,
+                0x05, 0x00,
+            ],
+            b"PMR Kan 01",
+        );
+        let r = decode_channels(&buf).unwrap();
+        let pmr = r.channels.iter().find(|c| c.name == "PMR Kan 01").unwrap();
+        assert!(matches!(pmr.mode, Mode::Am { .. }));
+        assert!(
+            !r.warnings.iter().any(|w| w.contains("Rx&Tx")),
+            "AM Rx (mode 1) should not warn about Rx&Tx"
+        );
+    }
+
+    #[test]
+    fn decodes_pmr1_am_rx_tx_emits_am_with_warning() {
+        // From `25_pmr1_am_rx_tx.kg`: byte 12 = 0x08 (bit 3
+        // = am_mode bit 1). AM Rx&Tx → Mode::Am + warning
+        // about TX-side AM being dropped.
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x08, 0x20,
+                0x05, 0x00,
+            ],
+            b"PMR Kan 01",
+        );
+        let r = decode_channels(&buf).unwrap();
+        let pmr = r.channels.iter().find(|c| c.name == "PMR Kan 01").unwrap();
+        assert!(matches!(pmr.mode, Mode::Am { .. }));
+        assert!(
+            r.warnings
+                .iter()
+                .any(|w| w.contains("PMR Kan 01") && w.contains("AM Rx&Tx")),
+            "expected Rx&Tx warning, got {:?}",
+            r.warnings
+        );
+    }
+
+    #[test]
+    fn power_does_not_collide_with_am_bits() {
+        // Regression: power_idx must mask only bits 0..1.
+        // If we accidentally masked the low nibble, AM Rx
+        // (bit 2 = 0x04) would parse as power=4 → mapped
+        // to High; with the correct mask power must stay Low.
+        let mut buf = vec![0u8; MIN_RAW];
+        place_pmr1(
+            &mut buf,
+            &[
+                0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x04, 0x20,
+                0x05, 0x00,
+            ],
+            b"PMR Kan 01",
+        );
+        let r = decode_channels(&buf).unwrap();
+        let pmr = r.channels.iter().find(|c| c.name == "PMR Kan 01").unwrap();
+        assert_eq!(pmr.power, Power::Low);
+    }
+
+    #[test]
+    fn srbr_kan_01_decodes_with_call_group_4() {
+        // CH-201 = SRBR Kan 01 in the FB-Radio baseline.
+        // Captured trailer bytes show byte 14 = 0x04 → Call
+        // Group 4, matching the CPS Channel Information tab
+        // (image 9 in docs/kgq336-codeplug.md).
+        let mut buf = vec![0u8; MIN_RAW];
+        // CH-201 data at 0x140 + 200*16 = 0x0DC0.
+        buf[0x0DC0..0x0DD0].copy_from_slice(&[
+            0xE0, 0x67, 0xA6, 0x02, 0xE0, 0x67, 0xA6, 0x02, 0x00, 0x00, 0x00, 0x00, 0x02, 0x21,
+            0x04, 0x00,
+        ]);
+        // CH-201 name at 0x3FBC + 200*12 = 0x491C.
+        buf[0x491C..0x4928].copy_from_slice(b"SRBR  Kan 01");
+        let r = decode_channels(&buf).unwrap();
+        let ch = r
+            .channels
+            .iter()
+            .find(|c| c.name == "SRBR  Kan 01")
+            .unwrap();
+        assert_eq!(ch.rx_hz, 444_600_000);
+        // Call Group 4 ≠ 1 → emit a warning.
+        assert!(
+            r.warnings
+                .iter()
+                .any(|w| w.contains("SRBR  Kan 01") && w.contains("Call Group 4")),
+            "expected Call Group 4 warning, got {:?}",
+            r.warnings
+        );
+    }
+
+    #[test]
+    fn call_group_1_does_not_warn() {
+        // CH-501 = 69M Kanal 01 with Call Group 1 (default) →
+        // no warning emitted.
+        let mut buf = vec![0u8; MIN_RAW];
+        buf[0x2080..0x2090].copy_from_slice(&[
+            0x02, 0x4E, 0x69, 0x00, 0x02, 0x4E, 0x69, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x21,
+            0x01, 0x00,
+        ]);
+        buf[0x572C..0x5738].copy_from_slice(b"69M Kanal 01");
+        let r = decode_channels(&buf).unwrap();
+        assert!(r.channels.iter().any(|c| c.name == "69M Kanal 01"));
+        assert!(
+            !r.warnings.iter().any(|w| w.contains("Call Group")),
+            "expected no Call Group warning for default group 1, got {:?}",
+            r.warnings
+        );
+    }
+
+    #[test]
     fn decimal_to_octal_display_known_values() {
         // Sanity checks for the helper.
         assert_eq!(decimal_to_octal_display(0), 0);
@@ -877,17 +1403,53 @@ mod tests {
     }
 
     #[test]
-    fn uncategorised_channel_emits_warning() {
-        // A channel at 0x3000 (outside any known category).
+    fn arbitrary_channel_index_decodes_with_synthetic_name() {
+        // 0x3000 = data for CH = (0x3000 - 0x140) / 16 + 1 = 749.
+        // No name written → fall back to "CH_749".
         let mut buf = vec![0u8; MIN_RAW];
         buf[0x3000..0x3010].copy_from_slice(&[
             0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00,
         ]);
         let r = decode_channels(&buf).unwrap();
-        let ch = r.channels.iter().find(|c| c.name == "Q336_3000").unwrap();
+        let ch = r.channels.iter().find(|c| c.name == "CH_749").unwrap();
         assert_eq!(ch.rx_hz, 446_006_250);
-        assert_eq!(r.warnings.len(), 1);
-        assert!(r.warnings[0].contains("0x3000"));
+    }
+
+    #[test]
+    fn vfo_state_decoded_from_0x00b0() {
+        // The 8 VFO entries occupy 0x00B0..0x0140 in the same
+        // [rx_freq u32 LE × 10 Hz] format as channel records.
+        let mut buf = vec![0u8; MIN_RAW];
+        // VFO slot 0 = 118.10 MHz simplex (real bytes from
+        // FB-Radio baseline).
+        buf[0x00B0..0x00C0].copy_from_slice(&[
+            0xD0, 0x34, 0xB4, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x01,
+            0x01, 0x05,
+        ]);
+        let r = decode_channels(&buf).unwrap();
+        assert_eq!(r.vfo_state.len(), 8);
+        assert_eq!(r.vfo_state[0].rx_hz, 118_100_000);
+        assert_eq!(r.vfo_state[0].tx_hz, 0);
+        // VFO entries are NOT emitted as channels (they live
+        // outside the flat 999-slot channel array).
+        assert!(r.channels.is_empty());
+    }
+
+    #[test]
+    fn fm_broadcast_decoded_from_0x73e0() {
+        // 20 × u16 LE × 100 kHz starting at 0x73E0.
+        let mut buf = vec![0u8; MIN_RAW];
+        // Slot 0 = 76.0 MHz (760 = 0x02F8) → matches the CPS
+        // default in the FB-Radio baseline.
+        buf[0x73E0..0x73E2].copy_from_slice(&760u16.to_le_bytes());
+        // Slot 5 = 100.5 MHz (1005 = 0x03ED).
+        buf[0x73E0 + 10..0x73E0 + 12].copy_from_slice(&1005u16.to_le_bytes());
+        let r = decode_channels(&buf).unwrap();
+        assert_eq!(r.fm_broadcast.len(), 20);
+        assert_eq!(r.fm_broadcast[0], 76_000_000);
+        assert_eq!(r.fm_broadcast[5], 100_500_000);
+        // FM broadcast presets are NOT emitted as channels.
+        assert!(r.channels.is_empty());
     }
 }
