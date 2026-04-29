@@ -21,6 +21,9 @@ mod decode;
 mod error;
 mod file;
 
-pub use decode::{DecodeReport, decode_channels};
+pub use decode::{
+    DecodeReport, PttId, ScanGroup, ScanMode, Settings, Sidetone, StartupDisplay, TopKey, VfoEntry,
+    decode_channels,
+};
 pub use error::KgQ336Error;
 pub use file::{mojibake, unmojibake};

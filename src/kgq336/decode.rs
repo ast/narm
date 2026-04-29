@@ -141,6 +141,27 @@ const FM_BROADCAST_COUNT: usize = 20;
 /// FM-broadcast frequency unit: 100 kHz.
 const FM_BROADCAST_UNIT_HZ: u64 = 100_000;
 
+/// Settings block — 132 B at offset 0. See [`Settings`] /
+/// [`SettingsRaw`] and `docs/kgq336-codeplug.md` for the
+/// per-byte map.
+const SETTINGS_BASE: usize = 0x0000;
+const SETTINGS_SIZE: usize = 0x0084;
+
+/// Scan group ranges — 10 × `(start, end : u16 LE)` at
+/// `0x7278`. The 8 B at `0x7270..0x7278` ahead of this likely
+/// hold the `All` group plus A/B flags (TBD).
+const SCAN_GROUP_RANGE_BASE: usize = 0x7278;
+/// Scan group names — 10 × 12 B ASCII NUL-padded at `0x72A0`.
+/// Index in storage is `UI group number - 1`.
+const SCAN_GROUP_NAME_BASE: usize = 0x72A0;
+const SCAN_GROUP_COUNT: usize = 10;
+const SCAN_GROUP_NAME_SIZE: usize = 12;
+
+/// Call group 1 name — 12 B ASCII NUL-padded at `0x766C`.
+/// Slot pitch unknown; only slot 0 surfaced.
+const CALL_GROUP_1_NAME_BASE: usize = 0x766C;
+const CALL_GROUP_1_NAME_SIZE: usize = 12;
+
 const MIN_PLAUSIBLE_HZ: u64 = 1_000_000;
 const MAX_PLAUSIBLE_HZ: u64 = 1_000_000_000;
 
@@ -346,6 +367,18 @@ pub struct DecodeReport {
     /// FM broadcast preset frequencies in Hz, 20 slots. The
     /// CPS default is 76.0 MHz for every slot.
     pub fm_broadcast: Vec<u64>,
+    /// Radio-wide Configuration / Key Settings block. `None`
+    /// only if the image is shorter than 0x84 bytes (which
+    /// `decode_channels` already rejects via `ShortImage`).
+    pub settings: Option<Settings>,
+    /// Scan groups 1..10. Always returns 10 entries (blank
+    /// `name` and `(0, 0)` range for unconfigured slots) so
+    /// the index field tracks the CPS UI row directly.
+    pub scan_groups: Vec<ScanGroup>,
+    /// Call group 1's name (`0x766C`, 12 B). `None` if blank.
+    /// Slot pitch + per-group call code are TBD, so the rest
+    /// of the call-settings table isn't decoded.
+    pub call_group_1_name: Option<String>,
 }
 
 /// One VFO state entry. Reuses the channel record's `rx_freq`
@@ -356,6 +389,272 @@ pub struct VfoEntry {
     pub rx_hz: u64,
     /// 0 for simplex / receive-only VFOs.
     pub tx_hz: u64,
+}
+
+/// CPS Scan Mode for the radio-wide Scan setting.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ScanMode {
+    /// Time-Operated: dwell on a busy channel for a fixed time.
+    TimeOperated,
+    /// Carrier-Operated: stay on a busy channel until the
+    /// carrier drops.
+    CarrierOperated,
+    Other(u8),
+}
+
+impl ScanMode {
+    fn from_raw(b: u8) -> Self {
+        match b {
+            0 => Self::TimeOperated,
+            1 => Self::CarrierOperated,
+            n => Self::Other(n),
+        }
+    }
+}
+
+/// CPS PTT-ID setting. Only `Off` and `Bot` are confirmed
+/// from captures; `Other(u8)` carries the rest (likely
+/// `Eot` / `Both`) until those captures land.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PttId {
+    Off,
+    Bot,
+    Other(u8),
+}
+
+impl PttId {
+    fn from_raw(b: u8) -> Self {
+        match b {
+            0 => Self::Off,
+            1 => Self::Bot,
+            n => Self::Other(n),
+        }
+    }
+}
+
+/// Top-key short-press behaviour.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TopKey {
+    Alarm,
+    Sos,
+    Other(u8),
+}
+
+impl TopKey {
+    fn from_raw(b: u8) -> Self {
+        match b {
+            0 => Self::Alarm,
+            1 => Self::Sos,
+            n => Self::Other(n),
+        }
+    }
+}
+
+/// Boot screen content selector.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum StartupDisplay {
+    Image,
+    BatteryVoltage,
+    Other(u8),
+}
+
+impl StartupDisplay {
+    fn from_raw(b: u8) -> Self {
+        match b {
+            0 => Self::Image,
+            1 => Self::BatteryVoltage,
+            n => Self::Other(n),
+        }
+    }
+}
+
+/// Sidetone behaviour. Only `Off` and `Dtst` confirmed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Sidetone {
+    Off,
+    Dtst,
+    Other(u8),
+}
+
+impl Sidetone {
+    fn from_raw(b: u8) -> Self {
+        match b {
+            0 => Self::Off,
+            1 => Self::Dtst,
+            n => Self::Other(n),
+        }
+    }
+}
+
+/// Raw 132-byte Settings block at offset `0x0000`. Only the
+/// fields with confirmed semantics are named — the rest are
+/// `_bNN: [u8; N]` filler so the struct size matches `0x84`
+/// exactly. See `docs/kgq336-codeplug.md` for the byte map.
+#[repr(C)]
+#[derive(FromBytes, Immutable, KnownLayout, Debug, Clone, Copy)]
+struct SettingsRaw {
+    _b00: u8,
+    battery_save: u8,
+    _b02: u8,
+    tot: u8,
+    _b04: u8,
+    vox: u8,
+    _b06: [u8; 2],
+    beep: u8,
+    scan_mode: u8,
+    backlight: u8,
+    brightness_active: u8,
+    _b0c: u8,
+    startup_display: u8,
+    ptt_id: u8,
+    _b0f: u8,
+    sidetone: u8,
+    _b11: [u8; 4],
+    auto_lock: u8,
+    priority_channel: U16,
+    _b18: u8,
+    rpt_setting: u8,
+    _b1a: [u8; 7],
+    theme: u8,
+    _b22: [u8; 2],
+    time_zone: u8,
+    _b25: u8,
+    gps_on: u8,
+    _b27: [u8; 33],
+    mode_switch_password: [u8; 6],
+    reset_password: [u8; 6],
+    _b54: [u8; 8],
+    vfo_squelch: [u8; 2],
+    _b5e: [u8; 6],
+    top_key: u8,
+    pf1_short: u8,
+    _b66: u8,
+    pf2_long: u8,
+    pf3_short: u8,
+    _b69: [u8; 5],
+    ani_code: [u8; 6],
+    scc_code: [u8; 6],
+    _b7a: [u8; 10],
+}
+
+const _: () = assert!(size_of::<SettingsRaw>() == SETTINGS_SIZE);
+
+/// Decoded radio-wide settings. Binary fields are `bool`;
+/// multi-state fields are enums with `Other(u8)` catch-alls
+/// so unknown values round-trip without warning noise.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Settings {
+    pub battery_save: bool,
+    /// Time-Out Timer index. Encoding TBD — baseline `04`
+    /// and `01` = 15 s confirmed; intermediate values not
+    /// yet captured.
+    pub tot: u8,
+    /// VOX level (0=off, 1..10).
+    pub vox: u8,
+    pub beep: bool,
+    pub scan_mode: ScanMode,
+    /// Backlight time, seconds. `05` = 5 s confirmed.
+    pub backlight_seconds: u8,
+    /// Active-screen brightness, 1..10.
+    pub brightness_active: u8,
+    pub startup_display: StartupDisplay,
+    pub ptt_id: PttId,
+    pub sidetone: Sidetone,
+    pub auto_lock: bool,
+    /// Channel number used as the priority-scan channel.
+    pub priority_channel: u16,
+    /// "RPT Setting" enum index. Semantic TBD.
+    pub rpt_setting: u8,
+    /// 0..3 (4 themes per CPS image 2).
+    pub theme: u8,
+    /// Time-zone index (`0c` baseline).
+    pub time_zone: u8,
+    pub gps_on: bool,
+    /// 6 ASCII digits `'0'..'9'`. Baseline = `"000000"`.
+    pub mode_switch_password: [u8; 6],
+    /// 6 ASCII digits `'0'..'9'`. Baseline = `"000000"`.
+    pub reset_password: [u8; 6],
+    /// VFO A squelch level, 0..9.
+    pub vfo_squelch_a: u8,
+    /// VFO B squelch level, 0..9.
+    pub vfo_squelch_b: u8,
+    pub top_key: TopKey,
+    pub pf1_short: u8,
+    pub pf2_long: u8,
+    pub pf3_short: u8,
+    /// 6 bytes; one digit `0..9` per byte, `0x0F` / `0xF0`
+    /// = padding/terminator. See [`Settings::ani_code_string`].
+    pub ani_code: [u8; 6],
+    /// Same encoding as `ani_code`.
+    pub scc_code: [u8; 6],
+}
+
+impl Settings {
+    fn from_raw(r: &SettingsRaw) -> Self {
+        Self {
+            battery_save: r.battery_save != 0,
+            tot: r.tot,
+            vox: r.vox,
+            beep: r.beep != 0,
+            scan_mode: ScanMode::from_raw(r.scan_mode),
+            backlight_seconds: r.backlight,
+            brightness_active: r.brightness_active,
+            startup_display: StartupDisplay::from_raw(r.startup_display),
+            ptt_id: PttId::from_raw(r.ptt_id),
+            sidetone: Sidetone::from_raw(r.sidetone),
+            auto_lock: r.auto_lock != 0,
+            priority_channel: r.priority_channel.get(),
+            rpt_setting: r.rpt_setting,
+            theme: r.theme,
+            time_zone: r.time_zone,
+            gps_on: r.gps_on != 0,
+            mode_switch_password: r.mode_switch_password,
+            reset_password: r.reset_password,
+            vfo_squelch_a: r.vfo_squelch[0],
+            vfo_squelch_b: r.vfo_squelch[1],
+            top_key: TopKey::from_raw(r.top_key),
+            pf1_short: r.pf1_short,
+            pf2_long: r.pf2_long,
+            pf3_short: r.pf3_short,
+            ani_code: r.ani_code,
+            scc_code: r.scc_code,
+        }
+    }
+
+    /// ANI code as ASCII digits. Stops at the first non-digit
+    /// byte (`0x0F`, `0xF0`, etc.), matching the CPS view.
+    pub fn ani_code_string(&self) -> String {
+        decode_bcd_digits(&self.ani_code)
+    }
+
+    /// SCC code as ASCII digits. See [`Self::ani_code_string`].
+    pub fn scc_code_string(&self) -> String {
+        decode_bcd_digits(&self.scc_code)
+    }
+}
+
+fn decode_bcd_digits(bytes: &[u8]) -> String {
+    bytes
+        .iter()
+        .take_while(|&&b| b <= 9)
+        .map(|&b| char::from(b'0' + b))
+        .collect()
+}
+
+/// One scan group (CPS UI groups `1..10`).
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct ScanGroup {
+    /// 1-based UI index, matches the row number in image 6.
+    pub index: u8,
+    /// Group name (NUL/`0xFF`-trimmed). Empty for slots the
+    /// user hasn't renamed.
+    pub name: String,
+    /// First channel in the group's range (1-based). `0` for
+    /// unconfigured slots.
+    pub start_channel: u16,
+    /// Last channel in the group's range (1-based). `0` for
+    /// unconfigured slots.
+    pub end_channel: u16,
 }
 
 pub fn decode_channels(raw: &[u8]) -> Result<DecodeReport, KgQ336Error> {
@@ -388,6 +687,9 @@ pub fn decode_channels(raw: &[u8]) -> Result<DecodeReport, KgQ336Error> {
     let startup_message = decode_startup_message(raw);
     let vfo_state = decode_vfo_state(raw);
     let fm_broadcast = decode_fm_broadcast(raw);
+    let settings = decode_settings(raw);
+    let scan_groups = decode_scan_groups(raw);
+    let call_group_1_name = decode_call_group_1_name(raw);
 
     Ok(DecodeReport {
         channels,
@@ -395,6 +697,9 @@ pub fn decode_channels(raw: &[u8]) -> Result<DecodeReport, KgQ336Error> {
         startup_message,
         vfo_state,
         fm_broadcast,
+        settings,
+        scan_groups,
+        call_group_1_name,
     })
 }
 
@@ -572,14 +877,104 @@ fn decode_fm_broadcast(raw: &[u8]) -> Vec<u64> {
         .collect()
 }
 
+fn decode_settings(raw: &[u8]) -> Option<Settings> {
+    let end = SETTINGS_BASE + SETTINGS_SIZE;
+    if raw.len() < end {
+        return None;
+    }
+    let r = SettingsRaw::ref_from_bytes(&raw[SETTINGS_BASE..end])
+        .expect("SETTINGS_SIZE matches SettingsRaw size_of");
+    Some(Settings::from_raw(r))
+}
+
+fn decode_scan_groups(raw: &[u8]) -> Vec<ScanGroup> {
+    let ranges_end = SCAN_GROUP_RANGE_BASE + SCAN_GROUP_COUNT * 4;
+    let names_end = SCAN_GROUP_NAME_BASE + SCAN_GROUP_COUNT * SCAN_GROUP_NAME_SIZE;
+    if raw.len() < ranges_end || raw.len() < names_end {
+        return Vec::new();
+    }
+    (0..SCAN_GROUP_COUNT)
+        .map(|i| {
+            let r_off = SCAN_GROUP_RANGE_BASE + i * 4;
+            let start = u16::from_le_bytes([raw[r_off], raw[r_off + 1]]);
+            let end = u16::from_le_bytes([raw[r_off + 2], raw[r_off + 3]]);
+            let n_off = SCAN_GROUP_NAME_BASE + i * SCAN_GROUP_NAME_SIZE;
+            let name = read_ascii_slot(&raw[n_off..n_off + SCAN_GROUP_NAME_SIZE]);
+            ScanGroup {
+                index: (i + 1) as u8,
+                name,
+                start_channel: start,
+                end_channel: end,
+            }
+        })
+        .collect()
+}
+
+fn decode_call_group_1_name(raw: &[u8]) -> Option<String> {
+    let end = CALL_GROUP_1_NAME_BASE + CALL_GROUP_1_NAME_SIZE;
+    if raw.len() < end {
+        return None;
+    }
+    let s = read_ascii_slot(&raw[CALL_GROUP_1_NAME_BASE..end]);
+    if s.is_empty() { None } else { Some(s) }
+}
+
+/// Read a NUL/`0xFF`-terminated ASCII slot as a trimmed
+/// `String`. Shared by scan-group, call-group, and channel
+/// name decoding.
+fn read_ascii_slot(bytes: &[u8]) -> String {
+    let s: String = bytes
+        .iter()
+        .take_while(|&&b| b != 0 && b != 0xFF)
+        .map(|&b| b as char)
+        .collect();
+    s.trim().to_string()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
     /// Minimum image size for the new flat-array decoder:
     /// covers channel data (0x140..0x3FB0), name area
-    /// (0x3FBC..0x6EA0), and FM broadcast (0x73E0..0x7408).
-    const MIN_RAW: usize = 0x7500;
+    /// (0x3FBC..0x6EA0), FM broadcast (0x73E0..0x7408), and
+    /// the call-group-1 name slot (0x766C..0x7678).
+    const MIN_RAW: usize = 0x7700;
+
+    /// Settings block (`0x0000..0x0084`) lifted verbatim from
+    /// the FB-Radio baseline (`tmp/KG-Q336_FB_Radio_2024.kg`
+    /// after `unmojibake`). Used as the starting point for
+    /// single-field-delta tests so each one mirrors the
+    /// corresponding capture in `~/Downloads/kg-re/`.
+    #[rustfmt::skip]
+    const BASELINE_SETTINGS: [u8; 0x84] = [
+        0x01, 0x01, 0x00, 0x04, 0x05, 0x00, 0x01, 0x00,
+        0x01, 0x00, 0x00, 0x0a, 0x0a, 0x00, 0x00, 0x03,
+        0x00, 0x08, 0x08, 0x05, 0x00, 0x00, 0xfc, 0x01,
+        0x00, 0x02, 0x00, 0x00, 0x00, 0x03, 0x00, 0x00,
+        0x00, 0x03, 0x00, 0x00, 0x0c, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0xff, 0xff, 0x00, 0xf8, 0xa0, 0x02,
+        0x1f, 0x00, 0xff, 0xff, 0x00, 0xf8, 0x00, 0x00,
+        0xa0, 0xfa, 0x00, 0x00, 0x40, 0x05, 0xa0, 0xfa,
+        0xff, 0xff, 0x00, 0x00, 0x40, 0x05, 0xff, 0xff,
+        0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30, 0x30,
+        0x30, 0x30, 0x30, 0x30, 0x03, 0x03, 0xfc, 0x01,
+        0x65, 0x00, 0x05, 0x05, 0x05, 0x05, 0x00, 0x00,
+        0x03, 0x00, 0x00, 0x00, 0x00, 0x01, 0x03, 0x01,
+        0x04, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01, 0x00,
+        0x01, 0x0f, 0xf0, 0xf0, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00,
+        0xf8, 0x02, 0x00, 0x00,
+    ];
+
+    /// Build a buffer with the baseline settings block in
+    /// place; everything else zeroed. Tests then apply the
+    /// single-byte delta from their capture and assert.
+    fn buf_with_baseline_settings() -> Vec<u8> {
+        let mut buf = vec![0u8; MIN_RAW];
+        buf[0..0x84].copy_from_slice(&BASELINE_SETTINGS);
+        buf
+    }
 
     #[test]
     fn rejects_image_shorter_than_channel_block() {
@@ -1451,5 +1846,263 @@ mod tests {
         assert_eq!(r.fm_broadcast[5], 100_500_000);
         // FM broadcast presets are NOT emitted as channels.
         assert!(r.channels.is_empty());
+    }
+
+    // ===== Settings-block tests =====
+    //
+    // Each test starts from `buf_with_baseline_settings()`,
+    // overwrites the bytes that the corresponding capture
+    // changed (per the diff sweep against `00_baseline.kg`),
+    // and asserts on the decoded `Settings` field.
+
+    #[test]
+    fn decodes_baseline_settings() {
+        let r = decode_channels(&buf_with_baseline_settings()).unwrap();
+        let s = r.settings.expect("settings block fits in MIN_RAW");
+        assert!(s.battery_save);
+        assert!(s.beep);
+        assert!(!s.gps_on);
+        assert!(!s.auto_lock);
+        assert_eq!(s.scan_mode, ScanMode::TimeOperated);
+        assert_eq!(s.ptt_id, PttId::Off);
+        assert_eq!(s.sidetone, Sidetone::Off);
+        assert_eq!(s.startup_display, StartupDisplay::Image);
+        assert_eq!(s.top_key, TopKey::Alarm);
+        assert_eq!(s.vfo_squelch_a, 5);
+        assert_eq!(s.vfo_squelch_b, 5);
+        assert_eq!(s.priority_channel, 508);
+        assert_eq!(s.theme, 3);
+        assert_eq!(s.time_zone, 0x0c);
+        assert_eq!(&s.mode_switch_password, b"000000");
+        assert_eq!(&s.reset_password, b"000000");
+        assert_eq!(s.ani_code_string(), "101");
+        // SCC unset in baseline = six zero bytes, which the
+        // digit-per-byte encoding renders as "000000". The
+        // encoding can't distinguish that from a literal
+        // SCC of "000000" — the CPS treats both as default.
+        assert_eq!(s.scc_code_string(), "000000");
+    }
+
+    #[test]
+    fn decodes_battery_save_off() {
+        // Cap 26: 0x0001 = 0x01 → 0x00.
+        let mut buf = buf_with_baseline_settings();
+        buf[0x0001] = 0x00;
+        let s = decode_channels(&buf).unwrap().settings.unwrap();
+        assert!(!s.battery_save);
+    }
+
+    #[test]
+    fn decodes_topkey_sos() {
+        // Cap 27: 0x0064 = 0x00 → 0x01.
+        let mut buf = buf_with_baseline_settings();
+        buf[0x0064] = 0x01;
+        let s = decode_channels(&buf).unwrap().settings.unwrap();
+        assert_eq!(s.top_key, TopKey::Sos);
+    }
+
+    #[test]
+    fn decodes_vfo_squelch_9() {
+        // Cap 30: 0x005C..0x005E = `05 05` → `09 09`.
+        let mut buf = buf_with_baseline_settings();
+        buf[0x005C] = 0x09;
+        buf[0x005D] = 0x09;
+        let s = decode_channels(&buf).unwrap().settings.unwrap();
+        assert_eq!(s.vfo_squelch_a, 9);
+        assert_eq!(s.vfo_squelch_b, 9);
+    }
+
+    #[test]
+    fn decodes_tot_15s() {
+        // Cap 31: 0x0003 = 0x04 → 0x01.
+        let mut buf = buf_with_baseline_settings();
+        buf[0x0003] = 0x01;
+        let s = decode_channels(&buf).unwrap().settings.unwrap();
+        assert_eq!(s.tot, 1);
+    }
+
+    #[test]
+    fn decodes_vox_5() {
+        // Cap 32: 0x0005 = 0x00 → 0x05.
+        let mut buf = buf_with_baseline_settings();
+        buf[0x0005] = 0x05;
+        let s = decode_channels(&buf).unwrap().settings.unwrap();
+        assert_eq!(s.vox, 5);
+    }
+
+    #[test]
+    fn decodes_scan_mode_co() {
+        // Cap 34: 0x0009 = 0x00 → 0x01.
+        let mut buf = buf_with_baseline_settings();
+        buf[0x0009] = 0x01;
+        let s = decode_channels(&buf).unwrap().settings.unwrap();
+        assert_eq!(s.scan_mode, ScanMode::CarrierOperated);
+    }
+
+    #[test]
+    fn decodes_ptt_id_bot() {
+        // Cap 39: 0x000E = 0x00 → 0x01 (plus a theme refresh
+        // we don't care about here).
+        let mut buf = buf_with_baseline_settings();
+        buf[0x000E] = 0x01;
+        let s = decode_channels(&buf).unwrap().settings.unwrap();
+        assert_eq!(s.ptt_id, PttId::Bot);
+    }
+
+    #[test]
+    fn decodes_priority_channel_001() {
+        // Cap 42: 0x0015..0x0018 = `00 fc 01` → `01 01 00`.
+        // priority_channel u16 LE at 0x0016 = 0x0001 = 1.
+        let mut buf = buf_with_baseline_settings();
+        buf[0x0015] = 0x01;
+        buf[0x0016] = 0x01;
+        buf[0x0017] = 0x00;
+        let s = decode_channels(&buf).unwrap().settings.unwrap();
+        assert!(s.auto_lock);
+        assert_eq!(s.priority_channel, 1);
+    }
+
+    #[test]
+    fn decodes_gps_on() {
+        // Cap 44: 0x0026 = 0x00 → 0x01.
+        let mut buf = buf_with_baseline_settings();
+        buf[0x0026] = 0x01;
+        let s = decode_channels(&buf).unwrap().settings.unwrap();
+        assert!(s.gps_on);
+    }
+
+    #[test]
+    fn decodes_ani_max_scc_5s() {
+        // Cap 50: 0x006E..0x007A all set to ANI=`09*6`,
+        // SCC=`05*6`. The string helpers must render both
+        // as 6-digit ASCII.
+        let mut buf = buf_with_baseline_settings();
+        buf[0x006E..0x0074].copy_from_slice(&[9; 6]);
+        buf[0x0074..0x007A].copy_from_slice(&[5; 6]);
+        let s = decode_channels(&buf).unwrap().settings.unwrap();
+        assert_eq!(s.ani_code_string(), "999999");
+        assert_eq!(s.scc_code_string(), "555555");
+    }
+
+    #[test]
+    fn decodes_unknown_enum_value_as_other() {
+        // Sanity: a non-0/1 byte for a 2-state enum lands in
+        // `Other(_)` rather than panicking or being silently
+        // mapped. Useful regression for future captures.
+        let mut buf = buf_with_baseline_settings();
+        buf[0x000E] = 0x05; // PTT-ID = some unknown variant
+        let s = decode_channels(&buf).unwrap().settings.unwrap();
+        assert_eq!(s.ptt_id, PttId::Other(5));
+    }
+
+    // ===== Scan group tests =====
+
+    /// Place a 12-byte ASCII NUL-padded name at the given
+    /// scan-group slot (0-based slot; `slot+1` matches the UI
+    /// group number).
+    fn place_scan_group_name(buf: &mut [u8], slot: usize, name: &[u8]) {
+        let off = SCAN_GROUP_NAME_BASE + slot * SCAN_GROUP_NAME_SIZE;
+        buf[off..off + SCAN_GROUP_NAME_SIZE].fill(0);
+        buf[off..off + name.len()].copy_from_slice(name);
+    }
+
+    /// Place a `(start, end)` pair (u16 LE × 2) at the given
+    /// scan-group slot.
+    fn place_scan_group_range(buf: &mut [u8], slot: usize, start: u16, end: u16) {
+        let off = SCAN_GROUP_RANGE_BASE + slot * 4;
+        buf[off..off + 2].copy_from_slice(&start.to_le_bytes());
+        buf[off + 2..off + 4].copy_from_slice(&end.to_le_bytes());
+    }
+
+    #[test]
+    fn scan_groups_always_returns_ten_entries() {
+        let r = decode_channels(&vec![0u8; MIN_RAW]).unwrap();
+        assert_eq!(r.scan_groups.len(), SCAN_GROUP_COUNT);
+        for (i, g) in r.scan_groups.iter().enumerate() {
+            assert_eq!(g.index, (i + 1) as u8);
+            assert_eq!(g.start_channel, 0);
+            assert_eq!(g.end_channel, 0);
+            assert!(g.name.is_empty());
+        }
+    }
+
+    #[test]
+    fn decodes_baseline_scan_group_ranges() {
+        // The five named ranges in the FB-Radio baseline.
+        let mut buf = vec![0u8; MIN_RAW];
+        place_scan_group_range(&mut buf, 0, 501, 518);
+        place_scan_group_range(&mut buf, 1, 55, 94);
+        place_scan_group_range(&mut buf, 2, 101, 107);
+        place_scan_group_range(&mut buf, 3, 201, 208);
+        place_scan_group_range(&mut buf, 4, 301, 316);
+        place_scan_group_name(&mut buf, 0, b"69 MHz");
+        place_scan_group_name(&mut buf, 1, b"\xc5keri");
+        place_scan_group_name(&mut buf, 2, b"Jakt");
+        place_scan_group_name(&mut buf, 3, b"SRBR 444MHz");
+        place_scan_group_name(&mut buf, 4, b"PMR 446MHz");
+        let r = decode_channels(&buf).unwrap();
+        let g: Vec<_> = r
+            .scan_groups
+            .iter()
+            .map(|g| (g.index, g.name.as_str(), g.start_channel, g.end_channel))
+            .collect();
+        assert_eq!(g[0], (1, "69 MHz", 501, 518));
+        assert_eq!(g[1].0, 2);
+        // Slot 1 name is "\xc5keri" — Latin-1 Å. The decoder
+        // maps each byte to its codepoint, so we get a U+00C5
+        // followed by "keri". Don't compare as &str literal —
+        // just check the start/end + length.
+        assert!(g[1].1.starts_with('\u{00C5}'));
+        assert_eq!(g[1].2, 55);
+        assert_eq!(g[1].3, 94);
+        assert_eq!(g[2], (3, "Jakt", 101, 107));
+        assert_eq!(g[3], (4, "SRBR 444MHz", 201, 208));
+        assert_eq!(g[4], (5, "PMR 446MHz", 301, 316));
+        // Slots 6..10 stay at default (no name, zero range).
+        for slot_idx in 5..SCAN_GROUP_COUNT {
+            let g = &r.scan_groups[slot_idx];
+            assert!(g.name.is_empty());
+            assert_eq!(g.start_channel, 0);
+            assert_eq!(g.end_channel, 0);
+        }
+    }
+
+    #[test]
+    fn decodes_scangrp1_rename() {
+        // Cap 28: 0x72A0..0x72A8 = `36 39 20 4d 48 7a 00 00`
+        //   → `54 45 53 54 47 52 50 31` ("TESTGRP1").
+        let mut buf = vec![0u8; MIN_RAW];
+        place_scan_group_name(&mut buf, 0, b"TESTGRP1");
+        let r = decode_channels(&buf).unwrap();
+        assert_eq!(r.scan_groups[0].name, "TESTGRP1");
+        assert_eq!(r.scan_groups[0].index, 1);
+    }
+
+    // ===== Call-group-1 name tests =====
+
+    #[test]
+    fn decodes_call_group_1_baseline() {
+        // Baseline: 0x766C = "Allanrop\0\0\0\0".
+        let mut buf = vec![0u8; MIN_RAW];
+        buf[0x766C..0x766C + 8].copy_from_slice(b"Allanrop");
+        let r = decode_channels(&buf).unwrap();
+        assert_eq!(r.call_group_1_name.as_deref(), Some("Allanrop"));
+    }
+
+    #[test]
+    fn decodes_callgrp1_rename() {
+        // Cap 29: 0x766C..0x7674 = `41 6c 6c 61 6e 72 6f 70`
+        //   → `54 45 53 54 43 41 4c 4c` ("TESTCALL").
+        let mut buf = vec![0u8; MIN_RAW];
+        buf[0x766C..0x766C + 8].copy_from_slice(b"TESTCALL");
+        let r = decode_channels(&buf).unwrap();
+        assert_eq!(r.call_group_1_name.as_deref(), Some("TESTCALL"));
+    }
+
+    #[test]
+    fn call_group_1_blank_returns_none() {
+        let buf = vec![0u8; MIN_RAW];
+        let r = decode_channels(&buf).unwrap();
+        assert!(r.call_group_1_name.is_none());
     }
 }

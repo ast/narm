@@ -39,18 +39,63 @@ confirming the layout. The decoder should iterate
 
 | Range             | Size       | Contents                             |
 |-------------------|------------|--------------------------------------|
-| `0x0000..0x0084`  | 132 B      | **Settings block** — Configuration tab fields + per-VFO Squelch + TopKey + (more TBD). Mostly 1-byte enums. Confirmed bytes: `0x01` = Battery Save (1=on); `0x5C`/`0x5D` = VFO A/B Squelch (0..9); `0x64` = TopKey (0=Alarm, 1=SOS). |
+| `0x0000..0x0084`  | 132 B      | **Settings block** — see "Settings block" subsection below |
 | `0x0084..0x0098`  | 20 B       | **Startup message** (ASCII, NUL-pad) |
 | `0x0098..0x00B0`  | 24 B       | Brand strings + separator            |
 | `0x00B0..0x0140`  | 8 × 16 B   | **VFO state** — 8 entries (see below)|
 | `0x0140..0x3FB0`  | 999 × 16 B | **Channel data array** (CH-001..999) |
 | `0x3FB0..0x3FBC`  | 12 B       | Padding / unused (TBD)               |
 | `0x3FBC..0x6EA0`  | 999 × 12 B | **Channel name array** (CH-001..999) |
-| `0x6EA0..0x72A0`  | ~1 KiB     | TBD — likely scan-group start/end channel pairs and other key/scan settings |
-| `0x72A0..0x73E0`  | ~320 B     | **Scan Group names** — 11 groups, 8 bytes each + padding. Group 1 name at `0x72A0`. |
+| `0x6EA0..0x7270`  | ~970 B     | TBD — likely per-channel scan-group / A-B membership flags |
+| `0x7270..0x7278`  | 8 B        | Scan Group "All" data + A/B flags (TBD) |
+| `0x7278..0x72A0`  | 10 × 4 B   | **Scan Group ranges** (start, end : u16 LE) |
+| `0x72A0..0x7318`  | 10 × 12 B  | **Scan Group names** (slots 1..10)   |
+| `0x7318..0x73E0`  | ~200 B     | TBD — possibly band edges and scan-group misc |
 | `0x73E0..0x7408`  | 20 × 2 B   | **FM broadcast memories** (u16 LE × 100 kHz) |
-| `0x7408..0x766C`  | ~600 B     | TBD — possibly scan-group A/B flags, DTMF settings, etc. |
-| `0x766C..0xC350`  | ~20 KiB    | **Call Settings** + remaining settings (themes, GPS, DTMF). Call Group 1 name at `0x766C`. |
+| `0x7408..0x766C`  | ~600 B     | TBD — possibly default DTMF code table |
+| `0x766C..0xC350`  | ~20 KiB    | **Call Settings** + remaining settings (themes, GPS, DTMF). Group 1 name at `0x766C`; rest TBD. |
+
+## Settings block (`0x0000..0x0084`, 132 B)
+
+Mostly 1-byte enums for Configuration / Key Settings tab
+fields. Pinned down by single-field byte-diff captures
+(`26..52` in the capture set). Offsets are within the block.
+
+| Offset | Width | Field                  | Encoding / notes |
+|--------|-------|------------------------|------------------|
+| `0x01` | 1     | Battery Save           | bool (0=off, 1=on) |
+| `0x03` | 1     | TOT (Time-Out Timer)   | index; baseline `04`, `01`=15 s |
+| `0x05` | 1     | VOX                    | 0=off, 1..10 |
+| `0x08` | 1     | Beep                   | bool |
+| `0x09` | 1     | Scan Mode              | 0=TO (time), 1=CO (carrier) |
+| `0x0A` | 1     | Backlight (seconds)    | `05` = 5 s; other values TBD |
+| `0x0B` | 1     | Brightness Active      | 1..10 |
+| `0x0D` | 1     | Startup Display        | 0=image, 1=batt voltage |
+| `0x0E` | 1     | PTT-ID                 | 0=off, 1=BOT (more TBD) |
+| `0x10` | 1     | Sidetone               | 0=off, 1=DTST (more TBD) |
+| `0x15` | 1     | Auto Lock              | bool |
+| `0x16` | 2     | Priority Channel       | u16 LE channel number |
+| `0x19` | 1     | RPT Setting            | semantic TBD (baseline `02`) |
+| `0x21` | 1     | Theme                  | 0..3 (4 themes) |
+| `0x24` | 1     | Time Zone              | index (`0c` baseline) |
+| `0x26` | 1     | GPS On                 | bool |
+| `0x48` | 6     | Mode Switch password   | ASCII `'0'..'9'` |
+| `0x4E` | 6     | Reset password         | ASCII `'0'..'9'` |
+| `0x5C` | 2     | VFO A/B Squelch        | 0..9 each |
+| `0x64` | 1     | TopKey                 | 0=Alarm, 1=SOS |
+| `0x65` | 1     | PF1 short              | semantic TBD |
+| `0x67` | 1     | PF2 long               | semantic TBD |
+| `0x68` | 1     | PF3 short              | semantic TBD |
+| `0x6E` | 6     | ANI code               | 1 digit/byte; `0x0F`/`0xF0` = pad |
+| `0x74` | 6     | SCC code               | same encoding as ANI |
+
+Bytes still TBD inside the block: `0x00`, `0x02`, `0x04`,
+`0x06..0x07`, `0x0C`, `0x0F`, `0x11..0x14`, `0x18`,
+`0x1A..0x20`, `0x22..0x23`, `0x25`, `0x27..0x47`,
+`0x54..0x5B`, `0x5E..0x63`, `0x66`, `0x69..0x6D`,
+`0x7A..0x83`. These need fresh single-field captures (PTT
+long, Kill, Stun, Monitor, Inspector codes, the rest of the
+key-config fields, more theme variants, etc.).
 
 ## Channel record (16 bytes per slot)
 
@@ -152,32 +197,65 @@ spuriously emitted as `Q336_73E0..7400` channels live in this
 region — they should be excluded from channel emission once
 the flat-array refactor lands.
 
+## Scan groups (`0x7270..0x7318`)
+
+The CPS Scan Group tab (image 6) shows 11 groups
+(`All + 1..10`). Storage:
+
+| Range            | Size        | Contents |
+|------------------|-------------|----------|
+| `0x7270..0x7278` | 8 B         | "All" group + A/B flags (TBD) |
+| `0x7278..0x72A0` | 10 × 4 B    | `(start_ch: u16 LE, end_ch: u16 LE)` |
+| `0x72A0..0x7318` | 10 × 12 B   | Group names (slot 1..10), ASCII NUL-pad |
+
+Range pairs validated against the FB-Radio baseline:
+
+| Slot | Range     | Name (baseline) |
+|------|-----------|-----------------|
+| 1    | 501..518  | `69 MHz`        |
+| 2    | 55..94    | `Åkeri`         |
+| 3    | 101..107  | `Jakt`          |
+| 4    | 201..208  | `SRBR 444MHz`   |
+| 5    | 301..316  | `PMR 446MHz`    |
+| 6..10 | (defaults) | (blank, default name) |
+
+The `All` group's start/end is implicit (all channels) and
+probably backed by the 8 bytes at `0x7270..0x7278`. We model
+slots 1..10 only; `All` stays TBD until a capture toggles its
+A/B flag.
+
+## Call Settings (`0x766C..`)
+
+Slot 0 of the call-group name table is at `0x766C`, 12 bytes
+ASCII NUL-padded (baseline `Allanrop`). Slot pitch and the
+per-group `Call Code` field are unknown — captures only
+covered group 1's name. Image 7 shows 17 visible groups;
+need a rename of group 2+ and a code edit to determine
+pitch and offsets.
+
 ## TBD regions (locations unknown)
 
-- **Configuration Settings** tab (image 2): ~40 fields including
-  Battery Save, Roger, Time-out Timer, TOT Pre-alert, VOX,
-  Language, Voice Guide, Beep, Scan Mode, Backlight, Brightness
-  (Active/Standby), Theme, Startup Display, PTT-ID, PTT-ID
-  Delay, Sidetone, DTMF Transmit/Interval time, Ring Time,
-  ALERT, Auto Lock, Priority Scan, Priority Channel, RPT
-  Setting / SPK / PTT / Tone, Hold time of repeat, SCAN-DET,
-  SC-QT, Sub-Frequency Mute, TIME SET, Time Zone, GPS, GPS SEND
-  TYPE, GPS Receive SW, Mode Switch Password, Reset Password,
-  plus 4 themes (text/bg/icon/line colours).
+- **Configuration Settings** tab (image 2) leftovers: Roger,
+  TOT Pre-alert, Language, Voice Guide, PTT-ID Delay, DTMF
+  Transmit/Interval time, Ring Time, ALERT, Priority Scan,
+  Hold time of repeat, SCAN-DET, SC-QT, Sub-Frequency Mute,
+  TIME SET, GPS SEND TYPE, GPS Receive SW. (Most others now
+  located in the Settings block.)
 - **VFO Settings** extras (image 3): the `Work Mode / Selected
   Channel / Step / Squelch / Busy Lockout / Current Band` row,
   plus per-VFO `Step / Squelch / Mute Mode / Shift / Scramble /
   Compand / Call Group / AM / TX Power / W / N / RX CTC/DCS /
   TX CTC/DCS`.
-- **Scan Group** tab (image 6): 11 scan groups (`All` plus
-  `1..10`). Each: A/B-selected flag, start channel, end
-  channel, group name. Storage TBD.
-- **Key Settings** tab (image 5): TopKey, PF1, PTT, PF2 short/
-  long, PF3 short/long, ANI-EDIT, SCC-EDIT, Kill, Stun, Monitor,
-  Inspector codes. Storage TBD (startup message already located
-  at `0x0084`).
-- **Call Settings** tab (image 7): list of (call group #, call
-  code, call name) for DTMF/5-tone calling. Storage TBD.
+- **Scan Group** tab (image 6) leftovers: per-group A/B
+  flag bits and the `All` group state — storage probably the
+  8 B at `0x7270..0x7278` plus per-channel flags somewhere
+  in `0x6EA0..0x7270`.
+- **Key Settings** tab (image 5) leftovers: PTT long, PF1
+  short alternates, Kill, Stun, Monitor, Inspector codes.
+  TopKey + PF1 short + PF2 long + PF3 short + ANI + SCC
+  already located in the Settings block.
+- **Call Settings** tab (image 7): per-group `Call Code` and
+  slot pitch beyond group 1's name. Storage TBD.
 
 ## Refined implementation plan
 
@@ -223,20 +301,18 @@ Mute Mode field.
 
 ### Phase 1 v2.0 — radio-level settings
 
-Once the per-channel record is fully decoded:
-
-- **FM broadcast memories**: trivial once we're walking
-  `0x73E0` (already partly identified).
-- **Startup message**: already done.
-- **Scan groups**: need byte-diff captures (rename a group,
-  change start/end channel).
-- **Configuration settings**: lots of single-field captures.
-  Start with the high-leverage ones (Time-out Timer, VOX,
-  Priority Scan / Channel, RPT Setting, Time Zone).
-- **Key Settings**: capture-driven; the `TopKey` and `PF1..3`
-  fields likely sit in the `0x6EA0..0x73E0` gap.
-- **Call Settings**: capture-driven; the `123456` default code
-  in image 7 should be easy to grep for in the unused regions.
+- **FM broadcast memories**: done.
+- **Startup message**: done.
+- **Settings block**: ~70% mapped — see the Settings block
+  subsection above. ~10 byte ranges still TBD; need fresh
+  single-field captures for PTT long, Kill/Stun/Monitor/
+  Inspector, Roger, Voice Guide, etc.
+- **Scan groups**: ranges + names done (slots 1..10). The
+  `All` group state and per-channel A/B membership flags
+  (likely in `0x6EA0..0x7270`) still TBD.
+- **Call Settings**: group 1 name done. Slot pitch and the
+  per-group `Call Code` field still TBD — need a rename of
+  group 2+ and a code edit.
 
 ### Phase 1 v3.0 — narm schema extensions (optional)
 
