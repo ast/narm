@@ -11,6 +11,74 @@ The recovered raw image (after `unmojibake`) is **50,000 bytes**.
 The same shape will come off the radio over serial in Phase 2,
 so the decode logic is shared between the file and live paths.
 
+This document is intended as a self-contained reference — a
+future CHIRP driver author should be able to implement a
+`.kg` reader/writer from this file alone, without re-doing
+the byte-diffing work. All offsets below are into the
+**post-unmojibake** raw image; the `.kg` file is *not* a
+direct dump of those bytes (see "File wrapper" next).
+
+## File wrapper (`.kg`)
+
+The vendor CPS does **not** save its codeplug as a plain
+binary file. Every `.kg` is a "text" wrapper around the raw
+50 000-byte image:
+
+```text
+  "xiepinruanjian\r\n"   ← 14-byte ASCII header (vendor
+                            branding; pinyin for "协频软件")
+  <body>                  ← UTF-8-encoded Latin-1 of the raw
+                            image (see encoding below)
+  "\r\n"                  ← 2-byte ASCII footer
+```
+
+Each binary byte of the underlying image is encoded:
+
+- `0x00..0x7F` → emitted as-is (one byte).
+- `0x80..0xFF` → emitted as the **2-byte UTF-8 sequence for
+  the same Unicode codepoint**. So `0x80..0xBF` becomes
+  `c2 XX` and `0xC0..0xFF` becomes `c3 XX`.
+
+That is exactly what you get if a program does
+`bytes.decode("latin-1").encode("utf-8")` — a common
+encoding mistake. The CPS apparently shoves the raw image
+into a string field somewhere along the save path and the
+expansion happens implicitly. Whether that's a bug or
+deliberate "obfuscation" is unclear; either way, every byte
+≥ 0x80 in the image becomes two bytes in the file, so a
+typical `.kg` is roughly 50 kB plus ~8 kB of expansion plus
+the 16-byte header/footer. **Reading or writing a `.kg`
+without reversing this encoding will not work** — the
+sizes won't match the documented offsets, and anything ≥
+0x80 will be corrupt.
+
+The reverse transform — strip the header/footer, undo the
+Latin-1-via-UTF-8 expansion — is implemented in
+`src/kgq336/file.rs` as `unmojibake()` (and its inverse
+`mojibake()` for round-trip / write paths). Pseudocode for
+a CHIRP driver:
+
+```python
+HEADER = b"xiepinruanjian\r\n"
+FOOTER = b"\r\n"
+
+def unmojibake(file_bytes: bytes) -> bytes:
+    assert file_bytes.startswith(HEADER)
+    assert file_bytes.endswith(FOOTER)
+    body = file_bytes[len(HEADER):-len(FOOTER)]
+    # body is UTF-8 text; each codepoint is one image byte.
+    return body.decode("utf-8").encode("latin-1")
+
+def mojibake(raw: bytes) -> bytes:
+    return HEADER + raw.decode("latin-1").encode("utf-8") + FOOTER
+```
+
+When Phase 2 lands (live USB-serial reads from the radio),
+the bytes coming off the wire are the **raw image directly**
+— no mojibake step. So the file path is just `unmojibake →
+decode_*`, and the live path is `read_eeprom → decode_*`,
+both feeding the same byte map documented below.
+
 ## Big revision from earlier RE work
 
 Earlier iterations of `src/kgq336/decode.rs` (≤ v0.6) treated

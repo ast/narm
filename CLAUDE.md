@@ -60,6 +60,15 @@ Example: `rga -i "color code" docs/`.
 | Channel memory | 999 |
 | Notes | dual receive (Area A/B); cross-band repeat (must be VHF↔UHF); IP55; USB-C; no digital modes |
 
+`docs/kgq336-codeplug.md` is the canonical codeplug
+reference — file wrapper (`unmojibake`), region map, byte
+layouts, settings block, scan groups, captured byte-diff
+results. Treat it as a self-contained spec: a future CHIRP
+driver author should be able to implement a `.kg`
+reader/writer from that file alone, so keep it
+self-contained (no "see source" hand-waves) and update it
+whenever new bytes are mapped.
+
 ### Quansheng UV-K5
 
 | Capability | Value |
