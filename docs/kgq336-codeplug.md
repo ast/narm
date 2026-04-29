@@ -39,16 +39,18 @@ confirming the layout. The decoder should iterate
 
 | Range             | Size       | Contents                             |
 |-------------------|------------|--------------------------------------|
-| `0x0000..0x0084`  | 132 B      | Header / per-radio metadata (TBD)    |
+| `0x0000..0x0084`  | 132 B      | **Settings block** — Configuration tab fields + per-VFO Squelch + TopKey + (more TBD). Mostly 1-byte enums. Confirmed bytes: `0x01` = Battery Save (1=on); `0x5C`/`0x5D` = VFO A/B Squelch (0..9); `0x64` = TopKey (0=Alarm, 1=SOS). |
 | `0x0084..0x0098`  | 20 B       | **Startup message** (ASCII, NUL-pad) |
 | `0x0098..0x00B0`  | 24 B       | Brand strings + separator            |
 | `0x00B0..0x0140`  | 8 × 16 B   | **VFO state** — 8 entries (see below)|
 | `0x0140..0x3FB0`  | 999 × 16 B | **Channel data array** (CH-001..999) |
 | `0x3FB0..0x3FBC`  | 12 B       | Padding / unused (TBD)               |
 | `0x3FBC..0x6EA0`  | 999 × 12 B | **Channel name array** (CH-001..999) |
-| `0x6EA0..0x73E0`  | ~1.3 KiB   | TBD — likely scan groups, key bindings, call groups |
+| `0x6EA0..0x72A0`  | ~1 KiB     | TBD — likely scan-group start/end channel pairs and other key/scan settings |
+| `0x72A0..0x73E0`  | ~320 B     | **Scan Group names** — 11 groups, 8 bytes each + padding. Group 1 name at `0x72A0`. |
 | `0x73E0..0x7408`  | 20 × 2 B   | **FM broadcast memories** (u16 LE × 100 kHz) |
-| `0x7408..0xC350`  | ~20 KiB    | TBD — config settings, themes, DTMF, GPS, etc. |
+| `0x7408..0x766C`  | ~600 B     | TBD — possibly scan-group A/B flags, DTMF settings, etc. |
+| `0x766C..0xC350`  | ~20 KiB    | **Call Settings** + remaining settings (themes, GPS, DTMF). Call Group 1 name at `0x766C`. |
 
 ## Channel record (16 bytes per slot)
 
