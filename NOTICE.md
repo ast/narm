@@ -60,25 +60,11 @@ included for reference only; they are © their
 respective copyright holders and are not redistributed
 under any narm licence.
 
-## License decision pending
+## Licence
 
-narm itself does not yet have a `LICENSE` file or a
-`license =` field in `Cargo.toml`. Before publishing
-or sharing the binary the maintainer should pick one;
-the obvious choices given the CHIRP-derived UV-K5
-module are:
-
-- **GPL-3.0**: matches CHIRP's top-level licence;
-  the cleanest path. Pretty much eliminates the
-  derivative-work question.
-- **GPL-2.0-or-later**: matches `uvk5.py`'s per-file
-  header; later upgradeable to GPL-3.0.
-- **Permissive (MIT/Apache-2.0)** for the non-UV-K5
-  parts, with `src/uvk5.rs` and `src/commands/
-  radio.rs` segregated under GPL: technically possible
-  but creates a dual-licence headache; not recommended
-  unless you genuinely need permissive distribution
-  for the channel-config / repeater-DB parts.
-
-This file is a record of the derivation, not a
-licence grant in either direction.
+narm is distributed under the **GNU General Public License
+version 3** — see the `LICENSE` file at the repo root for the
+full text. This matches CHIRP's top-level licence, keeping the
+derivation question clean for both the UV-K5 module and any
+future CHIRP-derived radio support (e.g. KG-Q336 work that
+references kg935g / kgq10h / kguv9dplus).

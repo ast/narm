@@ -49,7 +49,7 @@ const WAKEUP_BLASTS: usize = 3;
 const WAKEUP_DELAY_MS: u64 = 200;
 
 /// Open the PL2303 cable and put the line into the state CPS uses:
-/// 19200 8N1, DTR asserted, RTS deasserted, input buffer flushed.
+/// 115200 8N1, DTR asserted, RTS deasserted, input buffer flushed.
 ///
 /// Captured CPS sets DTR=1, RTS=0 via SET_CONTROL_LINE_STATE
 /// just before the first CMD_RD. Many K-plug cables wire RTS to a

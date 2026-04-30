@@ -293,10 +293,38 @@ The post-unmojibake size is **50 000 bytes** — bigger than the
 radio's 32 KiB EEPROM. The extra ~18 KiB is whatever CPS adds
 on top of (or interleaved with) the codeplug data: padding,
 CPS-private metadata, expanded tables, etc. Mapping `.kg` ↔
-logical isn't a simple shift; deltas vary by region in steps of
-`0x200`, suggesting CPS rearranges things by category for its
-UI. This is a separate (mostly TBD) reverse-engineering
-problem; live reads sidestep it.
+logical isn't a single shift across the whole file; deltas
+vary by region in steps of `0x200`, suggesting CPS rearranges
+things by category for its UI. This is mostly a separate
+reverse-engineering problem and live reads sidestep it.
+
+**The Q336 settings struct is the kgq10h struct minus exactly
+three phantom fields**: `wxalert`, `wxalert_type`, and
+`batt_ind`. With those removed, the `.kg ↔ logical` shift is a
+clean **+`0x0440` across the entire settings region** —
+empirically verified with 9 single-byte captures spanning
+`.kg 0x01..0x21`.
+
+| Phantom field | kgq10h logical | Why it's not on Q336 |
+|---|---|---|
+| `wxalert` | `0x0445` | NOAA wx alert — Q336 has no NOAA receiver |
+| `wxalert_type` | `0x0446` | NOAA wx alert type — same reason |
+| `batt_ind` | `0x0462` | Battery indicator — not a CPS-configurable Q336 setting |
+
+So for the Q336 logical layout, take the kgq10h struct from
+`0x0440` and apply this transform:
+
+```
+fields up to and including `toalarm`        : same logical offset
+fields from `vox` through `smuteset`        : logical -= 2
+fields from `ToneScnSave` onwards           : logical -= 3
+```
+
+Equivalently: the Q336 has `unk_xp8` (now identified as
+**Language**) where kgq10h has `wxalert`, etc. The clean
+shift is preserved against `.kg`-space for all 9 captures
+because the phantoms aren't in the `.kg` either; CPS knows
+the same Q336 field set as the radio firmware.
 
 ## Logical memory map
 
@@ -348,15 +376,64 @@ payload (= `0x036C - 0x0340 + 2` for the leading address echo)
 
 ### Settings struct (`0x0440..0x0500`)
 
-Radio-wide configuration. The struct definition from the
-kgq10h driver, with field offsets resolved (some are explicit
-via `#seekto`, others by sequential layout):
+#### Confirmed Q336 positions (`.kg`-derived, ground truth)
+
+These positions come from single-field byte-diff captures
+against a baseline `.kg` save. Each row is a CPS field where
+we've watched exactly one byte (or run of bytes) change in
+response to the corresponding UI toggle.
+
+| `.kg` offset | Field | Encoding |
+|---|---|---|
+| `0x01` | Battery Save | bool (0=off, 1=on) |
+| `0x02` | Roger | 0=OFF, 1=BOT, 2=EOT, 3=BOTH |
+| `0x03` | TOT (Time-Out Timer) | u8 index (baseline `0x04` = 60S; full enum TBD) |
+| `0x04` | TOT Pre-alert | u8 seconds (`0x00`=OFF, `0x01..0x0A`=1S..10S; direct integer) |
+| `0x05` | VOX | u8 level (0=off, 1..10) |
+| `0x06` | Language | enum: `0x00`=CHS, `0x01`=EN, `0x02`=TC (resolves kgq10h's `unk_xp8`) |
+| `0x07` | Voice Guide | bool (0=off, 1=on); = kgq10h's `voice` |
+| `0x08` | Beep | bool |
+| `0x09` | Scan Mode | 0=TO (time-op.), 1=CO (carrier-op.) |
+| `0x0A` | Backlight (seconds) | u8 (5 in baseline) |
+| `0x0B` | Brightness (active) | u8 1..10 |
+| `0x0D` | Startup Display | 0=image, 1=batt voltage |
+| `0x0E` | PTT-ID | 0=off, 1=BOT (more TBD) |
+| `0x10` | Sidetone | 0=off, 1=DTST (more TBD) |
+| `0x11` | DTMF Transmit Time | u8, units of 10 ms (`0x08`=80 ms baseline; `0x0A`=100 ms; `0x32`=500 ms) |
+| `0x14` | ALERT (tone freq) | enum: `0x00`=1750 Hz, `0x01`=2100 Hz, `0x02`=1000 Hz, `0x03`=1450 Hz (dropdown-order index, not the frequency itself) |
+| `0x15` | Auto Lock | bool |
+| `0x16..0x18` | Priority Channel | `ul16` channel number |
+| `0x19` | RPT Setting | u8 (TBD encoding); = kgq10h's `rpttype` |
+| `0x1A` | RPT-SPK | bool (0=off, 1=on); = kgq10h's `rpt_spk` |
+| `0x1E` | SCAN-DET | bool (0=off, 1=on); = kgq10h's `scan_det` |
+| `0x1F` | Sub-Frequency Mute | enum: `0x00`=OFF, `0x01`=Rx (others Tx/Rx&Tx, dropdown-order); = kgq10h's `smuteset` |
+| `0x20` | SC-QT | enum: `0x00`=RX QT/DT-ME (baseline), `0x01`=TX QT/DT-ME (others Rx&Tx Qt/Dt-S, dropdown-order); = kgq10h's `ToneScnSave` |
+| `0x21` | Theme | u8 0..3 |
+| `0x24` | Time Zone | u8 index |
+| `0x26` | GPS On | bool |
+| `0x48..0x4E` | Mode Switch password | ASCII digits `'0'..'9'` |
+| `0x4E..0x54` | Reset password | same |
+| `0x5C..0x5E` | VFO A/B Squelch | `[u8; 2]`, each 0..9 |
+| `0x64` | TopKey | 0=Alarm, 1=SOS (more TBD) |
+| `0x65` | PF1 short | TBD |
+| `0x67` | PF2 long | TBD |
+| `0x68` | PF3 short | TBD |
+| `0x6E..0x74` | ANI code | 6 digits, `0x0F`-padded |
+| `0x74..0x7A` | SCC code | same encoding as ANI |
+
+#### kgq10h-derived field map (logical, **drift-prone for Q336**)
+
+The struct definition below comes from the kgq10h driver,
+which targets Q10H first and was extended to Q33x. Several
+field positions don't match Q336 reality (see drift table
+above). Use this only as a *what fields exist* hint; for
+*where they live*, trust the `.kg` table above.
 
 | Logical | Field | Type | Notes |
 |---|---|---|---|
 | `0x0440` | `channel_menu` | `u8` | |
 | `0x0441` | `power_save` | `u8` | bool |
-| `0x0442` | `roger_beep` | `u8` | |
+| `0x0442` | `roger_beep` | `u8` | 0=OFF, 1=BOT, 2=EOT, 3=BOTH (CPS Roger dropdown) |
 | `0x0443` | `timeout` | `u8` | TOT (Time-Out Timer) index |
 | `0x0444` | `toalarm` | `u8` | TOT alarm |
 | `0x0445` | `wxalert` | `u8` | NOAA wx alert |
