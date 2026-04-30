@@ -432,6 +432,123 @@ impl PttId {
     }
 }
 
+/// CPS "Roger" beep dropdown. Full enum verified by single-field
+/// captures.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Roger {
+    Off,
+    /// Beep at the start of TX.
+    Bot,
+    /// Beep at the end of TX.
+    Eot,
+    /// Beep at both start and end of TX.
+    Both,
+    Other(u8),
+}
+
+impl Roger {
+    fn from_raw(b: u8) -> Self {
+        match b {
+            0 => Self::Off,
+            1 => Self::Bot,
+            2 => Self::Eot,
+            3 => Self::Both,
+            n => Self::Other(n),
+        }
+    }
+}
+
+/// Menu / voice-prompt language. Verified by single-field
+/// capture (CHS toggle).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Language {
+    /// Simplified Chinese.
+    ChineseSimplified,
+    English,
+    /// Traditional Chinese.
+    ChineseTraditional,
+    Other(u8),
+}
+
+impl Language {
+    fn from_raw(b: u8) -> Self {
+        match b {
+            0 => Self::ChineseSimplified,
+            1 => Self::English,
+            2 => Self::ChineseTraditional,
+            n => Self::Other(n),
+        }
+    }
+}
+
+/// CPS "ALERT" tone-frequency dropdown. Full 4-value enum
+/// verified.
+///
+/// The byte is a dropdown-order index, **not** the frequency
+/// itself, so the order is non-monotonic.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Alert {
+    Hz1750,
+    Hz2100,
+    Hz1000,
+    Hz1450,
+    Other(u8),
+}
+
+impl Alert {
+    fn from_raw(b: u8) -> Self {
+        match b {
+            0 => Self::Hz1750,
+            1 => Self::Hz2100,
+            2 => Self::Hz1000,
+            3 => Self::Hz1450,
+            n => Self::Other(n),
+        }
+    }
+}
+
+/// "Sub-Frequency Mute" dropdown. `Off` and `Rx` confirmed;
+/// `Tx` / `RxAndTx` are likely `0x02` / `0x03` by dropdown
+/// order but unverified — `Other(u8)` carries unknowns.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SubFreqMute {
+    Off,
+    Rx,
+    Other(u8),
+}
+
+impl SubFreqMute {
+    fn from_raw(b: u8) -> Self {
+        match b {
+            0 => Self::Off,
+            1 => Self::Rx,
+            n => Self::Other(n),
+        }
+    }
+}
+
+/// "SC-QT" (scan-carrier-tone-save) dropdown. Two values
+/// confirmed; the third (`Rx&Tx Qt/Dt-S`) is likely `0x02`
+/// by dropdown order but unverified.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ScQt {
+    /// `RX QT/DT-ME` — save Rx tone on scan match.
+    RxQtDtMe,
+    /// `TX QT/DT-ME` — save Tx tone on scan match.
+    TxQtDtMe,
+    Other(u8),
+}
+
+impl ScQt {
+    fn from_raw(b: u8) -> Self {
+        match b {
+            0 => Self::RxQtDtMe,
+            1 => Self::TxQtDtMe,
+            n => Self::Other(n),
+        }
+    }
+}
+
 /// Top-key short-press behaviour.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum TopKey {
@@ -494,46 +611,53 @@ impl Sidetone {
 #[derive(FromBytes, Immutable, KnownLayout, Debug, Clone, Copy)]
 struct SettingsRaw {
     _b00: u8,
-    battery_save: u8,
-    _b02: u8,
-    tot: u8,
-    _b04: u8,
-    vox: u8,
-    _b06: [u8; 2],
-    beep: u8,
-    scan_mode: u8,
-    backlight: u8,
-    brightness_active: u8,
-    _b0c: u8,
-    startup_display: u8,
-    ptt_id: u8,
-    _b0f: u8,
-    sidetone: u8,
-    _b11: [u8; 4],
-    auto_lock: u8,
-    priority_channel: U16,
-    _b18: u8,
-    rpt_setting: u8,
-    _b1a: [u8; 7],
-    theme: u8,
+    battery_save: u8,       // 0x01
+    roger: u8,              // 0x02
+    tot: u8,                // 0x03
+    tot_pre_alert: u8,      // 0x04 — seconds direct (0=OFF, 1..10)
+    vox: u8,                // 0x05
+    language: u8,           // 0x06 — kgq10h's `unk_xp8`
+    voice_guide: u8,        // 0x07
+    beep: u8,               // 0x08
+    scan_mode: u8,          // 0x09
+    backlight: u8,          // 0x0A
+    brightness_active: u8,  // 0x0B
+    _b0c: u8,               // brightness_standby? TBD
+    startup_display: u8,    // 0x0D
+    ptt_id: u8,             // 0x0E
+    _b0f: u8,               // ptt_id_delay? TBD
+    sidetone: u8,           // 0x10
+    dtmf_transmit_time: u8, // 0x11 — units of 10 ms
+    _b12: [u8; 2],          // dtmf_interval (0x12), ring_time (0x13)? TBD
+    alert: u8,              // 0x14
+    auto_lock: u8,          // 0x15
+    priority_channel: U16,  // 0x16
+    _b18: u8,               // prich_sw? TBD
+    rpt_setting: u8,        // 0x19
+    rpt_spk: u8,            // 0x1A
+    _b1b: [u8; 3],          // rpt_ptt/rpt_tone/rpt_hold? TBD
+    scan_det: u8,           // 0x1E
+    sub_freq_mute: u8,      // 0x1F
+    sc_qt: u8,              // 0x20
+    theme: u8,              // 0x21
     _b22: [u8; 2],
-    time_zone: u8,
+    time_zone: u8, // 0x24
     _b25: u8,
-    gps_on: u8,
+    gps_on: u8, // 0x26
     _b27: [u8; 33],
-    mode_switch_password: [u8; 6],
-    reset_password: [u8; 6],
+    mode_switch_password: [u8; 6], // 0x48
+    reset_password: [u8; 6],       // 0x4E
     _b54: [u8; 8],
-    vfo_squelch: [u8; 2],
+    vfo_squelch: [u8; 2], // 0x5C
     _b5e: [u8; 6],
-    top_key: u8,
-    pf1_short: u8,
+    top_key: u8,   // 0x64
+    pf1_short: u8, // 0x65
     _b66: u8,
-    pf2_long: u8,
-    pf3_short: u8,
+    pf2_long: u8,  // 0x67
+    pf3_short: u8, // 0x68
     _b69: [u8; 5],
-    ani_code: [u8; 6],
-    scc_code: [u8; 6],
+    ani_code: [u8; 6], // 0x6E
+    scc_code: [u8; 6], // 0x74
     _b7a: [u8; 10],
 }
 
@@ -545,12 +669,17 @@ const _: () = assert!(size_of::<SettingsRaw>() == SETTINGS_SIZE);
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Settings {
     pub battery_save: bool,
+    pub roger: Roger,
     /// Time-Out Timer index. Encoding TBD — baseline `04`
     /// and `01` = 15 s confirmed; intermediate values not
     /// yet captured.
     pub tot: u8,
+    /// TOT pre-alert seconds (0=OFF, 1..10). Direct integer.
+    pub tot_pre_alert_seconds: u8,
     /// VOX level (0=off, 1..10).
     pub vox: u8,
+    pub language: Language,
+    pub voice_guide: bool,
     pub beep: bool,
     pub scan_mode: ScanMode,
     /// Backlight time, seconds. `05` = 5 s confirmed.
@@ -560,11 +689,21 @@ pub struct Settings {
     pub startup_display: StartupDisplay,
     pub ptt_id: PttId,
     pub sidetone: Sidetone,
+    /// DTMF transmit time in ms. Stored as `byte × 10 ms`,
+    /// surfaced here pre-multiplied for ergonomics.
+    pub dtmf_transmit_time_ms: u16,
+    pub alert: Alert,
     pub auto_lock: bool,
     /// Channel number used as the priority-scan channel.
     pub priority_channel: u16,
     /// "RPT Setting" enum index. Semantic TBD.
     pub rpt_setting: u8,
+    /// Repeater speaker on/off (kgq10h's `rpt_spk`).
+    pub rpt_spk: bool,
+    /// Scan detection on/off (kgq10h's `scan_det`).
+    pub scan_det: bool,
+    pub sub_freq_mute: SubFreqMute,
+    pub sc_qt: ScQt,
     /// 0..3 (4 themes per CPS image 2).
     pub theme: u8,
     /// Time-zone index (`0c` baseline).
@@ -593,8 +732,12 @@ impl Settings {
     fn from_raw(r: &SettingsRaw) -> Self {
         Self {
             battery_save: r.battery_save != 0,
+            roger: Roger::from_raw(r.roger),
             tot: r.tot,
+            tot_pre_alert_seconds: r.tot_pre_alert,
             vox: r.vox,
+            language: Language::from_raw(r.language),
+            voice_guide: r.voice_guide != 0,
             beep: r.beep != 0,
             scan_mode: ScanMode::from_raw(r.scan_mode),
             backlight_seconds: r.backlight,
@@ -602,9 +745,15 @@ impl Settings {
             startup_display: StartupDisplay::from_raw(r.startup_display),
             ptt_id: PttId::from_raw(r.ptt_id),
             sidetone: Sidetone::from_raw(r.sidetone),
+            dtmf_transmit_time_ms: (r.dtmf_transmit_time as u16) * 10,
+            alert: Alert::from_raw(r.alert),
             auto_lock: r.auto_lock != 0,
             priority_channel: r.priority_channel.get(),
             rpt_setting: r.rpt_setting,
+            rpt_spk: r.rpt_spk != 0,
+            scan_det: r.scan_det != 0,
+            sub_freq_mute: SubFreqMute::from_raw(r.sub_freq_mute),
+            sc_qt: ScQt::from_raw(r.sc_qt),
             theme: r.theme,
             time_zone: r.time_zone,
             gps_on: r.gps_on != 0,

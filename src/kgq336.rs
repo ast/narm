@@ -24,8 +24,8 @@ mod io;
 mod wire;
 
 pub use decode::{
-    DecodeReport, PttId, ScanGroup, ScanMode, Settings, Sidetone, StartupDisplay, TopKey, VfoEntry,
-    decode_channels,
+    Alert, DecodeReport, Language, PttId, Roger, ScQt, ScanGroup, ScanMode, Settings, Sidetone,
+    StartupDisplay, SubFreqMute, TopKey, VfoEntry, decode_channels,
 };
 pub use error::KgQ336Error;
 pub use file::{mojibake, unmojibake};

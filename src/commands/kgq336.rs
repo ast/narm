@@ -72,40 +72,50 @@ fn print_settings(r: &kgq336::DecodeReport) {
         }
     };
     println!("[settings]");
-    println!("  battery_save:      {}", s.battery_save);
-    println!("  beep:              {}", s.beep);
-    println!("  auto_lock:         {}", s.auto_lock);
-    println!("  gps_on:            {}", s.gps_on);
-    println!("  scan_mode:         {:?}", s.scan_mode);
-    println!("  startup_display:   {:?}", s.startup_display);
-    println!("  ptt_id:            {:?}", s.ptt_id);
-    println!("  sidetone:          {:?}", s.sidetone);
-    println!("  top_key:           {:?}", s.top_key);
-    println!("  tot:               {}", s.tot);
-    println!("  vox:               {}", s.vox);
-    println!("  backlight_seconds: {}", s.backlight_seconds);
-    println!("  brightness_active: {}", s.brightness_active);
-    println!("  theme:             {}", s.theme);
-    println!("  time_zone:         {}", s.time_zone);
-    println!("  rpt_setting:       {}", s.rpt_setting);
-    println!("  priority_channel:  {}", s.priority_channel);
+    println!("  battery_save:        {}", s.battery_save);
+    println!("  roger:               {:?}", s.roger);
+    println!("  tot:                 {}", s.tot);
+    println!("  tot_pre_alert:       {} s", s.tot_pre_alert_seconds);
+    println!("  vox:                 {}", s.vox);
+    println!("  language:            {:?}", s.language);
+    println!("  voice_guide:         {}", s.voice_guide);
+    println!("  beep:                {}", s.beep);
+    println!("  scan_mode:           {:?}", s.scan_mode);
+    println!("  backlight_seconds:   {}", s.backlight_seconds);
+    println!("  brightness_active:   {}", s.brightness_active);
+    println!("  startup_display:     {:?}", s.startup_display);
+    println!("  ptt_id:              {:?}", s.ptt_id);
+    println!("  sidetone:            {:?}", s.sidetone);
+    println!("  dtmf_transmit_time:  {} ms", s.dtmf_transmit_time_ms);
+    println!("  alert:               {:?}", s.alert);
+    println!("  auto_lock:           {}", s.auto_lock);
+    println!("  priority_channel:    {}", s.priority_channel);
+    println!("  rpt_setting:         {}", s.rpt_setting);
+    println!("  rpt_spk:             {}", s.rpt_spk);
+    println!("  scan_det:            {}", s.scan_det);
+    println!("  sub_freq_mute:       {:?}", s.sub_freq_mute);
+    println!("  sc_qt:               {:?}", s.sc_qt);
+    println!("  theme:               {}", s.theme);
+    println!("  time_zone:           {}", s.time_zone);
+    println!("  gps_on:              {}", s.gps_on);
     println!(
-        "  vfo_squelch:       A={} B={}",
+        "  vfo_squelch:         A={} B={}",
         s.vfo_squelch_a, s.vfo_squelch_b
     );
-    println!("  pf1_short:         {}", s.pf1_short);
-    println!("  pf2_long:          {}", s.pf2_long);
-    println!("  pf3_short:         {}", s.pf3_short);
+    println!("  top_key:             {:?}", s.top_key);
+    println!("  pf1_short:           {}", s.pf1_short);
+    println!("  pf2_long:            {}", s.pf2_long);
+    println!("  pf3_short:           {}", s.pf3_short);
     println!(
-        "  mode_switch_pwd:   {:?}",
+        "  mode_switch_pwd:     {:?}",
         printable_ascii(&s.mode_switch_password)
     );
     println!(
-        "  reset_password:    {:?}",
+        "  reset_password:      {:?}",
         printable_ascii(&s.reset_password)
     );
-    println!("  ani_code:          {:?}", s.ani_code_string());
-    println!("  scc_code:          {:?}", s.scc_code_string());
+    println!("  ani_code:            {:?}", s.ani_code_string());
+    println!("  scc_code:            {:?}", s.scc_code_string());
     println!();
 }
 
