@@ -5,8 +5,8 @@
 //! No I/O lives here — items in this file are pure functions over
 //! byte buffers, unit-testable without a serial port.
 //!
-//! See `docs/kgq336-wire-protocol.md` for the full protocol
-//! reference. In short: each frame is
+//! See `docs/kgq336-codeplug.md` for the full protocol
+//! reference (the wire-protocol section). In short: each frame is
 //!
 //! ```text
 //!   [0x7C] [cmd] [dir] [len]  enc(payload || cksum)

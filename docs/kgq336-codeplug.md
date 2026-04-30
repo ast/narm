@@ -1,62 +1,277 @@
-# Wouxun KG-Q332 / KG-Q336 codeplug format
+# Wouxun KG-Q332 / KG-Q336 codeplug reference
 
-Reference for the `.kg` codeplug file produced by Wouxun's CPS,
-based on byte-diffing single-field saves and inspecting the
-seven CPS UI tabs (the "screenshots from the official
-programming software" that prompted this document — kept here
-so we don't have to re-paste them every time we extend the
-decoder).
+Self-contained spec for talking to a KG-Q332 / KG-Q336 over its
+programming cable and decoding what comes out — wire protocol,
+file format, EEPROM layout, channel record format, the lot.
+A future CHIRP driver author or third-party CPS clone should be
+able to implement read + write from this file alone.
 
-The recovered raw image (after `unmojibake`) is **50,000 bytes**.
-The same shape will come off the radio over serial in Phase 2,
-so the decode logic is shared between the file and live paths.
+The Q332 and Q336 are the same radio at the link layer and
+codeplug layer; only the band plan and a few labels differ.
+This document treats them as one.
 
-This document is intended as a self-contained reference — a
-future CHIRP driver author should be able to implement a
-`.kg` reader/writer from this file alone, without re-doing
-the byte-diffing work. All offsets below are into the
-**post-unmojibake** raw image; the `.kg` file is *not* a
-direct dump of those bytes (see "File wrapper" next).
+## Layouts at a glance
+
+There are **three distinct layouts** for the same data — keep
+them straight or nothing else makes sense.
+
+| Layout | Where it lives | Origin |
+|---|---|---|
+| **Physical** | Radio EEPROM; the bytes you read or write over the serial cable. | The radio's actual storage. Each 1 KiB block is split into 4 × 256-byte slices, stored in *reverse* order. Almost certainly an artifact of however the firmware lays out flash pages. |
+| **Logical** | An in-memory image after applying the slice-reversal transform to the physical bytes. | What CHIRP's `kgq10h` driver works with; what every struct definition in this doc is keyed off. **All offsets below are logical** unless explicitly tagged "physical" or ".kg". |
+| **`.kg` file** | What the vendor CPS saves to disk via *File → Save*. | Yet another rearrangement, organised by CPS UI category. Scan groups, channel names, and call settings live at completely different offsets from logical. Mostly an interop concern; live reads bypass it entirely. |
+
+Total addressable memory in all three layouts is `0x8000` bytes
+(32 KiB). The `.kg` file *also* expands to ≈ 50 000 bytes on
+disk because of a UTF-8 wrapper (see "File wrapper").
+
+## Physical → logical conversion
+
+Each 1 KiB physical block (`0x400` bytes) is stored as four
+256-byte slices in reverse order:
+
+```text
+  Physical 0x0000..0x0100  ↔  Logical 0x0300..0x0400
+  Physical 0x0100..0x0200  ↔  Logical 0x0200..0x0300
+  Physical 0x0200..0x0300  ↔  Logical 0x0100..0x0200
+  Physical 0x0300..0x0400  ↔  Logical 0x0000..0x0100
+  (repeats per 1 KiB block, 32 blocks total to 0x8000)
+```
+
+Closed-form (CHIRP `convert_address` translates a *logical*
+address to the *physical* address you have to send the radio):
+
+```python
+def physical(logical: int) -> int:
+    q, r = divmod(logical, 0x400)
+    slice_idx = r // 0x100
+    return (q + 1) * 0x400 - (slice_idx + 1) * 0x100 + (r % 0x100)
+```
+
+Inverse is the same function: `physical(physical(x)) == x`.
+
+In Rust the simplest implementation is a buffer-level pass: for
+each 1 KiB block, copy slice `i` to slice `3 - i`. That's what
+`unscramble_image` does in narm.
+
+## Wire protocol
+
+The radio is reached via a Wouxun K-plug programming cable —
+a USB-to-TTL adapter (PL2303 in the wild) terminating in a
+2-pin Kenwood plug. From narm's perspective it's just a serial
+port (`/dev/ttyUSB0` on Linux).
+
+### Line settings
+
+| Parameter | Value |
+|---|---|
+| Baud | **115 200** |
+| Bits | 8 |
+| Parity | none |
+| Stop bits | 1 |
+| Flow control | none |
+| DTR | asserted (high) |
+| RTS | deasserted (low) — many K-plug cables wire RTS to a PTT transistor; keeping it low keeps the cable in RX mode |
+
+Note: the older kg935g family runs at 19200; only the Q33x
+family is at 115200. The K-plug cable itself doesn't care.
+
+### Frame format
+
+Every frame, both directions, has a 4-byte header followed by an
+encrypted payload+checksum blob.
+
+```text
+  +------+-----+-----+-----+--------------------------------+
+  | 0x7C | cmd | dir | len | enc(payload || cksum)          |
+  +------+-----+-----+-----+--------------------------------+
+     1B    1B    1B    1B           (len + 1) bytes
+```
+
+| Field | Value |
+|---|---|
+| `0x7C` | start-of-frame, fixed |
+| `cmd` | command byte (see table below) |
+| `dir` | `0xFF` host → radio, `0x00` radio → host |
+| `len` | length of the *plaintext* payload, **excluding** the trailing checksum byte |
+
+Total frame size on the wire = `5 + len` bytes (header 4 +
+encrypted payload `len` + encrypted checksum 1).
+
+### Commands
+
+| Code | Name | Direction | Notes |
+|---|---|---|---|
+| `0x80` | `CMD_ID` | both | Reserved by the kg935g family for an explicit model probe. **Q33x doesn't use it** — CPS does the model probe with `CMD_RD` at address `0x0040` instead. |
+| `0x81` | `CMD_END` | host → radio | Session end. Empty payload. The cksum byte is encrypted normally; full wire bytes are the constant `7C 81 FF 00 D7`. |
+| `0x82` | `CMD_RD` | both | Read N bytes from a 16-bit physical address. |
+| `0x83` | `CMD_WR` | host → radio | Write N bytes to a 16-bit physical address. The radio acks with a `CMD_WR` reply (TBD details). |
+
+### Cipher
+
+A rolling-XOR cipher with a single-byte seed. Same algorithm as
+kg935g and kguv9dplus; only the seed byte is per-radio:
+
+| Driver | Seed |
+|---|---|
+| kg935g | `0x57` |
+| kguv9dplus | `0x52` |
+| **KG-Q332 / Q336** | **`0x54`** |
+
+Encrypt (host → radio, also for the cksum byte at the tail):
+
+```python
+def encrypt(plain, seed=0x54):
+    out = bytearray(len(plain))
+    out[0] = seed ^ plain[0]
+    for i in range(1, len(plain)):
+        out[i] = out[i - 1] ^ plain[i]
+    return bytes(out)
+```
+
+Decrypt is symmetric:
+
+```python
+def decrypt(enc, seed=0x54):
+    out = bytearray(len(enc))
+    out[0] = seed ^ enc[0]
+    for i in range(1, len(enc)):
+        out[i] = enc[i - 1] ^ enc[i]
+    return bytes(out)
+```
+
+The cipher applies to the entire `(payload || cksum)` blob as a
+single `(len + 1)`-byte stream.
+
+### Checksum
+
+A sum-mod-256 of `cmd || dir || len || plain_payload`, with a
+small per-frame *adjustment* picked from a 4-entry table by the
+low 2 bits of `payload[0]` (which is always `addr_hi` in Q336
+frames):
+
+| `payload[0] & 0x03` | adjustment |
+|---|---|
+| `0b00` | +3 |
+| `0b01` | +1 |
+| `0b10` | -1 |
+| `0b11` | -3 |
+
+```python
+def checksum(cmd, dir_byte, length, plain_payload):
+    s = (cmd + dir_byte + length + sum(plain_payload)) & 0xFF
+    adj = {0: 3, 1: 1, 2: -1, 3: -3}[(plain_payload[0] if plain_payload else 0) & 0x03]
+    return (s + adj) & 0xFF
+```
+
+For an empty payload (only `CMD_END` qualifies) the adjustment
+input defaults to 0 → +3, which is how `CMD_END`'s constant
+trailing `0xD7` falls out.
+
+This adjustment is **specific to the Q33x family**; kg935g uses
+plain sum-mod-256, kguv9dplus uses a 4-bit cksum. It's almost
+certainly mild anti-tamper — the table is too small to add any
+real error-detection value.
+
+### CMD_RD payload (both directions)
+
+Host → radio plaintext (`len = 3`):
+
+```text
+  +----------+----------+--------+--------+
+  | addr_hi  | addr_lo  | length | cksum  |
+  +----------+----------+--------+--------+
+```
+
+`length` is `0x40` (64) in every CPS-observed read.
+
+Radio → host plaintext (`len = 0x42`, 66 bytes):
+
+```text
+  +----------+----------+----------------+--------+
+  | addr_hi  | addr_lo  | data * 0x40    | cksum  |
+  +----------+----------+----------------+--------+
+```
+
+`addr_hi` and `addr_lo` echo the requested address. The address
+is a *physical* address — the radio doesn't know about the
+logical layout.
+
+### CMD_WR payload (host → radio)
+
+`len = 0x22` (34), 32 bytes of data:
+
+```text
+  +----------+----------+----------------+--------+
+  | addr_hi  | addr_lo  | data * 0x20    | cksum  |
+  +----------+----------+----------------+--------+
+```
+
+Reads are 64-byte blocks; writes are 32-byte blocks.
+
+Empty (unprogrammed) memory contents are `0x00`, **not** `0xFF`
+— this surfaces as the all-equal-byte ciphertext signature for
+empty pages: rolling-XOR of `[X, 0, 0, 0, …]` produces
+`[seed^X, seed^X, seed^X, …]`.
+
+### Handshake
+
+Every session starts with a 3-burst wake-up. Per Mel Terechenok's
+KG-Q33x driver (CHIRP issue #10880, `kgq10h ... 2025mar16.py`):
+
+> Wouxun CPS sends the same Read command 3 times to establish
+> comms.
+
+Concretely:
+
+1. Open the port (115200 8N1, DTR=1, RTS=0). Sleep ~200 ms to
+   let the cable's level shifter settle.
+2. Write the canonical model-probe frame **three times
+   back-to-back** with no read in between:
+   `7C 82 FF 03 54 14 54 53` (= `CMD_RD` of physical address
+   `0x0040`, 64 bytes). Subsequent frames use the normal one
+   write / one read pattern.
+3. Read one reply. Bytes 46..53 of the decrypted payload contain
+   the model string (`KG-Q336` or `KG-Q332`); see "Logical
+   memory map → OEM info".
+
+The radio doesn't display the green "programming" indicator on
+its LCD until the line speed is correct (115200) — wrong baud
+gets you silence, not a half-broken handshake.
+
+After the model probe the host can issue `CMD_RD` / `CMD_WR` at
+arbitrary physical addresses in `[0x0040, 0x8000)`. Addresses
+below `0x0040` aren't accepted. End the session with a single
+`CMD_END` (`7C 81 FF 00 D7`) — no reply.
 
 ## File wrapper (`.kg`)
 
-The vendor CPS does **not** save its codeplug as a plain
-binary file. Every `.kg` is a "text" wrapper around the raw
-50 000-byte image:
+The vendor CPS does **not** save its codeplug as a plain binary
+file. Every `.kg` is a "text" wrapper:
 
 ```text
   "xiepinruanjian\r\n"   ← 14-byte ASCII header (vendor
                             branding; pinyin for "协频软件")
-  <body>                  ← UTF-8-encoded Latin-1 of the raw
-                            image (see encoding below)
+  <body>                  ← UTF-8 of the Latin-1 reading of the
+                            raw image — see encoding below
   "\r\n"                  ← 2-byte ASCII footer
 ```
 
 Each binary byte of the underlying image is encoded:
 
 - `0x00..0x7F` → emitted as-is (one byte).
-- `0x80..0xFF` → emitted as the **2-byte UTF-8 sequence for
-  the same Unicode codepoint**. So `0x80..0xBF` becomes
-  `c2 XX` and `0xC0..0xFF` becomes `c3 XX`.
+- `0x80..0xFF` → emitted as the **2-byte UTF-8 sequence for the
+  same Unicode codepoint**. So `0x80..0xBF` becomes `c2 XX` and
+  `0xC0..0xFF` becomes `c3 XX`.
 
-That is exactly what you get if a program does
-`bytes.decode("latin-1").encode("utf-8")` — a common
-encoding mistake. The CPS apparently shoves the raw image
-into a string field somewhere along the save path and the
-expansion happens implicitly. Whether that's a bug or
-deliberate "obfuscation" is unclear; either way, every byte
-≥ 0x80 in the image becomes two bytes in the file, so a
-typical `.kg` is roughly 50 kB plus ~8 kB of expansion plus
-the 16-byte header/footer. **Reading or writing a `.kg`
-without reversing this encoding will not work** — the
-sizes won't match the documented offsets, and anything ≥
-0x80 will be corrupt.
+That's exactly what you get if a program does
+`bytes.decode("latin-1").encode("utf-8")` — a common mojibake
+mistake. The CPS apparently shoves the image into a string
+field on save, and the expansion happens implicitly. Reading
+or writing a `.kg` without reversing this encoding will not
+work.
 
-The reverse transform — strip the header/footer, undo the
-Latin-1-via-UTF-8 expansion — is implemented in
-`src/kgq336/file.rs` as `unmojibake()` (and its inverse
-`mojibake()` for round-trip / write paths). Pseudocode for
-a CHIRP driver:
+The reverse:
 
 ```python
 HEADER = b"xiepinruanjian\r\n"
@@ -66,378 +281,396 @@ def unmojibake(file_bytes: bytes) -> bytes:
     assert file_bytes.startswith(HEADER)
     assert file_bytes.endswith(FOOTER)
     body = file_bytes[len(HEADER):-len(FOOTER)]
-    # body is UTF-8 text; each codepoint is one image byte.
     return body.decode("utf-8").encode("latin-1")
 
 def mojibake(raw: bytes) -> bytes:
     return HEADER + raw.decode("latin-1").encode("utf-8") + FOOTER
 ```
 
-When Phase 2 lands (live USB-serial reads from the radio),
-the bytes coming off the wire are the **raw image directly**
-— no mojibake step. So the file path is just `unmojibake →
-decode_*`, and the live path is `read_eeprom → decode_*`,
-both feeding the same byte map documented below.
+In narm: `src/kgq336/file.rs::unmojibake()` and `mojibake()`.
 
-## Big revision from earlier RE work
+The post-unmojibake size is **50 000 bytes** — bigger than the
+radio's 32 KiB EEPROM. The extra ~18 KiB is whatever CPS adds
+on top of (or interleaved with) the codeplug data: padding,
+CPS-private metadata, expanded tables, etc. Mapping `.kg` ↔
+logical isn't a simple shift; deltas vary by region in steps of
+`0x200`, suggesting CPS rearranges things by category for its
+UI. This is a separate (mostly TBD) reverse-engineering
+problem; live reads sidestep it.
 
-Earlier iterations of `src/kgq336/decode.rs` (≤ v0.6) treated
-channels as belonging to independent "categories" (Riks, Jakt,
-SRBR, PMR, 69M) each with its own data and name base offsets.
-The CPS Scan Group tab reveals the true layout: there is one
-flat **999-channel array** at offset `0x0140`, with a parallel
-12-byte name array at `0x3FBC`. Categories are just user
-chosen scan-group ranges over channel numbers (CH-001 .. CH-999).
+## Logical memory map
 
-| Group     | Channel range | First-channel data offset (× 16) | First-channel name offset (× 12) |
-|-----------|---------------|----------------------------------|----------------------------------|
-| Åkeri     | CH-055..094   | `0x140 + 54·16  = 0x04A0`        | `0x3FBC + 54·12  = 0x4244`       |
-| Jakt      | CH-101..107   | `0x140 + 100·16 = 0x0780`        | `0x3FBC + 100·12 = 0x446C`       |
-| SRBR 444  | CH-201..208   | `0x140 + 200·16 = 0x0DC0`        | `0x3FBC + 200·12 = 0x491C`       |
-| PMR 446   | CH-301..316   | `0x140 + 300·16 = 0x1400`        | `0x3FBC + 300·12 = 0x4DCC`       |
-| 69 MHz    | CH-501..518   | `0x140 + 500·16 = 0x2080`        | `0x3FBC + 500·12 = 0x572C`       |
+All offsets in this section are **logical** — i.e., into the
+post-unscramble image. They come from `_MEM_FORMAT_Q332_oem_read_nolims`
+in CHIRP's `kgq10h ... 2025mar16.py`, the only published
+authoritative reference. Field types use CHIRP's bitwise syntax
+(`u8` = 1 byte, `ul16` = u16 little-endian, etc.).
 
-All five category offsets land exactly on the flat-array math —
-confirming the layout. The decoder should iterate
-`CH-001..CH-999`, decode the 16-byte data slot at
-`0x140 + (n-1)*16`, look up the 12-byte name at
-`0x3FBC + (n-1)*12`, and emit only `is_plausible()` slots.
+### Region overview (`0x0000..0x8000`)
 
-## Confirmed codeplug regions (50 000-byte raw image)
+| Range | Size | Contents |
+|---|---|---|
+| `0x000A` | 1 B | `oem_info.locked` |
+| `0x0340..0x0398` | ~88 B | OEM info — model strings, firmware version, build date |
+| `0x0440..0x0500` | ~192 B | Settings struct (radio-wide config) |
+| `0x0540..0x05A0` | 6 × 16 B | VFO A entries (six bands) |
+| `0x05A0..0x05E0` | 2 × 16 B | VFO B entries |
+| `0x05E0..0x4460` | 1000 × 16 B | Channel data array |
+| `0x4460..0x6240` | 1000 × 12 B | Channel name array |
+| `0x7340..0x7728` | 1000 B | Channel valid array (1 byte per channel) |
+| `0x7740..0x7768` | 10 × 4 B | Scan group ranges |
+| `0x7768..0x77E0` | 10 × 12 B | Scan group names |
+| `0x77E0..0x77E8` | 8 B | VFO scan range A/B |
+| `0x78B0..0x78D8` | 20 × 2 B | FM broadcast presets |
+| `0x78E0..0x7B40` | 100 × 6 B | Call IDs |
+| `0x7B40..0x7FB0` | 100 × 12 B | Call names |
+| (else) | | TBD — reserved, calibration, or unused |
 
-| Range             | Size       | Contents                             |
-|-------------------|------------|--------------------------------------|
-| `0x0000..0x0084`  | 132 B      | **Settings block** — see "Settings block" subsection below |
-| `0x0084..0x0098`  | 20 B       | **Startup message** (ASCII, NUL-pad) |
-| `0x0098..0x00B0`  | 24 B       | Brand strings + separator            |
-| `0x00B0..0x0140`  | 8 × 16 B   | **VFO state** — 8 entries (see below)|
-| `0x0140..0x3FB0`  | 999 × 16 B | **Channel data array** (CH-001..999) |
-| `0x3FB0..0x3FBC`  | 12 B       | Padding / unused (TBD)               |
-| `0x3FBC..0x6EA0`  | 999 × 12 B | **Channel name array** (CH-001..999) |
-| `0x6EA0..0x7270`  | ~970 B     | TBD — likely per-channel scan-group / A-B membership flags |
-| `0x7270..0x7278`  | 8 B        | Scan Group "All" data + A/B flags (TBD) |
-| `0x7278..0x72A0`  | 10 × 4 B   | **Scan Group ranges** (start, end : u16 LE) |
-| `0x72A0..0x7318`  | 10 × 12 B  | **Scan Group names** (slots 1..10)   |
-| `0x7318..0x73E0`  | ~200 B     | TBD — possibly band edges and scan-group misc |
-| `0x73E0..0x7408`  | 20 × 2 B   | **FM broadcast memories** (u16 LE × 100 kHz) |
-| `0x7408..0x766C`  | ~600 B     | TBD — possibly default DTMF code table |
-| `0x766C..0xC350`  | ~20 KiB    | **Call Settings** + remaining settings (themes, GPS, DTMF). Group 1 name at `0x766C`; rest TBD. |
+### OEM info
 
-## Settings block (`0x0000..0x0084`, 132 B)
+Read-only, factory-set strings. Exact values vary by unit; the
+fields below come from a sample with firmware `VA1.27`, build
+date `2024-12-3`.
 
-Mostly 1-byte enums for Configuration / Key Settings tab
-fields. Pinned down by single-field byte-diff captures
-(`26..52` in the capture set). Offsets are within the block.
+| Logical offset | Field | Type | Sample |
+|---|---|---|---|
+| `0x000A` | `locked` | `u8` | (lock flag, unverified) |
+| `0x0340` | `oem1` | `char[8]` | `"WOUXUN  "` |
+| `0x036C` | `name` | `char[8]` | `"KG-Q336 "` |
+| `0x0378` | `date` | `char[10]` | `"2024-12-3 "` |
+| `0x0392` | `firmware` | `char[6]` | `"VA1.27"` |
 
-| Offset | Width | Field                  | Encoding / notes |
-|--------|-------|------------------------|------------------|
-| `0x01` | 1     | Battery Save           | bool (0=off, 1=on) |
-| `0x03` | 1     | TOT (Time-Out Timer)   | index; baseline `04`, `01`=15 s |
-| `0x05` | 1     | VOX                    | 0=off, 1..10 |
-| `0x08` | 1     | Beep                   | bool |
-| `0x09` | 1     | Scan Mode              | 0=TO (time), 1=CO (carrier) |
-| `0x0A` | 1     | Backlight (seconds)    | `05` = 5 s; other values TBD |
-| `0x0B` | 1     | Brightness Active      | 1..10 |
-| `0x0D` | 1     | Startup Display        | 0=image, 1=batt voltage |
-| `0x0E` | 1     | PTT-ID                 | 0=off, 1=BOT (more TBD) |
-| `0x10` | 1     | Sidetone               | 0=off, 1=DTST (more TBD) |
-| `0x15` | 1     | Auto Lock              | bool |
-| `0x16` | 2     | Priority Channel       | u16 LE channel number |
-| `0x19` | 1     | RPT Setting            | semantic TBD (baseline `02`) |
-| `0x21` | 1     | Theme                  | 0..3 (4 themes) |
-| `0x24` | 1     | Time Zone              | index (`0c` baseline) |
-| `0x26` | 1     | GPS On                 | bool |
-| `0x48` | 6     | Mode Switch password   | ASCII `'0'..'9'` |
-| `0x4E` | 6     | Reset password         | ASCII `'0'..'9'` |
-| `0x5C` | 2     | VFO A/B Squelch        | 0..9 each |
-| `0x64` | 1     | TopKey                 | 0=Alarm, 1=SOS |
-| `0x65` | 1     | PF1 short              | semantic TBD |
-| `0x67` | 1     | PF2 long               | semantic TBD |
-| `0x68` | 1     | PF3 short              | semantic TBD |
-| `0x6E` | 6     | ANI code               | 1 digit/byte; `0x0F`/`0xF0` = pad |
-| `0x74` | 6     | SCC code               | same encoding as ANI |
+The model-probe handshake's first read returns 64 bytes from
+physical `0x0040`, which is logical `0x0340`. The `name` field
+at logical `0x036C` becomes bytes 46..53 of that decrypted
+payload (= `0x036C - 0x0340 + 2` for the leading address echo)
+— that's how CHIRP's `_identify` extracts the model.
 
-Bytes still TBD inside the block: `0x00`, `0x02`, `0x04`,
-`0x06..0x07`, `0x0C`, `0x0F`, `0x11..0x14`, `0x18`,
-`0x1A..0x20`, `0x22..0x23`, `0x25`, `0x27..0x47`,
-`0x54..0x5B`, `0x5E..0x63`, `0x66`, `0x69..0x6D`,
-`0x7A..0x83`. These need fresh single-field captures (PTT
-long, Kill, Stun, Monitor, Inspector codes, the rest of the
-key-config fields, more theme variants, etc.).
+### Settings struct (`0x0440..0x0500`)
 
-## Channel record (16 bytes per slot)
+Radio-wide configuration. The struct definition from the
+kgq10h driver, with field offsets resolved (some are explicit
+via `#seekto`, others by sequential layout):
 
-Per-channel fields visible in the CPS **Channel Information**
-tab (image 1):
-`CH No | RX Freq | TX Freq | RX CTC/DCS | TX CTC/DCS | TX Power
-| W/N | Mute Mode | Scramble | Scan Add | Compand | AM | Call
-Group | CH-Name`.
+| Logical | Field | Type | Notes |
+|---|---|---|---|
+| `0x0440` | `channel_menu` | `u8` | |
+| `0x0441` | `power_save` | `u8` | bool |
+| `0x0442` | `roger_beep` | `u8` | |
+| `0x0443` | `timeout` | `u8` | TOT (Time-Out Timer) index |
+| `0x0444` | `toalarm` | `u8` | TOT alarm |
+| `0x0445` | `wxalert` | `u8` | NOAA wx alert |
+| `0x0446` | `wxalert_type` | `u8` | |
+| `0x0447` | `vox` | `u8` | 0=off, 1..10 |
+| `0x0448` | `unk_xp8` | `u8` | TBD |
+| `0x0449` | `voice` | `u8` | voice prompt |
+| `0x044A` | `beep` | `u8` | bool |
+| `0x044B` | `scan_rev` | `u8` | scan resume mode |
+| `0x044C` | `backlight` | `u8` | seconds |
+| `0x044D` | `DspBrtAct` | `u8` | brightness, active |
+| `0x044E` | `DspBrtSby` | `u8` | brightness, standby |
+| `0x044F` | `ponmsg` | `u8` | startup-display mode |
+| `0x0450` | `ptt_id` | `u8` | (driver comment: "0x530"; that's `0x0440 + 0x10 = 0x450` ✓) |
+| `0x0451` | `ptt_delay` | `u8` | |
+| `0x0452` | `dtmf_st` | `u8` | DTMF sidetone |
+| `0x0453` | `dtmf_tx_time` | `u8` | |
+| `0x0454` | `dtmf_interval` | `u8` | |
+| `0x0455` | `ring_time` | `u8` | |
+| `0x0456` | `alert` | `u8` | |
+| `0x0457` | `autolock` | `u8` | bool |
+| `0x0458` | `pri_ch` | `ul16` | priority channel number |
+| `0x045A` | `prich_sw` | `u8` | priority-channel switch |
+| `0x045B` | `rpttype` | `u8` | repeater type |
+| `0x045C` | `rpt_spk` | `u8` | |
+| `0x045D` | `rpt_ptt` | `u8` | |
+| `0x045E` | `rpt_tone` | `u8` | |
+| `0x045F` | `rpt_hold` | `u8` | |
+| `0x0460` | `scan_det` | `u8` | |
+| `0x0461` | `smuteset` | `u8` | sub-mute set |
+| `0x0462` | `batt_ind` | `u8` | battery indicator |
+| `0x0463` | `ToneScnSave` | `u8` | |
+| `0x0464` | `theme` | `u8` | 0..3 (4 themes) |
+| `0x0465` | `unkx545` | `u8` | TBD |
+| `0x0466` | `disp_time` | `u8` | display time on/off |
+| `0x0467` | `time_zone` | `u8` | |
+| `0x0468` | `GPS_send_freq` | `u8` | |
+| `0x0469` | `GPS` | `u8` | bool |
+| `0x046A` | `GPS_rcv` | `u8` | |
+| `0x046B..0x048B` | `custcol1..4_*` | 16 × `ul16` | RGB565 values for 4 custom themes (text/bg/icon/line each) |
+| `0x048B` | `mode_sw_pwd` | `char[6]` | mode-switch password (ASCII digits, `0x0F`-padded) |
+| `0x0491` | `reset_pwd` | `char[6]` | reset password |
+| `0x0497` | `work_mode_a` | `u8` | |
+| `0x0498` | `work_mode_b` | `u8` | |
+| `0x0499` | `work_ch_a` | `ul16` | |
+| `0x049B` | `work_ch_b` | `ul16` | |
+| `0x049D` | `vfostepA` | `u8` | |
+| `0x049E` | `vfostepB` | `u8` | |
+| `0x049F` | `squelchA` | `u8` | 0..9 |
+| `0x04A0` | `squelchB` | `u8` | 0..9 |
+| `0x04A1` | `BCL_A` | `u8` | busy-channel lockout A |
+| `0x04A2` | `BCL_B` | `u8` | |
+| `0x04A3` | `vfobandA` | `u8` | |
+| `0x04A4` | `vfobandB` | `u8` | |
+| `0x04A7` | `top_short` | `u8` | TopKey short-press code |
+| `0x04A8` | `top_long` | `u8` | TopKey long-press |
+| `0x04A9` | `ptt1` | `u8` | |
+| `0x04AA` | `ptt2` | `u8` | |
+| `0x04AB` | `pf1_short` | `u8` | |
+| `0x04AC` | `pf1_long` | `u8` | |
+| `0x04AD` | `pf2_short` | `u8` | |
+| `0x04AE` | `pf2_long` | `u8` | |
+| `0x04AF` | `ScnGrpA_Act` | `u8` | active scan group on side A |
+| `0x04B0` | `ScnGrpB_Act` | `u8` | |
+| `0x04B1` | `vfo_scanmodea` | `u8` | |
+| `0x04B2` | `vfo_scanmodeb` | `u8` | |
+| `0x04B3` | `ani_id` | `u8[6]` | ANI digits, `0x0F`-padded |
+| `0x04B9` | `scc` | `u8[6]` | SCC digits |
+| `0x04C1` | `act_area` | `u8` | active area (A/B) |
+| `0x04C2` | `tdr` | `u8` | dual receive on/off |
+| `0x04C3` | `keylock` | `u8` | |
+| `0x04C7` | `stopwatch` | `u8` | |
+| `0x04C8` | `x0x04c8` | `u8` | TBD |
+| `0x04C9` | `dispstr` | `char[12]` | startup-message text (e.g. `"fbradio.se"`) |
+| `0x04DD` | `areamsg` | `char[12]` | area-message text |
+| `0x04E9..0x04F4` | `xunk_*`, `xani_*`, … | various | secondary key/PTT codes; mostly TBD |
+| `0x04F5` | `main_band` | `u8` | |
+| `0x04F6..0x04FB` | `xTDR_single_mode`, `xunk1`, `xunk2`, `cur_call_grp`, `VFO_repeater_a`, `VFO_repeater_b` | `u8` × 6 | |
+| `0x04FC` | `sim_rec` | `u8` | simultaneous record |
 
-Decoded so far:
+### VFO A / VFO B records
+
+Six VFO A entries (one per band) at logical `0x0540`, two VFO B
+at `0x05A0`. Each is 16 bytes:
 
 ```text
-bytes 0..4   rx_freq        u32 LE × 10 Hz
-bytes 4..8   tx_freq        u32 LE × 10 Hz (0 = simplex; absolute
-                                            for repeaters)
-bytes 8..10  tone_rx_raw    u16 LE — see "Tone slot encoding"
-bytes 10..12 tone_tx_raw    u16 LE — see "Tone slot encoding"
-byte  12     power_am_scramble u8 — bits 0..1 = power_idx
-                                    (0=low, 1=mid, 2=high, 3=ultrahigh);
-                                    bits 2..3 = AM mode
-                                    (0=OFF, 1=AM Rx, 2=AM Rx&Tx, 3=unused);
-                                    bits 4..7 = scramble level
-                                    (0=off, 1..8 = group)
-byte  13     flags1         u8 — bit 0 = wide bandwidth
-                                 bits 1..2 = mute mode
-                                 (0=QT, 1=QT+DTMF, 2=QT*DTMF, 3=unused)
-                                 bit 3 = compand
-                                 bit 5 = scan add
-                                 bits 4, 6, 7 unknown
-byte  14     call_group     u8 — 1-based index into the Call
-                                 Settings table (image 7).
-                                 FB-Radio baseline values:
-                                 1 (default / 69M / Simplex),
-                                 2 (Riks), 3 (Jakt), 4 (SRBR),
-                                 5 (PMR).
-byte  15     unknown        u8 — 0x00 on every populated FB-Radio
-                                 channel; 0x05 on the eight VFO
-                                 entries. Possibly a VFO-only
-                                 marker — TBD.
+ul32  rxfreq            ← × 10 Hz
+ul32  offset            ← × 10 Hz, signed (TX = RX + offset)
+ul16  rxtone            ← see "Tone slot encoding"
+ul16  txtone
+u8    scrambler:4       ← bits 4..7
+u8    am_mode:2         ← bits 2..3
+u8    power:2           ← bits 0..1
+u8    ofst_dir:3        ← bits 5..7 (offset direction sign)
+u8    unknown:1         ← bit  4
+u8    compander:1       ← bit  3
+u8    mute_mode:2       ← bits 1..2
+u8    iswide:1          ← bit  0
+u8    call_group
+u8    unknown6
 ```
+
+VFO A bands (in order at `0x0540`): 150M-A, 400M-A, 200M-A,
+66M-A, 800M-A, 300M-A. VFO B at `0x05A0`: 150M-B, 400M-B.
+
+### Channel record (1000 entries at `0x05E0`, 16 B each)
+
+The radio supports 1000 channels (CPS exposes 999; channel 0 is
+either reserved or unused). Each record:
+
+```text
+ul32  rxfreq            ← × 10 Hz
+ul32  txfreq            ← × 10 Hz; 0 = simplex; absolute (not
+                          shift) for repeaters
+ul16  rxtone            ← see "Tone slot encoding"
+ul16  txtone
+u8    scrambler:4       ← bits 4..7 (0 = off, 1..8 = group)
+u8    am_mode:2         ← bits 2..3 (0=FM, 1=AM Rx, 2=AM Rx+Tx,
+                                     3=unused)
+u8    power:2           ← bits 0..1 (0=L, 1=M, 2=H, 3=Ultra)
+u8    unknown3:1        ← bit  7
+u8    send_loc:1        ← bit  6 (GPS location send on this ch)
+u8    scan_add:1        ← bit  5
+u8    favorite:1        ← bit  4
+u8    compander:1       ← bit  3
+u8    mute_mode:2       ← bits 1..2 (0=QT, 1=QT+DTMF,
+                                     2=QT*DTMF, 3=unused)
+u8    iswide:1          ← bit  0 (1 = 25 kHz, 0 = 12.5 kHz)
+u8    call_group        ← 1-based index into Call Settings
+u8    unknown6          ← TBD (always 0 in observed data)
+```
+
+### Channel valid array (`0x7340`, 1000 B)
+
+One byte per channel. Non-zero = valid; zero = empty slot.
+CHIRP's struct names this `valid[1000]`. Particular non-zero
+encodings (active/transmit/receive-only flags) are TBD.
+
+### Channel names (`0x4460`, 1000 × 12 B)
+
+Parallel array to `memory[1000]`. Each slot is a 12-byte ASCII
+string, NUL-padded (or `0xFF`-padded — radios in this family
+mix the two). Empty = blank slot.
 
 ### Tone slot encoding
 
-Both `tone_rx_raw` and `tone_tx_raw` use the same `u16` layout:
+Both `rxtone` and `txtone` use the same `u16` little-endian
+layout:
 
-| high nibble | meaning                |
-|-------------|------------------------|
-| `0x0`       | no tone                |
-| `0x4`       | DCS normal polarity    |
-| `0x6`       | DCS inverted polarity  |
-| `0x8`       | CTCSS                  |
+| High nibble | Meaning |
+|---|---|
+| `0x0` | no tone |
+| `0x4` | DCS, normal polarity |
+| `0x6` | DCS, inverted polarity |
+| `0x8` | CTCSS |
 
 Low 12 bits = value:
-- CTCSS: `freq × 10` deci-Hz (88.5 Hz → `0x375`, 100.0 Hz → `0x3E8`).
-- DCS: decimal of the octal display code (`023` oct → 19 dec,
-  `754` oct → 492 dec).
 
-### Per-channel record — fully decoded
+- CTCSS: `freq × 10` deci-Hz. So `88.5 Hz → 0x375`,
+  `100.0 Hz → 0x3E8`.
+- DCS: decimal of the octal display code. `023 oct → 19 dec`,
+  `754 oct → 492 dec`.
 
-All 14 fields from the CPS Channel Information tab are now
-located in the 16-byte record. The remaining unknowns at byte
-15 and `flags1` bits 4/6/7 don't appear to drive any user-
-visible UI column in this codeplug — they may be reserved or
-flagged differently for the live serial protocol.
+### Scan groups (`0x7740..0x77E0`)
 
-## VFO state (`0x00B0..0x0140`, 8 × 16 B)
+Ten user-definable channel-range groups + a synthetic "All"
+group displayed in the CPS UI (probably stored separately or
+synthesised at runtime).
 
-The eight 16-byte entries we previously called "BAND scanner"
-match the **VFO Settings** tab (image 3) exactly:
+| Logical | Field | Type |
+|---|---|---|
+| `0x7740` | `addrs[10]` | 10 × `{ ul16 scan_st; ul16 scan_end; }` |
+| `0x7768` | `names[10]` | 10 × `char[12]` |
 
-| Slot | Offset | VFO label | Frequency observed |
-|------|--------|-----------|--------------------|
-| 0    | `0x0B0`| 150M(A)   | 118.10000 MHz      |
-| 1    | `0x0C0`| 400M(A)   | 400.02500 MHz      |
-| 2    | `0x0D0`| 200M(A)   | 220.02500 MHz      |
-| 3    | `0x0E0`| 66M(A)    | 69.18500 MHz       |
-| 4    | `0x0F0`| 800M(A)   | 750.02500 MHz      |
-| 5    | `0x100`| 300M(A)   | 350.02500 MHz      |
-| 6    | `0x110`| 150M(B)   | 156.00000 MHz      |
-| 7    | `0x120`| 400M(B)   | 400.02500 MHz      |
+Sample (FB-Radio baseline):
 
-Each entry's first 8 bytes are the rx/tx frequency in the same
-`u32 LE × 10 Hz` format as channel records. The trailer bytes
-`02 01 01 05` are likely VFO-specific flags (TBD).
+| Slot | Range | Name |
+|---|---|---|
+| 1 | 501..518 | `69 MHz` |
+| 2 | 55..94 | `Åkeri` |
+| 3 | 101..107 | `Jakt` |
+| 4 | 201..208 | `SRBR 444MHz` |
+| 5 | 301..316 | `PMR 446MHz` |
+| 6..10 | (defaults) | (blank / default) |
 
-The CPS VFO tab also shows per-VFO `Step`, `Squelch`, `RX
-CTC/DCS`, `TX CTC/DCS`, `TX Power`, `W/N`, `Mute Mode`, `Shift`,
-`Scramble`, `Compand`, `Call Group`, `AM`, plus a separate row
-table for `Work Mode`, `Selected Channel`, `Step`, `Squelch`,
-`Busy Lockout`, `Current Band`. Most of these need to be
-located. The 8 × 16 B block can't fit them all — there's
-probably more VFO config later in the image.
+### VFO scan ranges (`0x77E0`)
 
-## FM broadcast memories (`0x73E0..0x7408`, 20 × 2 B)
+```text
+ul16  vfo_scan_start_A
+ul16  vfo_scan_end_A
+ul16  vfo_scan_start_B
+ul16  vfo_scan_end_B
+```
 
-20 entries, each `u16 LE × 100 kHz` (so `0x02F8` = 760 = 76.0
-MHz, the default in image 4). The bytes my v0.6 decoder
-spuriously emitted as `Q336_73E0..7400` channels live in this
-region — they should be excluded from channel emission once
-the flat-array refactor lands.
+### FM broadcast presets (`0x78B0`, 20 × 2 B)
 
-## Scan groups (`0x7270..0x7318`)
+Twenty `ul16` slots, each `freq_kHz / 100` (so
+`0x02F8 = 760 = 76.0 MHz`, the factory default).
 
-The CPS Scan Group tab (image 6) shows 11 groups
-(`All + 1..10`). Storage:
+### Call IDs (`0x78E0`, 100 × 6 B)
 
-| Range            | Size        | Contents |
-|------------------|-------------|----------|
-| `0x7270..0x7278` | 8 B         | "All" group + A/B flags (TBD) |
-| `0x7278..0x72A0` | 10 × 4 B    | `(start_ch: u16 LE, end_ch: u16 LE)` |
-| `0x72A0..0x7318` | 10 × 12 B   | Group names (slot 1..10), ASCII NUL-pad |
+Per-group caller ID digits; 6 bytes per slot, digit-per-byte
+(`0..9`), with `0x0F` as end-of-list and `0xF0` as filler.
+Same encoding as `ani_id` and `scc` in the settings struct.
 
-Range pairs validated against the FB-Radio baseline:
+### Call names (`0x7B40`, 100 × 12 B)
 
-| Slot | Range     | Name (baseline) |
-|------|-----------|-----------------|
-| 1    | 501..518  | `69 MHz`        |
-| 2    | 55..94    | `Åkeri`         |
-| 3    | 101..107  | `Jakt`          |
-| 4    | 201..208  | `SRBR 444MHz`   |
-| 5    | 301..316  | `PMR 446MHz`    |
-| 6..10 | (defaults) | (blank, default name) |
+Parallel ASCII names for each call ID. Slot 0 baseline =
+`"Allanrop"`. Slot pitch is 12 bytes; each entry is
+NUL/`0xFF`-padded.
 
-The `All` group's start/end is implicit (all channels) and
-probably backed by the 8 bytes at `0x7270..0x7278`. We model
-slots 1..10 only; `All` stays TBD until a capture toggles its
-A/B flag.
+## Channel-record CPS UI mapping
 
-## Call Settings (`0x766C..`)
+For reference when matching narm's TOML schema or the CPS UI
+columns to fields above:
 
-Slot 0 of the call-group name table is at `0x766C`, 12 bytes
-ASCII NUL-padded (baseline `Allanrop`). Slot pitch and the
-per-group `Call Code` field are unknown — captures only
-covered group 1's name. Image 7 shows 17 visible groups;
-need a rename of group 2+ and a code edit to determine
-pitch and offsets.
+| CPS column | Field |
+|---|---|
+| CH No | (implicit — channel index) |
+| RX Freq | `rxfreq` |
+| TX Freq | `txfreq` (or `rxfreq + offset` for VFO records) |
+| RX CTC/DCS | `rxtone` (decoded per tone slot table) |
+| TX CTC/DCS | `txtone` |
+| TX Power | `power` (0=L, 1=M, 2=H, 3=Ultra) |
+| W/N | `iswide` (1 = wide / 25 kHz, 0 = narrow / 12.5 kHz) |
+| Mute Mode | `mute_mode` (QT / QT+DTMF / QT*DTMF) |
+| Scramble | `scrambler` (0=off, 1..8) |
+| Scan Add | `scan_add` |
+| Compand | `compander` |
+| AM | `am_mode` (0=FM, 1=AM Rx, 2=AM Rx+Tx) |
+| Call Group | `call_group` (1-based) |
+| CH Name | `names[n]` |
 
-## TBD regions (locations unknown)
+## Empty-memory pattern
 
-- **Configuration Settings** tab (image 2) leftovers: Roger,
-  TOT Pre-alert, Language, Voice Guide, PTT-ID Delay, DTMF
-  Transmit/Interval time, Ring Time, ALERT, Priority Scan,
-  Hold time of repeat, SCAN-DET, SC-QT, Sub-Frequency Mute,
-  TIME SET, GPS SEND TYPE, GPS Receive SW. (Most others now
-  located in the Settings block.)
-- **VFO Settings** extras (image 3): the `Work Mode / Selected
-  Channel / Step / Squelch / Busy Lockout / Current Band` row,
-  plus per-VFO `Step / Squelch / Mute Mode / Shift / Scramble /
-  Compand / Call Group / AM / TX Power / W / N / RX CTC/DCS /
-  TX CTC/DCS`.
-- **Scan Group** tab (image 6) leftovers: per-group A/B
-  flag bits and the `All` group state — storage probably the
-  8 B at `0x7270..0x7278` plus per-channel flags somewhere
-  in `0x6EA0..0x7270`.
-- **Key Settings** tab (image 5) leftovers: PTT long, PF1
-  short alternates, Kill, Stun, Monitor, Inspector codes.
-  TopKey + PF1 short + PF2 long + PF3 short + ANI + SCC
-  already located in the Settings block.
-- **Call Settings** tab (image 7): per-group `Call Code` and
-  slot pitch beyond group 1's name. Storage TBD.
+Unprogrammed bytes in the radio's EEPROM are `0x00`, not
+`0xFF`. This matters for two reasons:
 
-## Refined implementation plan
+1. The "all bytes equal" signature in encrypted CMD_WR traffic
+   is `[seed^X, seed^X, …]` where `X` is the *first* plaintext
+   byte (typically the addr_hi being written) — not what you'd
+   expect for an `0xFF`-fill.
+2. When testing: a fresh blank channel slot reads as 16 bytes
+   of `0x00`, not `0xFF`.
 
-### Phase 1 v1.0 — refactor to flat array (in flight)
+## TBD areas
 
-1. **Drop `CATEGORIES`** in `src/kgq336/decode.rs`. Replace with
-   the flat constants:
-   ```rust
-   const CHANNEL_DATA_BASE: usize = 0x0140;
-   const CHANNEL_NAME_BASE: usize = 0x3FBC;
-   const CHANNEL_COUNT: usize = 999;
-   const CHANNEL_DATA_SIZE: usize = 16;
-   const CHANNEL_NAME_SIZE: usize = 12;
-   ```
-2. Iterate `n in 1..=999`, decode each slot, skip if not plausible.
-3. Synthesise the name `CH_NNN` (3-digit zero-padded) when the
-   12-byte name slot is blank — drops the per-category prefix
-   logic.
-4. Move the 8 VFO entries out of the channel emission. Add
-   `vfo_state: [Option<VfoEntry>; 8]` to `DecodeReport` (or a
-   smaller struct).
-5. Add a `fm_broadcast: [Option<u32>; 20]` field decoded from
-   `0x73E0..0x7408`. (Each `u16` × 100 kHz → Hz.)
-6. Drop the `Q336_<offset>` synthetic-name fallback and the
-   `MAX_SHIFT_HZ` heuristic — they were Band-Aids for a wrong
-   layout. The flat array's `is_plausible` filter is enough.
+In rough priority order:
 
-### Phase 1 v1.1 — done
+- **Channel valid encoding**: `valid[1000]` is non-zero for
+  populated channels but the precise meaning (active flag vs
+  RX-only vs TX-only vs other) is unverified.
+- **Settings struct unknowns**: `unk_xp8`, `unkx545`, `x0x04c8`,
+  `xunk1`, `xunk2`, `xTDR_single_mode`, `unknown6` in the VFO
+  and channel records. Need single-field captures.
+- **Per-channel scan-group / A-B membership flags**: storage
+  TBD; not present in the kgq10h struct, but it's a CPS UI
+  feature so the bytes are *somewhere*. Likely either bit-
+  packed alongside `valid[]` or in an unmapped region.
+- **`.kg` ↔ logical transform**: deltas vary by region in
+  `0x200`-byte steps, suggesting CPS rearranges by category.
+  Not blocking for live reads.
+- **CMD_WR reply format**: the radio acks each write but the
+  exact reply structure isn't decoded yet — no captures since
+  we haven't tested writes.
 
-All per-channel fields located. Captures 22-25 confirmed:
+## Implementation notes
 
-- **Mute Mode** (3 values) — `flags1` bits 1..2: `0`=QT,
-  `1`=QT+DTMF (`0x02` set), `2`=QT*DTMF (`0x04` set).
-- **AM Mode** (3 values) — `power_am_scramble` bits 2..3:
-  `0`=OFF (FM), `1`=AM Rx (`0x04` set), `2`=AM Rx&Tx
-  (`0x08` set).
+### Reading (live)
 
-The decoder emits `Mode::Am` instead of `Mode::Fm` for any
-non-zero AM mode (`AM Rx` and `AM Rx&Tx` both); the Rx vs
-Rx&Tx distinction is dropped and warned about. Mute Mode is
-always warned about when non-default since narm has no
-Mute Mode field.
+1. `open_port(115200, 8N1, DTR=1, RTS=0)`, sleep 200 ms.
+2. Build the canonical model probe `7C 82 FF 03 54 14 54 53`,
+   write it 3× back to back.
+3. Read one frame, verify cksum, extract bytes 2..2+64 = the
+   first physical block.
+4. Loop addr `= 0x0080, 0x00C0, …, 0x7FC0`: send `CMD_RD`,
+   read reply, place data at `image[addr..addr+0x40]`.
+5. Send `CMD_END` (`7C 81 FF 00 D7`).
+6. Apply slice-reversal to produce the **logical** image —
+   that's the canonical form the rest of narm decodes against.
 
-### Phase 1 v2.0 — radio-level settings
+### Writing (live)
 
-- **FM broadcast memories**: done.
-- **Startup message**: done.
-- **Settings block**: ~70% mapped — see the Settings block
-  subsection above. ~10 byte ranges still TBD; need fresh
-  single-field captures for PTT long, Kill/Stun/Monitor/
-  Inspector, Roger, Voice Guide, etc.
-- **Scan groups**: ranges + names done (slots 1..10). The
-  `All` group state and per-channel A/B membership flags
-  (likely in `0x6EA0..0x7270`) still TBD.
-- **Call Settings**: group 1 name done. Slot pitch and the
-  per-group `Call Code` field still TBD — need a rename of
-  group 2+ and a code edit.
+Mirror of the read flow:
 
-### Phase 1 v3.0 — narm schema extensions (optional)
+1. Wake the radio with the same 3× probe.
+2. For each 32-byte page in logical order, convert to physical
+   address, build the `CMD_WR` frame, send it, read the ack.
+3. `CMD_END` to close.
 
-To round-trip more state into TOML, narm's `Mode::Fm` would
-need new fields or sibling structs:
+The radio's calibration / reserved regions outside
+`[0x0040, 0x8000)` aren't writable through this protocol; CPS
+doesn't touch them either.
 
-- `scramble: Option<u8>`     — currently warned, not surfaced
-- `compand: bool`            — currently warned
-- `dcs_polarity: Polarity`   — currently warned
-- `mute_mode: MuteMode`      — currently TBD
-- `am_mode: bool`            — narm has `Mode::Am` already, so
-                                this is a write-side concern
-- `call_group: Option<u8>`   — radio-specific; not core narm
+### File path
 
-Each is an additive change, but they affect the Channel struct
-shared with other radios. Probably worth a separate design
-pass.
+`.kg` file → `unmojibake()` → 50 000 raw bytes → … and here
+the layout diverges from logical, so existing narm
+`decode_channels` (which uses `.kg` offsets) and a hypothetical
+`decode_channels_logical` (using the offsets above) need to
+stay separate until the `.kg` ↔ logical transform is mapped.
 
-### Phase 2 — live serial protocol (unchanged)
+## CHIRP references
 
-- Capture USB traffic from CPS via VirtualBox + usbmon while
-  doing a full read.
-- Implement `wire.rs` framing + opcode structs and `io.rs`
-  read loop.
-- Hook into `narm radio read --port`.
+- `kg935g.py` — closest predecessor; same framing, cipher
+  algorithm, and `_write_record` shape. Different seed (`0x57`)
+  and no checksum adjustment.
+- `kguv9dplus.py` — sibling family; different start byte
+  (`0x7D`), 4-bit cksum, but identical encrypt/decrypt
+  primitives.
+- `kgq10h ... 2025mar16.py` (attached to issue #10880) — the
+  actual Q33x driver. Source of `convert_address`,
+  `_checksum2` / `_checksum_adjust`, `_MEM_FORMAT_Q332_oem_read_nolims`.
 
-### Phase 3 — encode + write
-
-- `encode_channels(channels: &[Channel]) -> Vec<u8>` produces
-  the raw 50 000-byte image.
-- `mojibake` already exists for the file path.
-- `write_image` for the live-serial path (Phase 2 wire protocol
-  reused in reverse).
-
-## CPS UI screenshot summary (from image-cache batch)
-
-So the screenshots don't have to be re-pasted:
-
-1. **Channel Information** — the 14-column channel grid. Row
-   highlight on row 55 = `RIKS_TEST` (CH-055), 85.93750 simplex,
-   High / Wide / Mute Mode QT / Scan Add ON / Call Group 2.
-2. **Configuration Settings** — radio-wide parameters in 3
-   tables (function/setting pairs), plus 4 user-editable themes.
-3. **VFO Settings** — A/B Work Mode + Selected Channel + Step +
-   Squelch + Busy Lockout + Current Band; then an 8-column
-   table (six A bands + two B bands) with `Current Freq`,
-   `Offset`, `RX/TX CTC/DCS`, `TX Power`, `W/N`, `Mute Mode`,
-   `Shift`, `Scramble`, `Compand`, `Call Group`, `AM`.
-4. **FM Broadcast Memories** — 20 channels of FM broadcast
-   presets, all 76.0 MHz default in this codeplug.
-5. **Key Settings** — TopKey / PF1 / PTT / PF2 short+long /
-   PF3 short+long; CONTR section with ANI-EDIT, SCC-EDIT,
-   Kill, Stun, Monitor, Inspector codes; **Startup Message**
-   text field showing `www.fbradio.se`.
-6. **Scan Group** — table of 11 scan groups (All + 1..10) with
-   A/B radio buttons, start/end channel, group name. VFO Scan
-   Mode side panel with A/B range + mode dropdown.
-7. **Call Settings** — table of 17 visible call groups (Group #,
-   Call Code, Call Name). Group 1 = `70000 / Allanrop`; rest
-   default to `123456`.
+CHIRP issues to watch upstream: `#10692` (Q10H), `#10880`
+(Q332/Q336 channels-only test driver), `#11547` (Q332),
+`#11765` (Q336 status).
