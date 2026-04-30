@@ -4,6 +4,8 @@
 # Temp folder used for reverse engineering
 /tmp
 
+backup.bin
+
 # Emacs
 .#*
 \#*\#

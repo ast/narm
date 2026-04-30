@@ -1,0 +1,14 @@
+#+begin_src bash
+  sudo usermode -aG wireshark $USER
+#+end_src
+
+#+begin_src bash
+  export RADIO_VID_PID=067b:2303    # adjust to what lsusb showed
+  export USBMON=usbmon1            # bus 1 → usbmon1, etc.
+  export OUTDIR=~/Downloads/kg-re/wire
+  mkdir -p "$OUTDIR"
+#+end_src
+
+#+begin_src bash
+  tshark -i usbmon1 -w ~/Downloads/kg-re/wire/03_write_noop.pcapng
+#+end_src

@@ -1,0 +1,5 @@
+# Give members of the wireshark group access to usbmon
+# sudo install -m 0644 99-usbmon.rules /etc/udev/rules.d/99-usbmon.rules
+# lsusb shows what but your device is on
+
+SUBSYSTEM=="usbmon", GROUP="wireshark", MODE="0640"

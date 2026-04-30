@@ -20,6 +20,8 @@
 mod decode;
 mod error;
 mod file;
+mod io;
+mod wire;
 
 pub use decode::{
     DecodeReport, PttId, ScanGroup, ScanMode, Settings, Sidetone, StartupDisplay, TopKey, VfoEntry,
@@ -27,3 +29,9 @@ pub use decode::{
 };
 pub use error::KgQ336Error;
 pub use file::{mojibake, unmojibake};
+pub use io::{open_port, read_codeplug};
+pub use wire::{
+    CMD_END, CMD_RD, CMD_WR, DIR_IN, DIR_OUT, END_FRAME, InFrame, READ_BLOCK, SOF, WRITE_BLOCK,
+    build_read_cmd, build_write_cmd, checksum, decrypt_inplace, encrypt_inplace, parse_in_frame,
+    split_read_reply,
+};

@@ -56,8 +56,10 @@ pub struct ReadArgs {
     #[command(flatten)]
     pub source: ReadSource,
     /// Target radio. `quansheng-uv-k5` supports both serial
-    /// and file reads; `wouxun-kg-q336` currently supports
-    /// only `--from-file`.
+    /// and file reads. `wouxun-kg-q336` supports `--from-file`
+    /// for either format, and `--port` for `--format raw` only
+    /// (the live `--format toml` path needs the radio↔.kg
+    /// transform, not yet implemented).
     #[arg(long, value_enum)]
     pub radio: Radio,
     /// Output format. `toml` decodes channels; `raw` writes the
@@ -94,6 +96,22 @@ pub fn run(args: RadioArgs) -> Result<()> {
 }
 
 fn run_read(args: ReadArgs) -> Result<()> {
+    // Live Q336 reads return wire-level radio memory, which does
+    // NOT share the `.kg` file's logical layout that decode_channels
+    // expects. Until we work out the radio↔.kg transform, force
+    // `--format raw` for that combination so users don't get
+    // silently-broken TOML.
+    if args.radio == Radio::WouxunKgQ336
+        && args.source.port.is_some()
+        && args.format == ReadFormat::Toml
+    {
+        bail!(
+            "live Q336 reads currently only support --format raw \
+             (the radio↔.kg-file layout transform isn't implemented yet); \
+             save with --format raw and decode the saved file separately"
+        );
+    }
+
     let image = match (
         args.source.port.as_deref(),
         args.source.from_file.as_deref(),
@@ -120,16 +138,23 @@ fn run_read(args: ReadArgs) -> Result<()> {
 }
 
 fn read_from_port(radio: Radio, port: &str) -> Result<Vec<u8>> {
-    if radio != Radio::QuanshengUvK5 {
-        bail!(
-            "live serial read is only implemented for quansheng-uv-k5 (got {})",
-            radio.id()
-        );
+    match radio {
+        Radio::QuanshengUvK5 => {
+            let mut p =
+                uvk5::open_port(port).with_context(|| format!("opening serial port {port}"))?;
+            let eeprom = uvk5::read_eeprom(&mut *p).context("reading eeprom from radio")?;
+            eprintln!("read {} bytes from EEPROM", eeprom.len());
+            Ok(eeprom)
+        }
+        Radio::WouxunKgQ336 => {
+            let mut p =
+                kgq336::open_port(port).with_context(|| format!("opening serial port {port}"))?;
+            let image = kgq336::read_codeplug(&mut *p).context("reading codeplug from radio")?;
+            eprintln!("read {} bytes of radio memory", image.len());
+            Ok(image)
+        }
+        other => bail!("live serial read is not implemented for {} yet", other.id()),
     }
-    let mut p = uvk5::open_port(port).with_context(|| format!("opening serial port {port}"))?;
-    let eeprom = uvk5::read_eeprom(&mut *p).context("reading eeprom from radio")?;
-    eprintln!("read {} bytes from EEPROM", eeprom.len());
-    Ok(eeprom)
 }
 
 fn read_from_file(radio: Radio, path: &std::path::Path) -> Result<Vec<u8>> {
