@@ -164,6 +164,7 @@ pub fn decode_channels(eeprom: &[u8]) -> Result<DecodeReport, UvK5Error> {
                 tone_tx_hz,
                 tone_rx_hz,
                 dcs_code,
+                call_group: None,
             }
         };
 
@@ -264,6 +265,7 @@ mod tests {
                 tone_tx_hz,
                 tone_rx_hz,
                 dcs_code,
+                ..
             } => {
                 assert_eq!(*bandwidth, Bandwidth::Narrow);
                 assert_eq!(*tone_tx_hz, Some(88.5));
@@ -391,6 +393,7 @@ mod tests {
                 tone_tx_hz,
                 tone_rx_hz,
                 dcs_code,
+                ..
             } => {
                 assert_eq!(*bandwidth, Bandwidth::Wide);
                 assert_eq!(*tone_tx_hz, Some(114.8));
@@ -433,6 +436,7 @@ mod tests {
                 tone_tx_hz,
                 tone_rx_hz,
                 dcs_code,
+                ..
             } => {
                 assert_eq!(*bandwidth, Bandwidth::Wide);
                 assert!(tone_tx_hz.is_none());

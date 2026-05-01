@@ -82,6 +82,15 @@ pub enum Mode {
         tone_rx_hz: Option<f32>,
         #[serde(default)]
         dcs_code: Option<u16>,
+        /// Wouxun-style "Call Group" — a 1-based index into a
+        /// per-radio Call Settings table that holds DTMF caller
+        /// IDs and labels. Only meaningful on radios that have a
+        /// Call Settings feature (currently the KG-Q332/Q336);
+        /// other targets ignore it. Skipped on serialization
+        /// when `None` (or `Some(1)` / `default`) so plain FM
+        /// channels stay terse.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        call_group: Option<u8>,
     },
     /// Amplitude modulation. Wide AM is broadcast / aviation; narrow
     /// AM is rarer. Tone fields exist for symmetry with `Fm` but most

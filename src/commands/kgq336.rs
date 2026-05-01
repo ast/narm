@@ -99,9 +99,24 @@ fn print_settings(r: &kgq336::DecodeReport) {
     println!("  time_zone:           {}", s.time_zone);
     println!("  gps_on:              {}", s.gps_on);
     println!(
+        "  work_mode:           A={:?} B={:?}",
+        s.work_mode_a, s.work_mode_b
+    );
+    println!("  work_channel:        A={} B={}", s.work_ch_a, s.work_ch_b);
+    println!(
+        "  vfostep:             A={:?} B={:?}",
+        s.vfostep_a, s.vfostep_b
+    );
+    println!(
         "  vfo_squelch:         A={} B={}",
         s.vfo_squelch_a, s.vfo_squelch_b
     );
+    println!("  busy_lockout:        A={} B={}", s.bcl_a, s.bcl_b);
+    println!(
+        "  vfoband:             A={:?} B={:?}",
+        s.vfoband_a, s.vfoband_b
+    );
+    println!("  scn_grp_a_act:       {} (encoding TBD)", s.scn_grp_a_act);
     println!("  top_key:             {:?}", s.top_key);
     println!("  pf1_short:           {}", s.pf1_short);
     println!("  pf2_long:            {}", s.pf2_long);

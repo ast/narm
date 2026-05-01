@@ -125,6 +125,13 @@ const NAME_SIZE: usize = 12;
 /// `CHANNEL_DATA_BASE + (N-1) * RECORD_SIZE` and its name at
 /// `CHANNEL_NAME_BASE + (N-1) * NAME_SIZE`.
 const CHANNEL_DATA_BASE: usize = 0x0140;
+
+/// Per-channel "valid" flag array — 1 byte per channel,
+/// parallel to the channel-data and name arrays. `0x00` =
+/// empty slot, `0x9E` = active (verified by single-channel
+/// activation captures of CH-001, CH-002, CH-999).
+const VALID_BASE: usize = 0x6E91;
+const VALID_ACTIVE: u8 = 0x9E;
 const CHANNEL_NAME_BASE: usize = 0x3FBC;
 const CHANNEL_COUNT: usize = 999;
 
@@ -527,6 +534,80 @@ impl SubFreqMute {
     }
 }
 
+/// VFO Settings → Work Mode dropdown (per A/B side). Two
+/// values confirmed by capture; remaining values land in
+/// `Other(u8)` until pinned.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WorkMode {
+    Vfo,
+    ChannelName,
+    Other(u8),
+}
+
+impl WorkMode {
+    fn from_raw(b: u8) -> Self {
+        match b {
+            0 => Self::Vfo,
+            3 => Self::ChannelName,
+            n => Self::Other(n),
+        }
+    }
+}
+
+/// VFO Settings → Step dropdown (per A/B side). Two values
+/// confirmed by capture (`8.33` and `12.5` kHz). The other
+/// values fit the standard 11-step series
+/// `2.5/5/6.25/8.33/10/12.5/15/20/25/30/50 kHz` as a
+/// dropdown index but are unverified.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VfoStep {
+    /// `0x03` = 8.33 kHz (aviation/airband).
+    Khz8_33,
+    /// `0x05` = 12.5 kHz.
+    Khz12_5,
+    Other(u8),
+}
+
+impl VfoStep {
+    fn from_raw(b: u8) -> Self {
+        match b {
+            3 => Self::Khz8_33,
+            5 => Self::Khz12_5,
+            n => Self::Other(n),
+        }
+    }
+}
+
+/// VFO Settings → Current Band dropdown (per A/B side).
+/// Three values verified by capture (`Mhz150`, `Mhz66`,
+/// `Mhz300`); the rest are dropdown-order predictions
+/// (`400M`, `200M`, `800M` at byte values `0x01`, `0x02`,
+/// `0x04`) but unverified.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum VfoBand {
+    Mhz150,
+    Mhz400,
+    Mhz200,
+    Mhz66,
+    Mhz800,
+    Mhz300,
+    Other(u8),
+}
+
+impl VfoBand {
+    fn from_raw(b: u8) -> Self {
+        match b {
+            0 => Self::Mhz150,
+            1 => Self::Mhz400,
+            2 => Self::Mhz200,
+            3 => Self::Mhz66,
+            4 => Self::Mhz800,
+            5 => Self::Mhz300,
+            n => Self::Other(n),
+        }
+    }
+}
+
 /// "SC-QT" (scan-carrier-tone-save) dropdown. Two values
 /// confirmed; the third (`Rx&Tx Qt/Dt-S`) is likely `0x02`
 /// by dropdown order but unverified.
@@ -647,15 +728,26 @@ struct SettingsRaw {
     _b27: [u8; 33],
     mode_switch_password: [u8; 6], // 0x48
     reset_password: [u8; 6],       // 0x4E
-    _b54: [u8; 8],
-    vfo_squelch: [u8; 2], // 0x5C
-    _b5e: [u8; 6],
-    top_key: u8,   // 0x64
-    pf1_short: u8, // 0x65
+    work_mode_a: u8,               // 0x54 — kgq10h `work_mode_a`
+    work_mode_b: u8,               // 0x55
+    work_ch_a: U16,                // 0x56 — selected channel A (1..999)
+    work_ch_b: U16,                // 0x58 — selected channel B
+    vfostep_a: u8,                 // 0x5A
+    vfostep_b: u8,                 // 0x5B
+    vfo_squelch: [u8; 2],          // 0x5C — A then B, 0..9 direct
+    bcl_a: u8,                     // 0x5E — Busy Lockout A (bool)
+    bcl_b: u8,                     // 0x5F
+    vfoband_a: u8,                 // 0x60
+    vfoband_b: u8,                 // 0x61
+    _b62: [u8; 2],                 // padding (kgq10h has these unmapped too)
+    top_key: u8,                   // 0x64
+    pf1_short: u8, // 0x65 — narm-empirical label; likely actually `top_long` per kgq10h
     _b66: u8,
-    pf2_long: u8,  // 0x67
-    pf3_short: u8, // 0x68
-    _b69: [u8; 5],
+    pf2_long: u8,      // 0x67 — likely `ptt2` per kgq10h
+    pf3_short: u8,     // 0x68 — likely `pf1_short` per kgq10h
+    _b69: [u8; 2],     // 0x69..0x6A
+    scn_grp_a_act: u8, // 0x6B — kgq10h `ScnGrpA_Act`; encoding TBD
+    _b6c: [u8; 2],     // 0x6C..0x6D — likely `ScnGrpB_Act` + `vfo_scanmodea`
     ani_code: [u8; 6], // 0x6E
     scc_code: [u8; 6], // 0x74
     _b7a: [u8; 10],
@@ -713,14 +805,35 @@ pub struct Settings {
     pub mode_switch_password: [u8; 6],
     /// 6 ASCII digits `'0'..'9'`. Baseline = `"000000"`.
     pub reset_password: [u8; 6],
+    /// CPS "VFO Settings" tab — top half (Work Mode A/B,
+    /// Selected Channel A/B, Step A/B, Squelch A/B, Busy
+    /// Lockout A/B, Current Band A/B). All A-side fields
+    /// share an enum/encoding with their B-side counterpart.
+    pub work_mode_a: WorkMode,
+    pub work_mode_b: WorkMode,
+    /// Currently-selected channel number on side A (1..999).
+    pub work_ch_a: u16,
+    pub work_ch_b: u16,
+    pub vfostep_a: VfoStep,
+    pub vfostep_b: VfoStep,
     /// VFO A squelch level, 0..9.
     pub vfo_squelch_a: u8,
     /// VFO B squelch level, 0..9.
     pub vfo_squelch_b: u8,
+    /// Busy-channel lockout, side A.
+    pub bcl_a: bool,
+    pub bcl_b: bool,
+    pub vfoband_a: VfoBand,
+    pub vfoband_b: VfoBand,
     pub top_key: TopKey,
     pub pf1_short: u8,
     pub pf2_long: u8,
     pub pf3_short: u8,
+    /// "Scan Group A active" — kgq10h's `ScnGrpA_Act`. Holds
+    /// the index of the scan group currently selected for
+    /// side A (offset-by-1 hypothesis: `0x00`=none/All,
+    /// `0x02`=group 1; encoding TBD pending more captures).
+    pub scn_grp_a_act: u8,
     /// 6 bytes; one digit `0..9` per byte, `0x0F` / `0xF0`
     /// = padding/terminator. See [`Settings::ani_code_string`].
     pub ani_code: [u8; 6],
@@ -759,8 +872,19 @@ impl Settings {
             gps_on: r.gps_on != 0,
             mode_switch_password: r.mode_switch_password,
             reset_password: r.reset_password,
+            work_mode_a: WorkMode::from_raw(r.work_mode_a),
+            work_mode_b: WorkMode::from_raw(r.work_mode_b),
+            work_ch_a: r.work_ch_a.get(),
+            work_ch_b: r.work_ch_b.get(),
+            vfostep_a: VfoStep::from_raw(r.vfostep_a),
+            vfostep_b: VfoStep::from_raw(r.vfostep_b),
             vfo_squelch_a: r.vfo_squelch[0],
             vfo_squelch_b: r.vfo_squelch[1],
+            bcl_a: r.bcl_a != 0,
+            bcl_b: r.bcl_b != 0,
+            vfoband_a: VfoBand::from_raw(r.vfoband_a),
+            vfoband_b: VfoBand::from_raw(r.vfoband_b),
+            scn_grp_a_act: r.scn_grp_a_act,
             top_key: TopKey::from_raw(r.top_key),
             pf1_short: r.pf1_short,
             pf2_long: r.pf2_long,
@@ -818,19 +942,56 @@ pub fn decode_channels(raw: &[u8]) -> Result<DecodeReport, KgQ336Error> {
     let mut channels = Vec::new();
     let mut warnings = Vec::new();
 
-    // Walk the flat 1..=999 channel array. Each slot is 16
-    // bytes of data plus a parallel 12-byte name slot. Empty
-    // slots fail `is_plausible` and are skipped.
+    // Walk the flat 1..=999 channel array, using the parallel
+    // `valid[]` byte array (`.kg 0x6E91`) as the authoritative
+    // active-slot marker — this matches what the radio firmware
+    // and CPS use. `is_plausible()` is kept as a sanity check
+    // that emits a warning when valid[] and the record disagree
+    // (corrupt slot or unknown valid encoding).
+    let valid = valid_array(raw);
     for ch_no in 1..=CHANNEL_COUNT {
+        let active = valid.get(ch_no - 1).copied();
         let data_off = CHANNEL_DATA_BASE + (ch_no - 1) * RECORD_SIZE;
         let rec = ChannelRecord::ref_from_bytes(&raw[data_off..data_off + RECORD_SIZE])
             .expect("RECORD_SIZE matches ChannelRecord size_of");
-        if !rec.is_plausible() {
-            continue;
+        let plausible = rec.is_plausible();
+        match (active, plausible) {
+            (Some(VALID_ACTIVE), true) | (Some(VALID_ACTIVE), false) => {
+                if !plausible {
+                    warnings.push(format!(
+                        "CH-{ch_no:03}: valid[]=0x{VALID_ACTIVE:02x} but record fails plausibility (rx={} Hz, tx={} Hz)",
+                        rec.rx_hz(),
+                        rec.tx_hz()
+                    ));
+                    continue;
+                }
+                let name = decode_channel_name(raw, ch_no);
+                note_unrepresented_fields(rec, &name, &mut warnings);
+                channels.push(record_to_channel(rec, name));
+            }
+            (Some(0x00), true) => {
+                warnings.push(format!(
+                    "CH-{ch_no:03}: valid[]=0x00 but record is plausible (rx={} Hz) — slot may be a corrupt remnant",
+                    rec.rx_hz()
+                ));
+            }
+            (Some(other), _) if other != 0x00 && other != VALID_ACTIVE => {
+                // Unknown valid-encoding — surface as warning
+                // but otherwise treat as inactive.
+                warnings.push(format!(
+                    "CH-{ch_no:03}: valid[]=0x{other:02x} (unknown encoding; expected 0x00 or 0x{VALID_ACTIVE:02x})"
+                ));
+            }
+            // Image too short to contain valid[]; fall back to
+            // the plausibility heuristic so callers with truncated
+            // dumps still get something.
+            (None, true) => {
+                let name = decode_channel_name(raw, ch_no);
+                note_unrepresented_fields(rec, &name, &mut warnings);
+                channels.push(record_to_channel(rec, name));
+            }
+            _ => {}
         }
-        let name = decode_channel_name(raw, ch_no);
-        note_unrepresented_fields(rec, &name, &mut warnings);
-        channels.push(record_to_channel(rec, name));
     }
 
     let startup_message = decode_startup_message(raw);
@@ -877,12 +1038,9 @@ fn note_unrepresented_fields(rec: &ChannelRecord, name: &str, warnings: &mut Vec
             "channel '{name}' uses DCS inverted polarity (polarity dropped in TOML)"
         ));
     }
-    let cg = rec.call_group();
-    if cg != 1 {
-        warnings.push(format!(
-            "channel '{name}' uses Call Group {cg} (not represented in TOML)"
-        ));
-    }
+    // Call Group IS now represented (`Mode::Fm.call_group`), so
+    // no warning here — non-default groups are surfaced in the
+    // TOML output and round-trip through narm.
     match rec.mute_mode() {
         0 => {} // QT — default
         1 => warnings.push(format!(
@@ -952,11 +1110,18 @@ fn record_to_channel(rec: &ChannelRecord, name: String) -> Channel {
     // "Rx-only vs Rx&Tx" distinction is dropped here and
     // warned about in `note_unrepresented_fields`.
     let mode = if rec.am_mode() == 0 {
+        // Surface non-default Call Group only — the Q336 stores
+        // 1 as "default group", so emitting `call_group = 1` for
+        // every channel would just clutter TOML. None means "no
+        // value to round-trip"; on encode we'd write 1.
+        let cg = rec.call_group();
+        let call_group = if cg == 0 || cg == 1 { None } else { Some(cg) };
         Mode::Fm {
             bandwidth,
             tone_tx_hz,
             tone_rx_hz,
             dcs_code,
+            call_group,
         }
     } else {
         Mode::Am {
@@ -996,6 +1161,20 @@ fn decode_channel_name(raw: &[u8], ch_no: usize) -> String {
         }
     }
     format!("CH_{:03}", ch_no)
+}
+
+/// Borrow the per-channel `valid[]` byte slice if the image
+/// is large enough; otherwise return an empty slice. Callers
+/// index by `ch_no - 1`. An empty slice signals "image too
+/// short" — the decoder falls back to plausibility checks in
+/// that case.
+fn valid_array(raw: &[u8]) -> &[u8] {
+    let end = VALID_BASE + CHANNEL_COUNT;
+    if raw.len() >= end {
+        &raw[VALID_BASE..end]
+    } else {
+        &[]
+    }
 }
 
 fn decode_vfo_state(raw: &[u8]) -> Vec<VfoEntry> {
@@ -1140,11 +1319,50 @@ mod tests {
         assert!(r.warnings.is_empty());
     }
 
+    #[test]
+    fn channel_with_valid_byte_but_no_record_warns() {
+        // valid[ch]=0x9E but the channel record is all-zero
+        // (so rxfreq = 0, fails plausibility). Decoder should
+        // skip the slot AND emit a warning so the user knows
+        // the image has a corrupt slot.
+        let mut buf = vec![0u8; MIN_RAW];
+        buf[VALID_BASE + 100] = VALID_ACTIVE;
+        let r = decode_channels(&buf).unwrap();
+        assert!(r.channels.is_empty());
+        assert!(
+            r.warnings
+                .iter()
+                .any(|w| w.contains("CH-101") && w.contains("plausibility")),
+            "expected plausibility warning for CH-101, got {:?}",
+            r.warnings
+        );
+    }
+
+    #[test]
+    fn channel_with_unknown_valid_encoding_warns() {
+        // valid[ch] is some unrecognised non-zero, non-0x9E
+        // byte. We don't know what this means so the decoder
+        // emits a warning and skips the slot.
+        let mut buf = vec![0u8; MIN_RAW];
+        buf[VALID_BASE + 200] = 0x42;
+        let r = decode_channels(&buf).unwrap();
+        assert!(r.channels.is_empty());
+        assert!(
+            r.warnings
+                .iter()
+                .any(|w| w.contains("CH-201") && w.contains("0x42")),
+            "expected unknown-encoding warning for CH-201, got {:?}",
+            r.warnings
+        );
+    }
+
     /// PMR Kan 01 channel record + name slot, captured from
     /// the FB-Radio baseline (`KG-Q336_FB_Radio_2024.kg`).
     fn place_pmr1(buf: &mut [u8], rec: &[u8; 16], name: &[u8]) {
+        // PMR Kan 01 = CH-301 = 0-indexed slot 300.
         buf[0x1400..0x1410].copy_from_slice(rec);
         buf[0x4DCC..0x4DCC + name.len()].copy_from_slice(name);
+        buf[VALID_BASE + 300] = VALID_ACTIVE;
     }
 
     #[test]
@@ -1169,6 +1387,7 @@ mod tests {
                 tone_tx_hz,
                 tone_rx_hz,
                 dcs_code,
+                ..
             } => {
                 assert_eq!(bandwidth, Bandwidth::Narrow);
                 assert!(tone_tx_hz.is_none());
@@ -1363,6 +1582,7 @@ mod tests {
             0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x20,
             0x05, 0x00,
         ]);
+        buf[VALID_BASE + 301] = VALID_ACTIVE;
         let r = decode_channels(&buf).unwrap();
         assert!(
             r.channels.iter().any(|c| c.name == "CH_302"),
@@ -1705,6 +1925,7 @@ mod tests {
             0x02, 0x00,
         ]);
         buf[0x4244..0x4250].copy_from_slice(b"Riks 1\x00\x00\x00\x00\x00\x00");
+        buf[VALID_BASE + 54] = VALID_ACTIVE;
         let r = decode_channels(&buf).unwrap();
         let ch = r.channels.iter().find(|c| c.name == "Riks 1").unwrap();
         assert_eq!(ch.rx_hz, 85_937_500);
@@ -1720,6 +1941,7 @@ mod tests {
             0x02, 0x00,
         ]);
         buf[0x43E8..0x43F4].copy_from_slice(b"Riks 2\x00\x00\x00\x00\x00\x00");
+        buf[VALID_BASE + 89] = VALID_ACTIVE;
         let r = decode_channels(&buf).unwrap();
         let ch = r.channels.iter().find(|c| c.name == "Riks 2").unwrap();
         assert_eq!(ch.rx_hz, 85_962_500);
@@ -1737,6 +1959,7 @@ mod tests {
             0x02, 0x00,
         ]);
         buf[0x4244..0x4250].copy_from_slice(b"RIKS_TEST\x00\x00\x00");
+        buf[VALID_BASE + 54] = VALID_ACTIVE;
         let r = decode_channels(&buf).unwrap();
         assert!(r.channels.iter().any(|c| c.name == "RIKS_TEST"));
     }
@@ -1895,6 +2118,7 @@ mod tests {
         // (image 9 in docs/kgq336-codeplug.md).
         let mut buf = vec![0u8; MIN_RAW];
         // CH-201 data at 0x140 + 200*16 = 0x0DC0.
+        buf[VALID_BASE + 200] = VALID_ACTIVE;
         buf[0x0DC0..0x0DD0].copy_from_slice(&[
             0xE0, 0x67, 0xA6, 0x02, 0xE0, 0x67, 0xA6, 0x02, 0x00, 0x00, 0x00, 0x00, 0x02, 0x21,
             0x04, 0x00,
@@ -1908,14 +2132,11 @@ mod tests {
             .find(|c| c.name == "SRBR  Kan 01")
             .unwrap();
         assert_eq!(ch.rx_hz, 444_600_000);
-        // Call Group 4 ≠ 1 → emit a warning.
-        assert!(
-            r.warnings
-                .iter()
-                .any(|w| w.contains("SRBR  Kan 01") && w.contains("Call Group 4")),
-            "expected Call Group 4 warning, got {:?}",
-            r.warnings
-        );
+        // Call Group 4 ≠ 1 → surface in TOML on `Mode::Fm`.
+        match ch.mode {
+            Mode::Fm { call_group, .. } => assert_eq!(call_group, Some(4)),
+            ref other => panic!("expected Mode::Fm, got {other:?}"),
+        }
     }
 
     #[test]
@@ -1923,6 +2144,7 @@ mod tests {
         // CH-501 = 69M Kanal 01 with Call Group 1 (default) →
         // no warning emitted.
         let mut buf = vec![0u8; MIN_RAW];
+        buf[VALID_BASE + 500] = VALID_ACTIVE;
         buf[0x2080..0x2090].copy_from_slice(&[
             0x02, 0x4E, 0x69, 0x00, 0x02, 0x4E, 0x69, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0x21,
             0x01, 0x00,
@@ -1951,6 +2173,8 @@ mod tests {
         // 0x3000 = data for CH = (0x3000 - 0x140) / 16 + 1 = 749.
         // No name written → fall back to "CH_749".
         let mut buf = vec![0u8; MIN_RAW];
+        // CH-749 = 0-indexed slot 748.
+        buf[VALID_BASE + 748] = VALID_ACTIVE;
         buf[0x3000..0x3010].copy_from_slice(&[
             0x31, 0x8D, 0xA8, 0x02, 0x31, 0x8D, 0xA8, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
             0x00, 0x00,

@@ -293,10 +293,32 @@ The post-unmojibake size is **50 000 bytes** — bigger than the
 radio's 32 KiB EEPROM. The extra ~18 KiB is whatever CPS adds
 on top of (or interleaved with) the codeplug data: padding,
 CPS-private metadata, expanded tables, etc. Mapping `.kg` ↔
-logical isn't a single shift across the whole file; deltas
-vary by region in steps of `0x200`, suggesting CPS rearranges
-things by category for its UI. This is mostly a separate
-reverse-engineering problem and live reads sidestep it.
+logical isn't a single shift across the whole file — it's
+**piecewise per region**, with the shift varying because `.kg`
+is laid out in CPS-UI category order whereas logical (= radio
+physical, after slice-reversal) is in firmware-struct order.
+
+**Confirmed `.kg` ↔ logical region shifts** (extend as we
+verify more regions):
+
+| Region | `.kg` base | Logical base | Shift | Verified by |
+|---|---|---|---|---|
+| Settings struct | `0x0000` | `0x0440` | +`0x0440` | 11 single-field captures |
+| Channel data array | `0x0140` | `0x05E0` | +`0x04A0` | CH-001 rxfreq edit |
+| Channel name array | `0x3FBC` | `0x4460` | +`0x04A4` | CH-001 rename to `TEST1` |
+| Channel valid array | `0x6E91` | `0x7340` | +`0x04AF` | CH-002 activation |
+
+The +`0x04A4` shift for names (vs +`0x04A0` for data) means
+CPS inserts a 12-byte padding region between the end of the
+channel array and the start of the names in `.kg`, while
+kgq10h's logical layout has them directly abutting.
+
+Confirm each region with at least one byte-diff capture before
+trusting either side's offset for that region. (Other regions
+— channel names, scan groups, call settings, FM presets —
+remain TBD on the empirical `.kg` side, though kgq10h's logical
+offsets are at least consistent with our string-search anchors
+inside the unscrambled live read.)
 
 **The Q336 settings struct is the kgq10h struct minus exactly
 three phantom fields**: `wxalert`, `wxalert_type`, and
@@ -413,11 +435,23 @@ response to the corresponding UI toggle.
 | `0x26` | GPS On | bool |
 | `0x48..0x4E` | Mode Switch password | ASCII digits `'0'..'9'` |
 | `0x4E..0x54` | Reset password | same |
-| `0x5C..0x5E` | VFO A/B Squelch | `[u8; 2]`, each 0..9 |
+| `0x54` | work_mode_a (CPS "VFO Settings → Work Mode A") | u8 enum; `0x00`=VFO, `0x03`=Channel Name (`0x01`/`0x02` likely Channel Number / Channel Freq, TBD) |
+| `0x55` | work_mode_b | same enum |
+| `0x56..0x58` | work_ch_a (CPS "VFO Settings → Selected Channel A") | `u16 LE` channel number |
+| `0x58..0x5A` | work_ch_b | `u16 LE` |
+| `0x5A` | vfostepA (tuning step A) | u8 enum; `0x03`=8.33K, `0x05`=12.5K (likely dropdown-index over 2.5/5/6.25/8.33/10/12.5/15/20/25/30/50 kHz; full table TBD) |
+| `0x5B` | vfostepB | same enum |
+| `0x5C` | squelchA | u8 0..9 (direct integer) ✓ |
+| `0x5D` | squelchB | u8 0..9 ✓ |
+| `0x5E` | BCL_A (Busy Lockout A) | bool ✓ |
+| `0x5F` | BCL_B | bool |
+| `0x60` | vfobandA (Current Band A) | u8 enum; `0x00`=150M(A), `0x03`=66M(A), `0x05`=300M(A); `0x01`=400M, `0x02`=200M, `0x04`=800M predicted by dropdown-index |
+| `0x61` | vfobandB | same enum |
 | `0x64` | TopKey | 0=Alarm, 1=SOS (more TBD) |
-| `0x65` | PF1 short | TBD |
-| `0x67` | PF2 long | TBD |
-| `0x68` | PF3 short | TBD |
+| `0x65` | PF1 short (narm-empirical, **likely actually `top_long` per kgq10h**) | TBD |
+| `0x67` | PF2 long (narm-empirical, **likely `ptt2` per kgq10h**) | TBD |
+| `0x68` | PF3 short (narm-empirical, **likely `pf1_short` per kgq10h**) | TBD |
+| `0x6B` | Scan Group A active (kgq10h's `ScnGrpA_Act`) | u8; `0x00`=none / All, `0x02`=group 1 selected (encoding TBD) |
 | `0x6E..0x74` | ANI code | 6 digits, `0x0F`-padded |
 | `0x74..0x7A` | SCC code | same encoding as ANI |
 
@@ -516,6 +550,18 @@ above). Use this only as a *what fields exist* hint; for
 
 ### VFO A / VFO B records
 
+The CPS "VFO Settings" tab is misleadingly named — it's split
+across two storage regions:
+
+- **Top half** (Work Mode A/B, Selected Channel A/B, Step A/B,
+  Squelch A/B, Busy Lockout A/B, Current Band A/B) lives
+  inside the **settings struct** at `.kg 0x54..0x61`. See the
+  empirical `.kg`-derived settings table.
+- **Bottom half** (the 8-row per-band Current Freq / Offset /
+  RX-TX CTC/DCS / TX Power / W/N / Mute Mode / Shift /
+  Scramble / Compand / Call Group / AM table) lives in the
+  **VFO records region** described below.
+
 Six VFO A entries (one per band) at logical `0x0540`, two VFO B
 at `0x05A0`. Each is 16 bytes:
 
@@ -539,10 +585,18 @@ u8    unknown6
 VFO A bands (in order at `0x0540`): 150M-A, 400M-A, 200M-A,
 66M-A, 800M-A, 300M-A. VFO B at `0x05A0`: 150M-B, 400M-B.
 
-### Channel record (1000 entries at `0x05E0`, 16 B each)
+### Channel record (999 entries at `0x05E0`, 16 B each)
 
-The radio supports 1000 channels (CPS exposes 999; channel 0 is
-either reserved or unused). Each record:
+The radio supports **999 channels**, exposed in CPS as
+CH-001..CH-999 and stored as 0-indexed slots 0..998 (verified
+by `.kg`-space activation tests of CH-001, CH-002, and CH-999).
+
+> kgq10h's struct claims `memory[1000]` but that's another
+> Q10H-inherited inaccuracy: the actual Q336 array is 999
+> records, ending at `.kg 0x3FB0` (= `0x0140 + 999×16`) with a
+> 12-byte gap before the names array starts at `0x3FBC`.
+
+Each record:
 
 ```text
 ul32  rxfreq            ← × 10 Hz
@@ -568,9 +622,19 @@ u8    unknown6          ← TBD (always 0 in observed data)
 
 ### Channel valid array (`0x7340`, 1000 B)
 
-One byte per channel. Non-zero = valid; zero = empty slot.
-CHIRP's struct names this `valid[1000]`. Particular non-zero
-encodings (active/transmit/receive-only flags) are TBD.
+One byte per channel, parallel to the channel-data and name
+arrays. CHIRP's struct calls this `valid[1000]`.
+
+| Byte | Meaning |
+|---|---|
+| `0x00` | empty slot |
+| `0x9E` | active, default settings |
+
+Confirmed by single-field activation capture (CPS-001 fresh-
+activated empty channel got `0x00 → 0x9E`). Whether other
+non-zero values exist (e.g. for receive-only channels, locked
+channels, or different default profiles) is TBD; the FB-Radio
+baseline image only contains `0x00` and `0x9E` in this region.
 
 ### Channel names (`0x4460`, 1000 × 12 B)
 

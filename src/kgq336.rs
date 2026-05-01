@@ -25,7 +25,7 @@ mod wire;
 
 pub use decode::{
     Alert, DecodeReport, Language, PttId, Roger, ScQt, ScanGroup, ScanMode, Settings, Sidetone,
-    StartupDisplay, SubFreqMute, TopKey, VfoEntry, decode_channels,
+    StartupDisplay, SubFreqMute, TopKey, VfoBand, VfoEntry, VfoStep, WorkMode, decode_channels,
 };
 pub use error::KgQ336Error;
 pub use file::{mojibake, unmojibake};

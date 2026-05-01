@@ -145,6 +145,7 @@ pub fn channels_to_csv(channels: &[Channel]) -> Result<ConvertReport, ChirpError
                     tone_tx_hz: None,
                     tone_rx_hz: None,
                     dcs_code: None,
+                    call_group: None,
                 },
                 source: None,
             },
@@ -196,6 +197,7 @@ fn channel_to_row(ch: &Channel, location: u32) -> Result<ChirpRow, &'static str>
             tone_tx_hz,
             tone_rx_hz,
             dcs_code,
+            ..
         } => {
             fill_analog_row(
                 &mut row,
@@ -331,6 +333,7 @@ mod tests {
                 tone_tx_hz: None,
                 tone_rx_hz: None,
                 dcs_code: None,
+                call_group: None,
             },
             source: None,
         }
@@ -391,6 +394,7 @@ mod tests {
             tone_tx_hz: Some(88.5),
             tone_rx_hz: None,
             dcs_code: None,
+            call_group: None,
         };
         let row = &rows(&channels_to_csv(&[ch]).unwrap().csv)[1];
         assert_eq!(row[5], "Tone");
@@ -406,6 +410,7 @@ mod tests {
             tone_tx_hz: Some(123.0),
             tone_rx_hz: Some(123.0),
             dcs_code: None,
+            call_group: None,
         };
         let row = &rows(&channels_to_csv(&[ch]).unwrap().csv)[1];
         assert_eq!(row[5], "TSQL");
@@ -421,6 +426,7 @@ mod tests {
             tone_tx_hz: None,
             tone_rx_hz: None,
             dcs_code: Some(74),
+            call_group: None,
         };
         let row = &rows(&channels_to_csv(&[ch]).unwrap().csv)[1];
         assert_eq!(row[5], "DTCS");
@@ -462,6 +468,7 @@ mod tests {
             tone_tx_hz: None,
             tone_rx_hz: None,
             dcs_code: None,
+            call_group: None,
         };
         let row = &rows(&channels_to_csv(&[ch]).unwrap().csv)[1];
         assert_eq!(row[12], "NFM");
