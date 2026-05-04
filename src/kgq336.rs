@@ -20,6 +20,7 @@
 mod decode;
 mod error;
 mod file;
+pub mod inspect;
 mod io;
 mod wire;
 
@@ -28,7 +29,9 @@ pub use decode::{
     StartupDisplay, SubFreqMute, TopKey, VfoBand, VfoEntry, VfoStep, WorkMode, decode_channels,
 };
 pub use error::KgQ336Error;
-pub use file::{mojibake, unmojibake};
+pub use file::{
+    KG_SHAPE_LEN, PHYSICAL_LEN, logical_to_kg_shape, mojibake, to_kg_shape, unmojibake, unscramble,
+};
 pub use io::{open_port, read_codeplug};
 pub use wire::{
     CMD_END, CMD_RD, CMD_WR, DIR_IN, DIR_OUT, END_FRAME, InFrame, READ_BLOCK, SOF, WRITE_BLOCK,

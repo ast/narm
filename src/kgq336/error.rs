@@ -10,6 +10,12 @@ pub enum KgQ336Error {
     BadMojibake { offset: usize, byte: u8 },
     #[error("image too short: {got} bytes, expected at least {min}")]
     ShortImage { got: usize, min: usize },
+    #[error(
+        "unrecognised KG-Q336 image: {got} bytes, not a `.kg` text file \
+         (no `xiepinruanjian` header), not a 32 KiB physical dump, \
+         not a 50 KiB `.kg`-shape image"
+    )]
+    UnknownShape { got: usize },
     #[error("serial I/O: {0}")]
     Io(#[from] std::io::Error),
     #[error("serial port: {0}")]

@@ -84,6 +84,114 @@ pub fn unmojibake(file_bytes: &[u8]) -> Result<Vec<u8>, KgQ336Error> {
     Ok(out)
 }
 
+/// Length of the post-unmojibake `.kg` image. Matches `.kg`
+/// files the CPS produces, and is the canonical shape that
+/// [`super::decode_channels`] and [`mojibake`] operate on.
+pub const KG_SHAPE_LEN: usize = 50_000;
+
+/// Length of a raw radio EEPROM dump (32 KiB) — the "physical"
+/// layout you get from `narm read -b` over USB serial.
+pub const PHYSICAL_LEN: usize = 0x8000;
+
+/// Normalise any KG-Q336 codeplug input to the canonical
+/// 50 KiB `.kg`-shape buffer that [`super::decode_channels`]
+/// and [`mojibake`] operate on.
+///
+/// Auto-detects the input shape:
+///
+/// - `.kg` text file (`xiepinruanjian\r\n` header) →
+///   [`unmojibake`].
+/// - 32 KiB physical EEPROM dump → [`unscramble`] +
+///   [`logical_to_kg_shape`].
+/// - 50 KiB image → returned as-is (already in `.kg` shape).
+///
+/// Anything else is rejected with [`KgQ336Error::UnknownShape`].
+pub fn to_kg_shape(bytes: Vec<u8>) -> Result<Vec<u8>, KgQ336Error> {
+    if bytes.starts_with(HEADER) {
+        return unmojibake(&bytes);
+    }
+    match bytes.len() {
+        PHYSICAL_LEN => {
+            let logical = unscramble(&bytes);
+            Ok(logical_to_kg_shape(&logical))
+        }
+        KG_SHAPE_LEN => Ok(bytes),
+        other => Err(KgQ336Error::UnknownShape { got: other }),
+    }
+}
+
+/// Convert the radio's physical EEPROM layout (32 KiB,
+/// what `narm radio read --format raw` produces) into the
+/// "logical" layout that CHIRP's `kgq10h` driver works with.
+///
+/// Each 1 KiB physical block is stored as 4 × 256-byte slices
+/// in *reverse* order; this function reverses that (swap
+/// slice 0 ↔ slice 3, 1 ↔ 2 within each block). The output is
+/// the same length as the input.
+///
+/// See `docs/kgq336-codeplug.md` → "Physical → logical
+/// conversion".
+pub fn unscramble(physical: &[u8]) -> Vec<u8> {
+    const BLOCK: usize = 0x400; // 1 KiB
+    const SLICE: usize = 0x100; // 256 B
+    let mut logical = vec![0u8; physical.len()];
+    let mut block_start = 0;
+    while block_start + BLOCK <= physical.len() {
+        for slice_idx in 0..4 {
+            let phys_off = block_start + slice_idx * SLICE;
+            let log_off = block_start + (3 - slice_idx) * SLICE;
+            logical[log_off..log_off + SLICE]
+                .copy_from_slice(&physical[phys_off..phys_off + SLICE]);
+        }
+        block_start += BLOCK;
+    }
+    // Trailing partial block (shouldn't happen for a proper 32
+    // KiB image, but guard against weird sizes).
+    if block_start < physical.len() {
+        logical[block_start..].copy_from_slice(&physical[block_start..]);
+    }
+    logical
+}
+
+/// Build a synthesized `.kg`-shape buffer (50 000 bytes) from
+/// a logical-layout image (post-[`unscramble`]) by copying the
+/// known regions to their `.kg` offsets. Regions we haven't
+/// mapped yet are left zeroed — the decoder will render those
+/// as blank/default in inspect output.
+///
+/// This lets us reuse `decode_channels` (which is keyed off
+/// `.kg` offsets) for live-read `.bin` files without duplicating
+/// the whole decoder. As more `.kg ↔ logical` shifts are
+/// confirmed, extend the `REGIONS` table below.
+pub fn logical_to_kg_shape(logical: &[u8]) -> Vec<u8> {
+    /// Length of the post-unmojibake `.kg` image. Matches
+    /// `.kg` files the CPS produces.
+    const KG_SIZE: usize = 50_000;
+
+    // (kg_dst, logical_src, length) — confirmed shifts only.
+    // See docs/kgq336-codeplug.md → "Confirmed `.kg` ↔ logical
+    // region shifts" for how each was verified.
+    const REGIONS: &[(usize, usize, usize)] = &[
+        (0x0000, 0x0440, 0x0084),   // Settings struct (132 B)
+        (0x0084, 0x04C4, 0x0014),   // Startup message (20 B; shift +0x0440 like settings)
+        (0x0140, 0x05E0, 999 * 16), // Channel data array (999 × 16)
+        (0x3FBC, 0x4460, 999 * 12), // Channel name array (999 × 12)
+        (0x6E91, 0x7340, 999),      // Channel valid array
+        (0x7278, 0x7740, 10 * 4),   // Scan group ranges (10 × 4)
+        (0x72A0, 0x7768, 10 * 12),  // Scan group names (10 × 12)
+        (0x73E0, 0x78B0, 20 * 2),   // FM broadcast presets (20 × u16)
+        (0x766C, 0x7B4C, 12),       // Call group 1 name (slot 1, "Allanrop")
+    ];
+
+    let mut kg = vec![0u8; KG_SIZE];
+    for &(dst, src, len) in REGIONS {
+        if src + len <= logical.len() && dst + len <= kg.len() {
+            kg[dst..dst + len].copy_from_slice(&logical[src..src + len]);
+        }
+    }
+    kg
+}
+
 /// Re-encode a raw image as a `.kg` file. Inverse of
 /// [`unmojibake`]. Useful for round-trip tests and (later)
 /// writing modified codeplugs.
@@ -161,6 +269,37 @@ mod tests {
     fn missing_header_rejected() {
         let kg = b"not the right header\r\nbody\r\n";
         assert!(matches!(unmojibake(kg), Err(KgQ336Error::MissingHeader)));
+    }
+
+    #[test]
+    fn to_kg_shape_passes_through_50k() {
+        let img = vec![0xAB; KG_SHAPE_LEN];
+        let out = to_kg_shape(img.clone()).unwrap();
+        assert_eq!(out, img);
+    }
+
+    #[test]
+    fn to_kg_shape_unmojibakes_kg_text() {
+        let raw: Vec<u8> = (0..200u8).collect();
+        let kg = mojibake(&raw);
+        let out = to_kg_shape(kg).unwrap();
+        assert_eq!(out, raw);
+    }
+
+    #[test]
+    fn to_kg_shape_reshapes_32k_physical() {
+        let physical = vec![0u8; PHYSICAL_LEN];
+        let out = to_kg_shape(physical).unwrap();
+        assert_eq!(out.len(), KG_SHAPE_LEN);
+    }
+
+    #[test]
+    fn to_kg_shape_rejects_unknown_size() {
+        let bytes = vec![0u8; 1234];
+        assert!(matches!(
+            to_kg_shape(bytes),
+            Err(KgQ336Error::UnknownShape { got: 1234 })
+        ));
     }
 
     #[test]

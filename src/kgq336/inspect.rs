@@ -1,44 +1,25 @@
-use std::path::PathBuf;
+//! Human-readable summary of a KG-Q336 codeplug image.
+//!
+//! Used by the `narm info` CLI verb to pretty-print settings,
+//! VFO state, FM broadcast presets, scan groups, and channel
+//! list from either a `.kg` (de-mojibaked) image or a 32 KiB
+//! raw radio dump that's been re-shaped to the `.kg` layout.
+
+use std::path::Path;
 
 use anyhow::{Context, Result};
-use clap::{Args, Subcommand};
 
-use narm::kgq336;
+use super::{DecodeReport, decode_channels};
 
-#[derive(Args, Debug)]
-pub struct Kgq336Args {
-    #[command(subcommand)]
-    pub command: Kgq336Command,
-}
+/// Pretty-print a decoded image to stdout.
+///
+/// `source_label` is shown next to the file path in the
+/// header (`kg-file` for `.kg` inputs, `raw-radio-dump` for
+/// 32 KiB raw images, etc.).
+pub fn print_report(file: &Path, source_label: &str, raw: &[u8]) -> Result<()> {
+    let report = decode_channels(raw).context("decoding codeplug")?;
 
-#[derive(Subcommand, Debug)]
-pub enum Kgq336Command {
-    /// Pretty-print the radio-wide settings, scan groups, VFO
-    /// state, FM broadcast presets, and channel summary from a
-    /// `.kg` codeplug file.
-    #[command(visible_alias = "i")]
-    Inspect(InspectArgs),
-}
-
-#[derive(Args, Debug)]
-pub struct InspectArgs {
-    /// Path to a `.kg` file produced by the Wouxun CPS.
-    pub file: PathBuf,
-}
-
-pub fn run(args: Kgq336Args) -> Result<()> {
-    match args.command {
-        Kgq336Command::Inspect(a) => run_inspect(a),
-    }
-}
-
-fn run_inspect(args: InspectArgs) -> Result<()> {
-    let bytes =
-        std::fs::read(&args.file).with_context(|| format!("reading {}", args.file.display()))?;
-    let raw = kgq336::unmojibake(&bytes).context("de-mojibaking .kg file")?;
-    let report = kgq336::decode_channels(&raw).context("decoding codeplug")?;
-
-    println!("file:       {}", args.file.display());
+    println!("file:       {} ({})", file.display(), source_label);
     println!("size (raw): {} bytes", raw.len());
     println!();
 
@@ -54,7 +35,7 @@ fn run_inspect(args: InspectArgs) -> Result<()> {
     Ok(())
 }
 
-fn print_startup(r: &kgq336::DecodeReport) {
+fn print_startup(r: &DecodeReport) {
     println!("[startup message]");
     match r.startup_message.as_deref() {
         Some(s) => println!("  {s:?}"),
@@ -63,7 +44,7 @@ fn print_startup(r: &kgq336::DecodeReport) {
     println!();
 }
 
-fn print_settings(r: &kgq336::DecodeReport) {
+fn print_settings(r: &DecodeReport) {
     let s = match &r.settings {
         Some(s) => s,
         None => {
@@ -134,7 +115,7 @@ fn print_settings(r: &kgq336::DecodeReport) {
     println!();
 }
 
-fn print_vfo_state(r: &kgq336::DecodeReport) {
+fn print_vfo_state(r: &DecodeReport) {
     if r.vfo_state.is_empty() {
         return;
     }
@@ -145,7 +126,7 @@ fn print_vfo_state(r: &kgq336::DecodeReport) {
     println!();
 }
 
-fn print_fm_broadcast(r: &kgq336::DecodeReport) {
+fn print_fm_broadcast(r: &DecodeReport) {
     if r.fm_broadcast.is_empty() {
         return;
     }
@@ -161,7 +142,7 @@ fn print_fm_broadcast(r: &kgq336::DecodeReport) {
     println!();
 }
 
-fn print_scan_groups(r: &kgq336::DecodeReport) {
+fn print_scan_groups(r: &DecodeReport) {
     if r.scan_groups.is_empty() {
         return;
     }
@@ -182,7 +163,7 @@ fn print_scan_groups(r: &kgq336::DecodeReport) {
     println!();
 }
 
-fn print_call_group(r: &kgq336::DecodeReport) {
+fn print_call_group(r: &DecodeReport) {
     println!("[call group 1]");
     match r.call_group_1_name.as_deref() {
         Some(s) => println!("  name: {s:?}"),
@@ -191,7 +172,7 @@ fn print_call_group(r: &kgq336::DecodeReport) {
     println!();
 }
 
-fn print_channels(r: &kgq336::DecodeReport) {
+fn print_channels(r: &DecodeReport) {
     println!("[channels] {} populated", r.channels.len());
     if r.channels.is_empty() {
         println!();
@@ -204,7 +185,7 @@ fn print_channels(r: &kgq336::DecodeReport) {
     println!();
 }
 
-fn print_warnings(r: &kgq336::DecodeReport) {
+fn print_warnings(r: &DecodeReport) {
     if r.warnings.is_empty() {
         return;
     }
