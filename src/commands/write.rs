@@ -11,20 +11,20 @@ use crate::commands::format::{Format, resolve};
 
 #[derive(Args, Debug)]
 pub struct WriteArgs {
+    /// Target radio.
+    #[arg(short = 'R', long, value_enum)]
+    pub radio: Radio,
+
+    /// Serial port the radio is on (e.g. `/dev/ttyUSB0`).
+    #[arg(short = 'D', long)]
+    pub device: String,
+
     /// Codeplug to upload. Currently must be a raw EEPROM image
     /// (`-b/--bin`); other formats are decoded later.
     pub file: PathBuf,
 }
 
 pub fn run(cli: &Cli, args: &WriteArgs) -> Result<()> {
-    let radio = cli
-        .radio
-        .ok_or_else(|| anyhow::anyhow!("--radio/-R is required"))?;
-    let device = cli
-        .device
-        .as_deref()
-        .ok_or_else(|| anyhow::anyhow!("-D/--device is required"))?;
-
     let format = resolve(cli.format_flag(), Some(&args.file))?;
     if format != Format::Bin {
         bail!(
@@ -34,10 +34,10 @@ pub fn run(cli: &Cli, args: &WriteArgs) -> Result<()> {
         );
     }
 
-    if radio != Radio::QuanshengUvK5 {
+    if args.radio != Radio::QuanshengUvK5 {
         bail!(
             "radio write is only implemented for quansheng-uv-k5 (got {})",
-            radio.id()
+            args.radio.id()
         );
     }
 
@@ -55,14 +55,14 @@ pub fn run(cli: &Cli, args: &WriteArgs) -> Result<()> {
         );
     }
 
-    let mut port =
-        uvk5::open_port(device).with_context(|| format!("opening serial port {device}"))?;
+    let mut port = uvk5::open_port(&args.device)
+        .with_context(|| format!("opening serial port {}", args.device))?;
 
     eprintln!(
         "writing {} bytes from {} to {} (calibration block 0x1d00..0x2000 preserved)…",
         uvk5::WRITABLE_SIZE,
         args.file.display(),
-        device
+        args.device
     );
     let written = uvk5::write_eeprom(&mut *port, &image).context("writing eeprom to radio")?;
     eprintln!("wrote {written} bytes; resetting radio…");

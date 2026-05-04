@@ -13,24 +13,42 @@ use crate::commands::format::{self, Format};
 
 #[derive(Args, Debug)]
 pub struct ReadArgs {
+    /// Target radio.
+    #[arg(short = 'R', long, value_enum)]
+    pub radio: Radio,
+
+    #[command(flatten)]
+    pub source: ReadSource,
+}
+
+/// Source of the codeplug bytes — exactly one of `-D <port>`
+/// (live serial) or `--from-file <path>` (offline) must be
+/// given. Enforced by clap's `required = true, multiple = false`
+/// group so we don't have to check at runtime.
+#[derive(Args, Debug)]
+#[group(required = true, multiple = false)]
+pub struct ReadSource {
+    /// Serial port the radio is on (e.g. `/dev/ttyUSB0`).
+    #[arg(short = 'D', long)]
+    pub device: Option<String>,
+
     /// Decode a saved codeplug file instead of reading from the
     /// radio. For `wouxun-kg-q336` this is a `.kg` file from the
     /// vendor CPS, or a `.bin` raw EEPROM dump (32 KiB) saved by
-    /// `narm read -D <port> -b`. Mutually exclusive with `-D`.
+    /// `narm read -D <port> -b`.
     #[arg(long)]
     pub from_file: Option<PathBuf>,
 }
 
 pub fn run(cli: &Cli, args: &ReadArgs) -> Result<()> {
-    let radio = cli
-        .radio
-        .ok_or_else(|| anyhow::anyhow!("--radio/-R is required"))?;
-
-    match (cli.device.as_deref(), args.from_file.as_deref()) {
-        (Some(port), None) => run_live(cli, radio, port),
-        (None, Some(path)) => run_from_file(cli, radio, path),
-        (None, None) => bail!("either -D/--device or --from-file is required"),
-        (Some(_), Some(_)) => bail!("-D/--device and --from-file are mutually exclusive"),
+    match (
+        args.source.device.as_deref(),
+        args.source.from_file.as_deref(),
+    ) {
+        (Some(port), None) => run_live(cli, args.radio, port),
+        (None, Some(path)) => run_from_file(cli, args.radio, path),
+        // Clap's group makes both other arms unreachable.
+        _ => unreachable!("clap group enforces exactly one of -D / --from-file"),
     }
 }
 

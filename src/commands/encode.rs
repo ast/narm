@@ -3,20 +3,22 @@ use std::path::PathBuf;
 use anyhow::{Context, Result, bail};
 use clap::Args;
 
+use narm::Radio;
+
 use crate::commands::Cli;
 use crate::commands::format::{Format, resolve};
 
 #[derive(Args, Debug)]
 pub struct EncodeArgs {
+    /// Target radio.
+    #[arg(short = 'R', long, value_enum)]
+    pub radio: Radio,
+
     /// Path to a TOML config file or a directory of `*.toml` files.
     pub config: PathBuf,
 }
 
 pub fn run(cli: &Cli, args: &EncodeArgs) -> Result<()> {
-    let radio = cli
-        .radio
-        .ok_or_else(|| anyhow::anyhow!("--radio/-R is required"))?;
-
     let format = resolve(cli.format_flag(), cli.out.as_deref())?;
     if format != Format::Csv {
         bail!(
@@ -28,7 +30,7 @@ pub fn run(cli: &Cli, args: &EncodeArgs) -> Result<()> {
     let cfg = narm::load_from_path(&args.config)?;
     narm::validate(&cfg)?;
 
-    let spec = radio.spec();
+    let spec = args.radio.spec();
 
     let mut filtered = Vec::with_capacity(cfg.channels.len());
     let mut filter_warnings = Vec::new();

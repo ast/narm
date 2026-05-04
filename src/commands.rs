@@ -2,8 +2,6 @@ use std::path::PathBuf;
 
 use clap::{ArgGroup, Parser, Subcommand};
 
-use narm::Radio;
-
 pub mod completions;
 pub mod decode;
 pub mod detect;
@@ -28,9 +26,12 @@ use read::ReadArgs;
 use repeaters::RepeatersArgs;
 use write::WriteArgs;
 
-/// Top-level option group. Mirrors `dmrconf [Options] [COMMAND]
-/// [file]` — every flag here is `global = true` so it can be
-/// passed before *or* after the subcommand.
+/// Top-level CLI. Inspired by `dmrconf [Options] [COMMAND]
+/// [file]`, but in clap-idiomatic form: options that are
+/// *required* for a particular verb live on that verb's args
+/// struct so clap can enforce them at parse time. Truly
+/// cross-cutting options (format flag, `-o`, `--verbose`) stay
+/// here as `global = true`.
 #[derive(Parser, Debug)]
 #[command(
     name = "narm",
@@ -41,16 +42,6 @@ use write::WriteArgs;
 )]
 #[command(group = ArgGroup::new("format").multiple(false))]
 pub struct Cli {
-    /// Target radio. Required for offline `encode`/`decode`/
-    /// `verify`; optional when a radio is connected and `detect`
-    /// can identify it.
-    #[arg(short = 'R', long, value_enum, global = true)]
-    pub radio: Option<Radio>,
-
-    /// Serial port the radio is on (e.g. `/dev/ttyUSB0`, `COM3`).
-    #[arg(short = 'D', long, global = true)]
-    pub device: Option<String>,
-
     /// Format: TOML (narm canonical).
     #[arg(short = 't', long, global = true, group = "format")]
     pub toml: bool,

@@ -13,15 +13,15 @@ use crate::commands::format::{Format, resolve};
 
 #[derive(Args, Debug)]
 pub struct DecodeArgs {
+    /// Target radio.
+    #[arg(short = 'R', long, value_enum)]
+    pub radio: Radio,
+
     /// Binary codeplug file (`.bin` raw image or `.kg` vendor file).
     pub file: PathBuf,
 }
 
 pub fn run(cli: &Cli, args: &DecodeArgs) -> Result<()> {
-    let radio = cli
-        .radio
-        .ok_or_else(|| anyhow::anyhow!("--radio/-R is required"))?;
-
     let in_format = resolve(cli.format_flag(), Some(&args.file))?;
     let out_format = match cli.out.as_deref() {
         Some(p) => resolve(cli.format_flag(), Some(p)).unwrap_or(Format::Toml),
@@ -46,13 +46,13 @@ pub fn run(cli: &Cli, args: &DecodeArgs) -> Result<()> {
 
     // Format flag (or path extension) decides how to interpret
     // the bytes — no content sniffing.
-    let image = match (radio, in_format) {
+    let image = match (args.radio, in_format) {
         (Radio::WouxunKgQ336, Format::Bin) => {
             if bytes.len() != kgq336::PHYSICAL_LEN {
                 bail!(
                     "expected {}-byte physical EEPROM dump for {} -b (got {})",
                     kgq336::PHYSICAL_LEN,
-                    radio.id(),
+                    args.radio.id(),
                     bytes.len()
                 );
             }
@@ -70,7 +70,7 @@ pub fn run(cli: &Cli, args: &DecodeArgs) -> Result<()> {
         (other, _) => bail!("decoding is not implemented for {} yet", other.id()),
     };
 
-    let toml_bytes = decode_to_toml(radio, &image)?;
+    let toml_bytes = decode_to_toml(args.radio, &image)?;
     write_output(cli.out.as_deref(), &toml_bytes)
 }
 
